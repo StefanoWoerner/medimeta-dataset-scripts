@@ -1,0 +1,34 @@
+name: AML-Cytomorphology_LMU
+description: "The Munich AML Morphology Dataset contains 18,365 expert-labeled single-cell images taken from peripheral blood smears of 100 patients diagnosed with Acute Myeloid Leukemia at Munich University Hospital between 2014 and 2017, as well as 100 patients without signs of hematological malignancy. Image acquisition was done using a M8 digital microscope / scanner (Precipoint GmbH, Freising, Germany) at 100-fold optical magnification and oil immersion. Pathological and non-pathological leukocytes were classified into a standard morphological classification scheme derived from clinical practice by trained experts. To quantify inter- and intra-rater variability of examiners, a subset of images was re-annotated up to two times. The dataset has been used by the authors to train a convolutional neural network for single-cell morphology classification."
+tasks:
+  - task_name: "morphological class"
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: BAS Basophil
+      1: EBO Erythroblast
+      2: EOS Eosinophil
+      3: KSC Smudge cell
+      4: LYA Lymphocyte (atypical)
+      5: LYT Lymphocyte (typical)
+      6: MMZ Metamyelocyte
+      7: MOB Monoblast
+      8: MON Monocyte
+      9: MYB Myelocyte
+      10: MYO Myeloblast
+      11: NGB Neutrophil (band)
+      12: NGS Neutrophil (segmented)
+      13: PMB Promyelocyte (bilobled)
+      14: PMO Promyelocyte
+
+input_size: [3,224,244]
+num_samples:
+  train: 18_365
+  val: 0
+  test: 0
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+original_paper:
+original_download_url: https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585

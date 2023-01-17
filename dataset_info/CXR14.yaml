@@ -1,0 +1,40 @@
+name: ChestXRay14
+description: "ChestX-ray dataset comprises 112,120 frontal-view X-ray images of 30,805 unique
+patients with the text-mined fourteen disease image labels (where each image can have multi-
+labels), mined from the associated radiological reports using natural language processing.
+Fourteen common thoracic pathologies include Atelectasis, Consolidation, Infiltration,
+Pneumothorax, Edema, Emphysema, Fibrosis, Effusion, Pneumonia, Pleural_thickening,
+Cardiomegaly, Nodule, Mass and Hernia."
+
+tasks:
+  - task_name: "disease labels"
+    task_target: MULTILABEL_CLASSIFICATION
+    labels:
+      0: Atelectasis
+      1: Cardiomegaly
+      2: Effusion
+      3: Infiltration
+      4: Mass
+      5: Nodule
+      6: Pneumonia
+      7: Pneumothorax
+      8: Consolidation
+      9: Edema
+      10: Emphysema
+      11: Fibrosis
+      12: Pleural_Thickening
+      13: Hernia
+
+input_size: [1,224,244]
+num_samples:
+  train: 86524
+  val: 0
+  test: 25596
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "The usage of the data set is unrestricted. But you should provide the link to our original download site,
+acknowledge the NIH Clinical Center and provide a citation to our CVPR 2017 paper."
+original_paper: https://openaccess.thecvf.com/content_cvpr_2017/papers/Wang_ChestX-ray8_Hospital-Scale_Chest_CVPR_2017_paper.pdf
+original_download_url: https://nihcc.app.box.com/v/ChestXray-NIHCC

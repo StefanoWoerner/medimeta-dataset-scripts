@@ -1,0 +1,23 @@
+name: Kermany_Pneumonia
+description: "Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification
+Dataset of validated OCT and Chest X-Ray images  described and analyzed in \"Deep learning-based classification and referral of treatable human diseases\". The OCT Images are split into a training set and a testing set of independent patients. OCT Images are labeled as (disease)-(randomized patient ID)-(image number by this patient) and split into 4 directories: CNV, DME, DRUSEN, and NORMAL."
+
+tasks:
+  - task_name: "disease"
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: "NORMAL"
+      1: "PNEUMONIA"
+
+input_size: [1,224,244]
+num_samples:
+  train: 5233
+  val: 0
+  test: 624
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution 4.0 International"
+original_paper: "https://www.sciencedirect.com/science/article/pii/S0092867418301545"
+original_download_url: https://data.mendeley.com/datasets/rscbjbr9sj/2

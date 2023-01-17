@@ -1,0 +1,25 @@
+name: "DeepDRid ultra-widefield"
+description: "stuff goes here"
+
+tasks:
+  - task_name: "DR level"
+    task_target: ORDINAL_REGRESSION
+    labels:
+      0: "Grade – 0: No apparent retinopathy"
+      1: "Grade – 1: Mild – NPDR"
+      2: "Grade – 2: Moderate – NPDR"
+      3: "Grade – 3: Severe – NPDR"
+      4: "Grade – 4: PDR"
+
+input_size: [3,224,244]
+num_samples:
+  train: 0
+  val: 0
+  test: 0
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+original_paper: https://www.sciencedirect.com/science/article/pii/S2666389922001040
+original_download_url: https://isbi.deepdr.org/

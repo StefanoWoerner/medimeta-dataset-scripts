@@ -1,0 +1,30 @@
+name: peripheral blood cells
+description: "The dataset contains a total of 17,092 images of individual normal cells, which were acquired using the analyzer CellaVision DM96 in the Core Laboratory at the Hospital Clinic of Barcelona. The dataset is organized in the following eight groups: neutrophils, eosinophils, basophils, lymphocytes, monocytes, immature granulocytes (promyelocytes, myelocytes, and metamyelocytes), erythroblasts and platelets or thrombocytes. The size of the images is 360 x 363 pixels, in format JPG, and they were annotated by expert clinical pathologists. The images were captured from individuals without infection, hematologic or oncologic disease and free of any pharmacologic treatment at the moment of blood collection.
+
+This high-quality labelled dataset may be used to train and test machine learning and deep learning models to recognize different types of normal peripheral blood cells. To our knowledge, this is the first publicly available set with large numbers of normal peripheral blood cells, so that it is expected to be a canonical dataset for model benchmarking."
+
+tasks:
+  - task_name: "cell class"
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: neutrophil
+      1: eosinophil
+      2: basophil
+      3: lymphocyte
+      4: monocyte
+      5: immature granulocyte
+      6: erythroblast
+      7: platelet
+
+input_size: [3,224,244]
+num_samples:
+  train: 17_092
+  val: 0
+  test: 0
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+original_paper: https://www.sciencedirect.com/science/article/pii/S2352340920303681
+original_download_url: https://data.mendeley.com/datasets/snkd93bnjr/1

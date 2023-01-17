@@ -1,0 +1,32 @@
+name: NCT-CRC-HE-100K
+description: "This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue.
+All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method (http://ieeexplore.ieee.org/abstract/document/5193250/, DOI 10.1109/ISBI.2009.5193250).
+Tissue classes are: Adipose (ADI), background (BACK), debris (DEB), lymphocytes (LYM), mucus (MUC), smooth muscle (MUS), normal colon mucosa (NORM), cancer-associated stroma (STR), colorectal adenocarcinoma epithelium (TUM).
+These images were manually extracted from N=86 H&E stained human cancer tissue slides from formalin-fixed paraffin-embedded (FFPE) samples from the NCT Biobank (National Center for Tumor Diseases, Heidelberg, Germany) and the UMM pathology archive (University Medical Center Mannheim, Mannheim, Germany). Tissue samples contained CRC primary tumor slides and tumor tissue from CRC liver metastases; normal tissue classes were augmented with non-tumorous regions from gastrectomy specimen to increase variability."
+
+tasks:
+  - task_name: "tissue class"
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: "adipose (ADI)"
+      1: "background (BACK)"
+      2: "debris (DEB)"
+      3: "lymphocytes (LYM)"
+      4: "mucus (MUC)"
+      5: "smooth muscle (MUS)"
+      6: "normal colon mucosa (NORM)"
+      7: "cancer-associated stroma (STR)"
+      8: "colorectal adenocarcinoma epithelium (TUM)"
+
+input_size: [3,224,244]
+num_samples:
+  train: 100000
+  val: 7180
+  test: 0
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution 4.0 International"
+original_paper: ""
+original_download_url: https://zenodo.org/record/1214456
