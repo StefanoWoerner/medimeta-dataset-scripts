@@ -6,7 +6,6 @@ import torch
 import yaml
 from shutil import copyfile, rmtree
 from torchvision.utils import save_image
-from typing import Union, Sequence
 
 
 INFO_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset_info")
@@ -50,7 +49,7 @@ class UnifiedDatasetWriter:
         self,
         out_path: str,
         info_path: str,
-        add_annot_cols: Union[Sequence[str], None] = None,
+        add_annot_cols: list[str] | None = None,
     ):
         # Check output directory does not exist and create it
         self.out_path = out_path
@@ -138,8 +137,8 @@ class UnifiedDatasetWriter:
         old_paths: list[str],
         original_splits: list[str],
         task_labels: list[list[int]],
-        add_annots: Union[list, None] = None,
-        images: Union[torch.Tensor, None] = None,
+        add_annots: list | None = None,
+        images: torch.Tensor | None = None,
     ):
         """Add labels, additional, meta information, and images.
         """
