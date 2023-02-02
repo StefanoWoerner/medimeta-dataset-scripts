@@ -2,9 +2,11 @@
 """
 
 import os
+from shutil import rmtree
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
+from zipfile import ZipFile
 from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter
 
 
@@ -29,6 +31,10 @@ def get_unified_data(
             ("train", os.path.join(in_path, "NCT-CRC-HE-100K")),
             ("validation", os.path.join(in_path, "CRC-VAL-HE-7K")),
         ):
+            # extract folder
+            with ZipFile(f"{root_path}.zip", 'r') as zf:
+                zf.extractall(os.path.join(root_path, ".."))
+
             # dummy loader to avoid actually loading the images, since just copied
             dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
@@ -38,6 +44,9 @@ def get_unified_data(
                     original_splits=[split] * len(paths),
                     task_labels=[[int(lab)] for lab in labs],
                 )
+
+            # remove extracted folder to free up space
+            rmtree(root_path)
 
 
 if __name__ == "__main__":
