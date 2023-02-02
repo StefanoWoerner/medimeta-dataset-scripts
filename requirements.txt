@@ -1,5 +1,10 @@
-numpy~=1.23.1
 matplotlib~=3.5.2
 nibabel~=4.0.2
+numpy~=1.23.1
+pandas
+pyyaml
 scikit-image~=0.19.3
 SimpleITK
+tqdm
+torch
+torchvision
