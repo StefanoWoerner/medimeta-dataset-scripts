@@ -23,7 +23,7 @@ def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "NCT-CRC"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
-    batch_size=64,
+    batch_size=2048,
 ):
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         # original data separated in train and validation datasets

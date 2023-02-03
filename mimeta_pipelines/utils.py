@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import torch
 import yaml
+from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 from torchvision.utils import save_image
 
@@ -160,8 +161,12 @@ class UnifiedDatasetWriter:
         # Images
         # not passed => copy from original location
         if images is None:
-            for old_path, filepath in zip(old_paths, filepaths):
-                copyfile(old_path, os.path.join(self.out_path, filepath))
+            all_paths = zip(old_paths, filepaths)
+            copy_fun = lambda paths: copyfile(paths[0], os.path.join(self.out_path, paths[1]))
+            # multithreading since I/O bottleneck
+            n_threads = 16
+            with ThreadPool(n_threads) as pool:
+                pool.map(copy_fun, all_paths)
         # passed as tensors
         else:
             for image, filepath in zip(images, filepaths):
