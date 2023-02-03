@@ -4,14 +4,24 @@ import os
 import pandas as pd
 import torch
 import yaml
+from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from torchvision.utils import save_image
+from torchvision.datasets import ImageFolder
 
 
 INFO_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset_info")
 ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
 UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
+
+
+class ImageFolderPaths(ImageFolder):
+    """Modified torchvision.datasets.ImageFolder that returns paths too.
+    """
+    def __getitem__(self, index):
+        img, lab = super(ImageFolderPaths, self).__getitem__(index)
+        path = self.imgs[index][0]
+        return (img, lab, path)
 
 
 class UnifiedDatasetWriter:
@@ -90,7 +100,7 @@ class UnifiedDatasetWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         # If error occurred, roll back
         if exc_type is not None:
-            rmtree(self.out_path)
+            rmtree(self.out_path, ignore_errors=True)
             return
         # Write out files
         try:
@@ -130,7 +140,7 @@ class UnifiedDatasetWriter:
 
         # Roll back whenever an error occurs
         except Exception as e:
-            rmtree(self.out_path)
+            rmtree(self.out_path, ignore_errors=True)
             raise e
 
     def write(
@@ -139,7 +149,7 @@ class UnifiedDatasetWriter:
         original_splits: list[str],
         task_labels: list[list[int]],
         add_annots: list | None = None,
-        images: torch.Tensor | None = None,
+        images: list[Image.Image] | None = None,
     ):
         """Add labels, additional, meta information, and images.
         """
@@ -160,17 +170,30 @@ class UnifiedDatasetWriter:
 
         # Images
         # not passed => copy from original location
+        n_threads = 16
         if images is None:
             all_paths = zip(old_paths, filepaths)
-            copy_fun = lambda paths: copyfile(paths[0], os.path.join(self.out_path, paths[1]))
+
+            def copy_fun(paths):
+                orig_path, goal_path = paths
+                copyfile(orig_path, os.path.join(self.out_path, goal_path))
+
             # multithreading since I/O bottleneck
-            n_threads = 16
             with ThreadPool(n_threads) as pool:
                 pool.map(copy_fun, all_paths)
-        # passed as tensors
+
+        # passed as PIL images
         else:
-            for image, filepath in zip(images, filepaths):
-                save_image(image, fp=os.path.join(self.out_path, filepath))
+            imgs_paths = zip(images, filepaths)
+
+            def save_fun(img_path):
+                img, path = img_path
+                assert len(img.getbands()) == self.info_dict["input_size"][0]
+                assert img.size == tuple(self.info_dict["input_size"][1:])
+                img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
+
+            with ThreadPool(n_threads) as pool:
+                pool.map(save_fun, imgs_paths)
 
         # Check coherent lengths
         if not all(len(ls) == batch_size for ls in (
