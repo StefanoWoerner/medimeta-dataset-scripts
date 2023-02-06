@@ -41,7 +41,7 @@ tasks:
       8: The optic disc and macula are within 2PD of the center
       10: The optic disc and macula are within 1PD of the center
 
-input_size: [3,224,244]
+input_size: [3,224,224]
 num_samples:
   train: 0
   val: 0
