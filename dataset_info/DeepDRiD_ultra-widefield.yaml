@@ -11,7 +11,7 @@ tasks:
       3: "Grade – 3: Severe – NPDR"
       4: "Grade – 4: PDR"
 
-input_size: [3,224,244]
+input_size: [3,224,224]
 num_samples:
   train: 0
   val: 0

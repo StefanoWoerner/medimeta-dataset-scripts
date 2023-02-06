@@ -33,7 +33,7 @@ tasks:
       4: "REGIONAL"
       5: "SEGMENTAL"
 
-input_size: [1,224,244]
+input_size: [1,224,224]
 num_samples:
   train: 1546
   val: 0

@@ -16,7 +16,7 @@ tasks:
       6: erythroblast
       7: platelet
 
-input_size: [3,224,244]
+input_size: [3,224,224]
 num_samples:
   train: 17_092
   val: 0
