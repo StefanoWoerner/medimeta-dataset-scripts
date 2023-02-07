@@ -5,18 +5,8 @@ import os
 from shutil import rmtree
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter
-
-
-class ImageFolderPaths(ImageFolder):
-    """Modified torchvision.datasets.ImageFolder that returns paths too.
-    """
-    def __getitem__(self, index):
-        img, lab = super(ImageFolderPaths, self).__getitem__(index)
-        path = self.imgs[index][0]
-        return (img, lab, path)
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, ImageFolderPaths
 
 
 def get_unified_data(
@@ -24,6 +14,7 @@ def get_unified_data(
     out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=2048,
+    zipped=True,
 ):
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         # original data separated in train and validation datasets
@@ -32,8 +23,9 @@ def get_unified_data(
             ("validation", os.path.join(in_path, "CRC-VAL-HE-7K")),
         ):
             # extract folder
-            with ZipFile(f"{root_path}.zip", 'r') as zf:
-                zf.extractall(os.path.join(root_path, ".."))
+            if zipped:
+                with ZipFile(f"{root_path}.zip", 'r') as zf:
+                    zf.extractall(os.path.join(root_path, ".."))
 
             # dummy loader to avoid actually loading the images, since just copied
             dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
@@ -46,7 +38,8 @@ def get_unified_data(
                 )
 
             # remove extracted folder to free up space
-            rmtree(root_path)
+            if zipped:
+                rmtree(root_path, ignore_errors=True)
 
 
 if __name__ == "__main__":
