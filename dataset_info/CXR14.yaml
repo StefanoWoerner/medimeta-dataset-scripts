@@ -25,7 +25,7 @@ tasks:
       12: Pleural_Thickening
       13: Hernia
 
-input_size: [1,224,244]
+input_size: [1,224,224]
 num_samples:
   train: 86524
   val: 0
