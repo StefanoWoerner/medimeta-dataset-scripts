@@ -67,8 +67,8 @@ def get_unified_data(
         # remove extracted folder to free up space
         if zipped:
             rmtree(root_path, ignore_errors=True)
-            for p in os.listdir(os.path.join(root_path), ".."):
-                if not p[-4:] == "zip":
+            for p in os.listdir(in_path):
+                if not p[-4:] == ".zip":
                     os.remove(p)
 
 
