@@ -27,12 +27,13 @@ def get_unified_data(
         # extract folder
         if zipped:
             with ZipFile(f"{root_path}.zip", 'r') as zf:
-                zf.extractall(os.path.join(root_path, ".."))
+                zf.extractall(os.path.join(in_path))
 
-        dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
+        images_path = os.path.join(root_path, "AML-Cytomorphology_LMU")
+        dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         annotations = pd.read_csv(
-            os.path.join(in_path, "annotations.dat"), sep=r"\s+",
+            os.path.join(root_path, "annotations.dat"), sep=r"\s+",
             names=["path", "annotation", "first_reannotation", "second_reannotation"],
             index_col=0,
         )
@@ -45,7 +46,11 @@ def get_unified_data(
             rel_path = os.path.join(*(path.split(os.sep)[-2:]))
             annot = annotations.loc[rel_path]
             # "" since NaN being a float, we would get a float column
-            add_annot = [cls_to_idx.get(annot.first_reannotation, ""), cls_to_idx.get(annot.second_reannotation, ""), orig_size]
+            add_annot = [
+                cls_to_idx.get(annot.first_reannotation, ""),
+                cls_to_idx.get(annot.second_reannotation, ""),
+                orig_size
+            ]
             # resize
             image.thumbnail(out_img_size, Image.ANTIALIAS)
             # remove alpha channel
@@ -67,9 +72,6 @@ def get_unified_data(
         # remove extracted folder to free up space
         if zipped:
             rmtree(root_path, ignore_errors=True)
-            for p in os.listdir(in_path):
-                if not p[-4:] == ".zip":
-                    os.remove(p)
 
 
 if __name__ == "__main__":
