@@ -103,7 +103,7 @@ def get_unified_data(
             label = metadata.loc[index, "label"]
             original_split = splits.loc[index, "original_split"]
             # resize
-            image.thumbnail(out_img_size, Image.ANTIALIAS)
+            image.thumbnail(out_img_size)
             return image, label, original_split, annot, rgba
 
         all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
