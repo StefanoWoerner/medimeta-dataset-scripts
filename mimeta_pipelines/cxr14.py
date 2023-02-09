@@ -108,10 +108,9 @@ def get_unified_data(
 
         all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
         batches = list(chunked(all_paths, batch_size))
-        n_threads = 16
         rgba_counter = 0
         for paths in tqdm(batches, desc="CRX14"):
-            with ThreadPool(n_threads) as pool:
+            with ThreadPool() as pool:
                 results = pool.map(dataset_loader, paths)
             writer.write(
                 old_paths=list(paths),
