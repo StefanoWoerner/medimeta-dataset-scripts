@@ -24,7 +24,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "CXR14.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     with open(info_path, 'r') as f:
         info_dict = yaml.safe_load(f)
@@ -39,8 +39,13 @@ def get_unified_data(
         images_path = os.path.join(root_path, "images")
         # extract folder
         if zipped:
+            # extract to out_path (temporary)
+            in_path = f"{out_path}_temp"
             with ZipFile(f"{root_path}.zip", 'r') as zf:
                 zf.extractall(in_path)
+            # change path to extracted folder
+            root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+            images_path = os.path.join(root_path, "images")
             # extract subfolders
             subfolder_zips = [os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"]
 
