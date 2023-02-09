@@ -24,8 +24,13 @@ tasks:
       11: Fibrosis
       12: Pleural_Thickening
       13: Hernia
+  - task_name: "patient gender"
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: M
+      1: F
 
-input_size: [1,224,244]
+input_size: [1,224,224]
 num_samples:
   train: 86524
   val: 0

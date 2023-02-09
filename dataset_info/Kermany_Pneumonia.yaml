@@ -9,7 +9,7 @@ tasks:
       0: "NORMAL"
       1: "PNEUMONIA"
 
-input_size: [1,224,244]
+input_size: [1,224,224]
 num_samples:
   train: 5233
   val: 0
