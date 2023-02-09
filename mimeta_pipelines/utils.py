@@ -4,15 +4,23 @@ import os
 import pandas as pd
 import torch
 import yaml
+from dotenv import load_dotenv
 from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 from torchvision.datasets import ImageFolder
 
 
+# Base paths
 INFO_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset_info")
-ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
-UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
+env_file_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+if os.path.exists(env_file_path):
+    load_dotenv(dotenv_path=env_file_path)
+    ORIGINAL_DATA_PATH = os.getenv("ORIGINAL_DATA_PATH")
+    UNIFIED_DATA_PATH = os.getenv("UNIFIED_DATA_PATH")
+else:
+    ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
+    UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
 
 
 class ImageFolderPaths(ImageFolder):
@@ -170,7 +178,6 @@ class UnifiedDatasetWriter:
 
         # Images
         # not passed => copy from original location
-        n_threads = 16
         if images is None:
             all_paths = zip(old_paths, filepaths)
 
@@ -179,7 +186,7 @@ class UnifiedDatasetWriter:
                 copyfile(orig_path, os.path.join(self.out_path, goal_path))
 
             # multithreading since I/O bottleneck
-            with ThreadPool(n_threads) as pool:
+            with ThreadPool() as pool:
                 pool.map(copy_fun, all_paths)
 
         # passed as PIL images
@@ -192,7 +199,7 @@ class UnifiedDatasetWriter:
                 assert img.size == tuple(self.info_dict["input_size"][1:])
                 img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
 
-            with ThreadPool(n_threads) as pool:
+            with ThreadPool() as pool:
                 pool.map(save_fun, imgs_paths)
 
         # Check coherent lengths

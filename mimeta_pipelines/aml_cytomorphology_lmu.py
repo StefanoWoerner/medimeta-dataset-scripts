@@ -20,15 +20,19 @@ def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "AML-Cytomorphology_LMU"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "AML-Cytomorphology_LMU"),
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
-    batch_size=256,
+    batch_size=512,
     out_img_size=(224, 224),
-    zipped=True,
+    zipped=False,
 ):
     root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
     # extract folder
     if zipped:
+        # extract to out_path (temporary)
+        in_path = f"{out_path}_temp"
         with ZipFile(f"{root_path}.zip", 'r') as zf:
-            zf.extractall(os.path.join(in_path))
+            zf.extractall(in_path)
+        # change path to extracted folder
+        root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
 
     images_path = os.path.join(root_path, "AML-Cytomorphology_LMU")
     dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
@@ -61,9 +65,8 @@ def get_unified_data(
     with UnifiedDatasetWriter(
         out_path, info_path, add_annot_cols=["first_reannotation", "second_reannotation", "original_size"]
     ) as writer:
-        n_threads = 16
         for _, labs, paths in tqdm(dataloader, desc="Processing AML-Cytomorphology_LMU"):
-            with ThreadPool(n_threads) as pool:
+            with ThreadPool() as pool:
                 imgs_annots = pool.map(pil_image, paths)
             writer.write(
                 old_paths=list(paths),
@@ -75,7 +78,7 @@ def get_unified_data(
 
         # remove extracted folder to free up space
         if zipped:
-            rmtree(root_path, ignore_errors=True)
+            rmtree(in_path, ignore_errors=True)
 
 
 if __name__ == "__main__":
