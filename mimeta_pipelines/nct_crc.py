@@ -28,8 +28,10 @@ def get_unified_data(
         ):
             # extract folder
             if zipped:
+                new_root_path = os.path.join(out_path, "..", "NCT-CRC_temp")
                 with ZipFile(f"{root_path}.zip", 'r') as zf:
-                    zf.extractall(os.path.join(root_path, ".."))
+                    zf.extractall(new_root_path)
+                root_path = new_root_path
 
             # dummy loader to avoid actually loading the images, since just copied
             dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
