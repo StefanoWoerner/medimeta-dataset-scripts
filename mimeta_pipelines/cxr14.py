@@ -92,9 +92,11 @@ def get_unified_data(
         ]].join(bboxes[["bounding_box"]], how="left")
 
         def dataset_loader(path: str):
+            rgba = False
             image = Image.open(path)
             # some images are RGBA
             if image.mode == "RGBA":
+                rgba = True
                 image = image.convert("L")
             index = path.split(os.sep)[-1]
             annot = list(add_annots.loc[index])
@@ -102,12 +104,12 @@ def get_unified_data(
             original_split = splits.loc[index, "original_split"]
             # resize
             image.thumbnail(out_img_size, Image.ANTIALIAS)
-            return image, label, original_split, annot
+            return image, label, original_split, annot, rgba
 
-        # loop through images subfolders
         all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
         batches = list(chunked(all_paths, batch_size))
         n_threads = 16
+        rgba_counter = 0
         for paths in tqdm(batches, desc="CRX14"):
             with ThreadPool(n_threads) as pool:
                 results = pool.map(dataset_loader, paths)
@@ -118,6 +120,9 @@ def get_unified_data(
                 images=[res[0] for res in results],
                 add_annots=[res[3] for res in results],
             )
+            rgba_counter += sum([res[4] for res in results])
+
+        print("Found {} RGBA images, converted them.".format(rgba_counter))
 
         # remove extracted folder to free up space
         if zipped:
