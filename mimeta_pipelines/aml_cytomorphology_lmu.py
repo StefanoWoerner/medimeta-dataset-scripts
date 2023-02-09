@@ -53,7 +53,7 @@ def get_unified_data(
             orig_size
         ]
         # resize
-        image.thumbnail(out_img_size, Image.ANTIALIAS)
+        image.thumbnail(out_img_size)
         # remove alpha channel
         image = image.convert('RGB')
         return image, add_annot
