@@ -24,7 +24,7 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=False,
 ):
-    root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+    root_path = in_path
     # extract folder
     if zipped:
         # extract to out_path (temporary)
@@ -47,6 +47,7 @@ def get_unified_data(
 
     def pil_image(path: str):
         image = Image.open(path)
+        path = path.replace(".tiff.tiff", ".tiff")  # mistake in one path
         orig_size = image.size
         rel_path = os.path.join(*(path.split(os.sep)[-2:]))
         annot = annotations.loc[rel_path]

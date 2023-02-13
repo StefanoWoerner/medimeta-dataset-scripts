@@ -31,7 +31,7 @@ def get_unified_data(
 
     with UnifiedDatasetWriter(
         out_path, info_path, add_annot_cols=[
-            "follow-up_nb", "patient_id", "patient_age", "patient_gender", "view_position",
+            "follow-up_nb", "patient_id", "patient_age", "view_position",
             "original_image_size", "original_pixel_spacing", "bounding_box",
         ]
     ) as writer:
@@ -44,7 +44,7 @@ def get_unified_data(
             with ZipFile(f"{root_path}.zip", 'r') as zf:
                 zf.extractall(in_path)
             # change path to extracted folder
-            root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+            root_path = os.path.join(in_path, "CXR8")
             images_path = os.path.join(root_path, "images")
             # extract subfolders
             subfolder_zips = [os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"]
@@ -85,6 +85,9 @@ def get_unified_data(
             "Follow-up #": "follow-up_nb", "Patient ID": "patient_id", "Patient Age": "patient_age",
             "Patient Gender": "patient_gender", "View Position": "view_position",
         }, inplace=True)
+        metadata["patient_gender"] = metadata["patient_gender"].apply(
+            lambda g: 0 if g == "M" else (1 if g == "F" else "")
+        )
         # bounding boxes
         bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
         bboxes["bounding_box"] = (
@@ -92,7 +95,7 @@ def get_unified_data(
             bboxes["w"].astype(str) + "," + bboxes["h]"].astype(str) + ")"
         )
         add_annots = metadata[[
-            "follow-up_nb", "patient_id", "patient_age", "patient_gender", "view_position",
+            "follow-up_nb", "patient_id", "patient_age", "view_position",
             "original_image_size", "original_pixel_spacing"
         ]].join(bboxes[["bounding_box"]], how="left")
 
@@ -105,11 +108,11 @@ def get_unified_data(
                 image = image.convert("L")
             index = path.split(os.sep)[-1]
             annot = list(add_annots.loc[index])
-            label = metadata.loc[index, "label"]
+            labels = [metadata.loc[index, "label"], metadata.loc[index, "patient_gender"]]
             original_split = splits.loc[index, "original_split"]
             # resize
             image.thumbnail(out_img_size)
-            return image, label, original_split, annot, rgba
+            return image, labels, original_split, annot, rgba
 
         all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
         batches = list(chunked(all_paths, batch_size))
@@ -120,7 +123,7 @@ def get_unified_data(
             writer.write(
                 old_paths=list(paths),
                 original_splits=[res[2] for res in results],
-                task_labels=[[res[1]] for res in results],
+                task_labels=[res[1] for res in results],
                 images=[res[0] for res in results],
                 add_annots=[res[3] for res in results],
             )
@@ -130,7 +133,7 @@ def get_unified_data(
 
         # remove extracted folder to free up space
         if zipped:
-            rmtree(root_path, ignore_errors=True)
+            rmtree(in_path, ignore_errors=True)
 
 
 if __name__ == "__main__":
