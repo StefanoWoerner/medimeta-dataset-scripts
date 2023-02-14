@@ -1,8 +1,12 @@
 """Saves the NCT-CRC dataset in the unified format.
 
+INPUT DATA:
 Expects zip files as downloaded from https://zenodo.org/record/1214456
 at ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip if zipped=True,
 or extracted folders in ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K and ORIGINAL_DATA_PATH/NCT-CRC/CRC-VAL-HE-7K if zipped=False.
+
+DATA MODIFICATIONS:
+None.
 """
 
 import os

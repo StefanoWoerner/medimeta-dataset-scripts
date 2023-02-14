@@ -1,8 +1,13 @@
 """Saves the NCT-CRC dataset in the unified format.
 
+INPUT DATA:
 Expects zip file as downloaded from https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
 at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True,
 or extracted folder in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False.
+
+DATA MODIFICATIONS:
+- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images are converted to RGB using the PIL.Image.convert method.
 """
 
 import os
@@ -58,7 +63,7 @@ def get_unified_data(
             orig_size
         ]
         # resize
-        image.thumbnail(out_img_size)
+        image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # remove alpha channel
         image = image.convert('RGB')
         return image, add_annot

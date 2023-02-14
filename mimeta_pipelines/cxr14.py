@@ -1,9 +1,14 @@
 """Saves the ChestXRay14 dataset in the unified format.
 
+INPUT DATA:
 Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
 at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
 or extracted folder with the compressed subfolders extracted in /images
 in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
+
+DATA MODIFICATIONS:
+- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The 519 images in RGBA format are converted to grayscale using the PIL.Image.convert method.
 """
 
 import os
@@ -112,7 +117,7 @@ def get_unified_data(
             labels = [metadata.loc[index, "label"], metadata.loc[index, "patient_gender"]]
             original_split = splits.loc[index, "original_split"]
             # resize
-            image.thumbnail(out_img_size)
+            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             return image, labels, original_split, annot, rgba
 
         all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
