@@ -1,8 +1,8 @@
 """Saves the NCT-CRC dataset in the unified format.
 
-Expects zip file as downloaded from https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585 (if zipped=True),
-or extracted folder (if zipped=False),
-in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU named AML-Cytomorphology_LMU[.zip].
+Expects zip file as downloaded from https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
+at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True,
+or extracted folder in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False.
 """
 
 import os

@@ -1,8 +1,9 @@
 """Saves the ChestXRay14 dataset in the unified format.
 
-Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC (if zipped=True),
-or extracted folder with the compressed subfolders extracted in /images (if zipped=False),
-in ORIGINAL_DATA_PATH/CXR14 named CXR14[.zip].
+Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
+at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
+or extracted folder with the compressed subfolders extracted in /images
+in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
 """
 
 import os
@@ -35,13 +36,13 @@ def get_unified_data(
             "original_image_size", "original_pixel_spacing", "bounding_box",
         ]
     ) as writer:
-        root_path = os.path.join(in_path, "CXR8")
+        root_path = in_path
         images_path = os.path.join(root_path, "images")
         # extract folder
         if zipped:
             # extract to out_path (temporary)
             in_path = f"{out_path}_temp"
-            with ZipFile(f"{root_path}.zip", 'r') as zf:
+            with ZipFile(os.path.join(root_path, "CXR8.zip"), 'r') as zf:
                 zf.extractall(in_path)
             # change path to extracted folder
             root_path = os.path.join(in_path, "CXR8")
