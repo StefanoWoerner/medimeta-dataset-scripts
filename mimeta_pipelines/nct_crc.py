@@ -1,8 +1,13 @@
 """Saves the NCT-CRC dataset in the unified format.
 
-Expects zip files as downloaded from https://zenodo.org/record/1214456 (if zipped=True),
-or extracted folder (if zipped=False),
-in ORIGINAL_DATA_PATH/NCT-CRC named NCT-CRC-HE-100K[.zip] and CRC-VAL-HE-7K[.zip].
+INPUT DATA:
+Expects zip files as downloaded from https://zenodo.org/record/1214456
+at ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip if zipped=True,
+or extracted folders in ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K and ORIGINAL_DATA_PATH/NCT-CRC/CRC-VAL-HE-7K
+if zipped=False.
+
+DATA MODIFICATIONS:
+None.
 """
 
 import os
@@ -29,7 +34,7 @@ def get_unified_data(
             # extract folder
             if zipped:
                 new_root_path = os.path.join(out_path, "..", "NCT-CRC_temp")
-                with ZipFile(f"{root_path}.zip", 'r') as zf:
+                with ZipFile(f"{root_path}.zip", "r") as zf:
                     zf.extractall(new_root_path)
                 root_path = new_root_path
 

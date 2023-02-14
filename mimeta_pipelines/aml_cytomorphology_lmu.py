@@ -1,8 +1,14 @@
-"""Saves the NCT-CRC dataset in the unified format.
+"""Saves the Munich AML Cytomorphology dataset in the unified format.
 
-Expects zip file as downloaded from https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585 (if zipped=True),
-or extracted folder (if zipped=False),
-in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU named AML-Cytomorphology_LMU[.zip].
+INPUT DATA:
+Expects annotations.dat file and AML-Cytomorphology folder as downloaded from
+https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
+in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False,
+or that folder compressed at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True.
+
+DATA MODIFICATIONS:
+- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images are converted to RGB using the PIL.Image.convert method.
 """
 
 import os
@@ -22,23 +28,24 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
-    root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+    root_path = in_path
     # extract folder
     if zipped:
         # extract to out_path (temporary)
         in_path = f"{out_path}_temp"
-        with ZipFile(f"{root_path}.zip", 'r') as zf:
+        with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), "r") as zf:
             zf.extractall(in_path)
         # change path to extracted folder
-        root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+        root_path = in_path
 
-    images_path = os.path.join(root_path, "AML-Cytomorphology_LMU")
+    images_path = os.path.join(root_path, "AML-Cytomorphology")
     dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     annotations = pd.read_csv(
-        os.path.join(root_path, "annotations.dat"), sep=r"\s+",
+        os.path.join(root_path, "annotations.dat"),
+        sep=r"\s+",
         names=["path", "annotation", "first_reannotation", "second_reannotation"],
         index_col=0,
     )
@@ -54,12 +61,12 @@ def get_unified_data(
         add_annot = [
             cls_to_idx.get(annot.first_reannotation, ""),
             cls_to_idx.get(annot.second_reannotation, ""),
-            orig_size
+            orig_size,
         ]
         # resize
-        image.thumbnail(out_img_size)
+        image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # remove alpha channel
-        image = image.convert('RGB')
+        image = image.convert("RGB")
         return image, add_annot
 
     with UnifiedDatasetWriter(

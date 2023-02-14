@@ -24,8 +24,8 @@ else:
 
 
 class ImageFolderPaths(ImageFolder):
-    """Modified torchvision.datasets.ImageFolder that returns paths too.
-    """
+    """Modified torchvision.datasets.ImageFolder that returns paths too."""
+
     def __getitem__(self, index):
         img, lab = super(ImageFolderPaths, self).__getitem__(index)
         path = self.imgs[index][0]
@@ -35,35 +35,36 @@ class ImageFolderPaths(ImageFolder):
 class UnifiedDatasetWriter:
     """Context manager to construct and save a dataset in the unified format.
 
-        -- [`out_path']
-            |
-            |
-            -- [original_splits]
-            |   |
-            |   -- train.txt
-            |   |
-            |   -- val.txt
-            |   |
-            |   -- test.txt
-            |
-            -- images
-            |   |
-            |   -- 000000.tiff
-            |   |
-            |   -- 000001.tiff
-            |   ...
-            |
-            -- task_labels
-            |   |
-            |   -- [`task_name_1'].pt
-            |   |
-            |   -- [`task_name_2'].pt
-            |   ...
-            |   
-            -- annotations.csv
-            |
-            -- info.yaml
+    -- [`out_path']
+        |
+        |
+        -- [original_splits]
+        |   |
+        |   -- train.txt
+        |   |
+        |   -- val.txt
+        |   |
+        |   -- test.txt
+        |
+        -- images
+        |   |
+        |   -- 000000.tiff
+        |   |
+        |   -- 000001.tiff
+        |   ...
+        |
+        -- task_labels
+        |   |
+        |   -- [`task_name_1'].pt
+        |   |
+        |   -- [`task_name_2'].pt
+        |   ...
+        |
+        -- annotations.csv
+        |
+        -- info.yaml
     """
+
     def __init__(
         self,
         out_path: str,
@@ -76,7 +77,7 @@ class UnifiedDatasetWriter:
         # Copy in info file, load dict
         info_out_path = os.path.join(out_path, "info.yaml")
         copyfile(info_path, info_out_path)
-        with open(info_out_path, 'r') as f:
+        with open(info_out_path, "r") as f:
             self.info_dict = yaml.safe_load(f)
 
         # Initialize original splits
@@ -126,7 +127,10 @@ class UnifiedDatasetWriter:
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
             for task_idx, task_name in enumerate(self.task_names):
-                torch.save(torch.Tensor([t_l[task_idx] for t_l in self.task_labels]), os.path.join(task_labels_path, f"{task_name}.pt"))
+                torch.save(
+                    torch.Tensor([t_l[task_idx] for t_l in self.task_labels]),
+                    os.path.join(task_labels_path, f"{task_name}.pt"),
+                )
             # annotations
             annotations_path = os.path.join(self.out_path, "annotations.csv")
             annotations_df = pd.DataFrame.from_records(
@@ -159,8 +163,7 @@ class UnifiedDatasetWriter:
         add_annots: list | None = None,
         images: list[Image.Image] | None = None,
     ):
-        """Add labels, additional, meta information, and images.
-        """
+        """Add labels, additional, meta information, and images."""
         batch_size = len(old_paths)
 
         # Filenames: {index_6_digits}.tiff
@@ -203,9 +206,16 @@ class UnifiedDatasetWriter:
                 pool.map(save_fun, imgs_paths)
 
         # Check coherent lengths
-        if not all(len(ls) == batch_size for ls in (
-            filepaths, old_paths, original_splits, task_labels, add_annots,
-        )) or (images and len(images) != batch_size):
+        if not all(
+            len(ls) == batch_size
+            for ls in (
+                filepaths,
+                old_paths,
+                original_splits,
+                task_labels,
+                add_annots,
+            )
+        ) or (images and len(images) != batch_size):
             raise ValueError("All arguments should have the same length.")
         # Check splits valid
         if not all(split in ("train", "validation", "test") for split in original_splits):
@@ -218,6 +228,7 @@ class UnifiedDatasetWriter:
         self.task_labels += task_labels
         self.annotations += [
             [fp, os.path.realpath(orig_path), orig_split] + list(task_lab) + list(add_annot)
-            for fp, orig_path, orig_split, task_lab, add_annot
-            in zip(filepaths, old_paths, original_splits, task_labels, add_annots)
+            for fp, orig_path, orig_split, task_lab, add_annot in zip(
+                filepaths, old_paths, original_splits, task_labels, add_annots
+            )
         ]
