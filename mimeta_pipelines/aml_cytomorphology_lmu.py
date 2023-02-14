@@ -1,4 +1,4 @@
-"""Saves the NCT-CRC dataset in the unified format.
+"""Saves the Munich AML Cytomorphology dataset in the unified format.
 
 INPUT DATA:
 Expects annotations.dat file and AML-Cytomorphology folder as downloaded from
