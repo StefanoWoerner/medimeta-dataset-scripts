@@ -59,7 +59,7 @@ class UnifiedDatasetWriter:
             |   |
             |   -- [`task_name_2'].pt
             |   ...
-            |   
+            |
             -- annotations.csv
             |
             -- info.yaml
@@ -126,7 +126,10 @@ class UnifiedDatasetWriter:
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
             for task_idx, task_name in enumerate(self.task_names):
-                torch.save(torch.Tensor([t_l[task_idx] for t_l in self.task_labels]), os.path.join(task_labels_path, f"{task_name}.pt"))
+                torch.save(
+                    torch.Tensor([t_l[task_idx] for t_l in self.task_labels]),
+                    os.path.join(task_labels_path, f"{task_name}.pt")
+                )
             # annotations
             annotations_path = os.path.join(self.out_path, "annotations.csv")
             annotations_df = pd.DataFrame.from_records(

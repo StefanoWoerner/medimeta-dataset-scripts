@@ -1,9 +1,10 @@
 """Saves the NCT-CRC dataset in the unified format.
 
 INPUT DATA:
-Expects zip file as downloaded from https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
-at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False.
+Expects annotations.dat file and AML-Cytomorphology folder as downloaded from
+https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
+in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False,
+or that folder compressed at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True.
 
 DATA MODIFICATIONS:
 - The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
@@ -27,19 +28,19 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     root_path = in_path
     # extract folder
     if zipped:
         # extract to out_path (temporary)
         in_path = f"{out_path}_temp"
-        with ZipFile(f"{root_path}.zip", 'r') as zf:
-            zf.extractall(in_path)
+        #with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), 'r') as zf:
+        #    zf.extractall(in_path)
         # change path to extracted folder
-        root_path = os.path.join(in_path, "AML-Cytomorphology_LMU")
+        root_path = in_path
 
-    images_path = os.path.join(root_path, "AML-Cytomorphology_LMU")
+    images_path = os.path.join(root_path, "AML-Cytomorphology")
     dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     annotations = pd.read_csv(
@@ -52,7 +53,6 @@ def get_unified_data(
 
     def pil_image(path: str):
         image = Image.open(path)
-        path = path.replace(".tiff.tiff", ".tiff")  # mistake in one path
         orig_size = image.size
         rel_path = os.path.join(*(path.split(os.sep)[-2:]))
         annot = annotations.loc[rel_path]
