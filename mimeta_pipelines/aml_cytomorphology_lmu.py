@@ -35,8 +35,8 @@ def get_unified_data(
     if zipped:
         # extract to out_path (temporary)
         in_path = f"{out_path}_temp"
-        #with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), 'r') as zf:
-        #    zf.extractall(in_path)
+        with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), "r") as zf:
+            zf.extractall(in_path)
         # change path to extracted folder
         root_path = in_path
 
@@ -44,7 +44,8 @@ def get_unified_data(
     dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     annotations = pd.read_csv(
-        os.path.join(root_path, "annotations.dat"), sep=r"\s+",
+        os.path.join(root_path, "annotations.dat"),
+        sep=r"\s+",
         names=["path", "annotation", "first_reannotation", "second_reannotation"],
         index_col=0,
     )
@@ -60,12 +61,12 @@ def get_unified_data(
         add_annot = [
             cls_to_idx.get(annot.first_reannotation, ""),
             cls_to_idx.get(annot.second_reannotation, ""),
-            orig_size
+            orig_size,
         ]
         # resize
         image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # remove alpha channel
-        image = image.convert('RGB')
+        image = image.convert("RGB")
         return image, add_annot
 
     with UnifiedDatasetWriter(

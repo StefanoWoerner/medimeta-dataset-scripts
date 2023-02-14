@@ -32,14 +32,21 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=True,
 ):
-    with open(info_path, 'r') as f:
+    with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
 
     with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=[
-            "follow-up_nb", "patient_id", "patient_age", "view_position",
-            "original_image_size", "original_pixel_spacing", "bounding_box",
-        ]
+        out_path,
+        info_path,
+        add_annot_cols=[
+            "follow-up_nb",
+            "patient_id",
+            "patient_age",
+            "view_position",
+            "original_image_size",
+            "original_pixel_spacing",
+            "bounding_box",
+        ],
     ) as writer:
         root_path = in_path
         images_path = os.path.join(root_path, "images")
@@ -47,7 +54,7 @@ def get_unified_data(
         if zipped:
             # extract to out_path (temporary)
             in_path = f"{out_path}_temp"
-            with ZipFile(os.path.join(root_path, "CXR8.zip"), 'r') as zf:
+            with ZipFile(os.path.join(root_path, "CXR8.zip"), "r") as zf:
                 zf.extractall(in_path)
             # change path to extracted folder
             root_path = os.path.join(in_path, "CXR8")
@@ -69,9 +76,12 @@ def get_unified_data(
             train_val_files = list(map(lambda p: p.strip("\n"), f.readlines()))
         with open(os.path.join(root_path, "test_list.txt"), "r") as f:
             test_files = list(map(lambda p: p.strip("\n"), f.readlines()))
-        splits = pd.DataFrame({
-            "original_split": ["train"] * len(train_val_files) + ["test"] * len(test_files),
-        }, index=train_val_files + test_files)
+        splits = pd.DataFrame(
+            {
+                "original_split": ["train"] * len(train_val_files) + ["test"] * len(test_files),
+            },
+            index=train_val_files + test_files,
+        )
         # documentation
         for f in ("FAQ_CHESTXRAY.pdf", "LOG_CHESTXRAY.pdf", "README_CHESTXRAY.pdf"):
             copyfile(os.path.join(root_path, f), os.path.join(out_path, f"{f}_original"))
@@ -87,23 +97,42 @@ def get_unified_data(
         metadata["original_pixel_spacing"] = (
             "(" + metadata["OriginalImagePixelSpacing[x"].astype(str) + "," + metadata["y]"].astype(str) + ")"
         )
-        metadata.rename(columns={
-            "Follow-up #": "follow-up_nb", "Patient ID": "patient_id", "Patient Age": "patient_age",
-            "Patient Gender": "patient_gender", "View Position": "view_position",
-        }, inplace=True)
+        metadata.rename(
+            columns={
+                "Follow-up #": "follow-up_nb",
+                "Patient ID": "patient_id",
+                "Patient Age": "patient_age",
+                "Patient Gender": "patient_gender",
+                "View Position": "view_position",
+            },
+            inplace=True,
+        )
         metadata["patient_gender"] = metadata["patient_gender"].apply(
             lambda g: 0 if g == "M" else (1 if g == "F" else "")
         )
         # bounding boxes
         bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
         bboxes["bounding_box"] = (
-            "(" + bboxes["Bbox [x"].astype(str) + "," + bboxes["y"].astype(str) + "," +
-            bboxes["w"].astype(str) + "," + bboxes["h]"].astype(str) + ")"
+            "("
+            + bboxes["Bbox [x"].astype(str)
+            + ","
+            + bboxes["y"].astype(str)
+            + ","
+            + bboxes["w"].astype(str)
+            + ","
+            + bboxes["h]"].astype(str)
+            + ")"
         )
-        add_annots = metadata[[
-            "follow-up_nb", "patient_id", "patient_age", "view_position",
-            "original_image_size", "original_pixel_spacing"
-        ]].join(bboxes[["bounding_box"]], how="left")
+        add_annots = metadata[
+            [
+                "follow-up_nb",
+                "patient_id",
+                "patient_age",
+                "view_position",
+                "original_image_size",
+                "original_pixel_spacing",
+            ]
+        ].join(bboxes[["bounding_box"]], how="left")
 
         def dataset_loader(path: str):
             rgba = False

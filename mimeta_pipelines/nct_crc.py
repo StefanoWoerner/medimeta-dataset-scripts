@@ -34,7 +34,7 @@ def get_unified_data(
             # extract folder
             if zipped:
                 new_root_path = os.path.join(out_path, "..", "NCT-CRC_temp")
-                with ZipFile(f"{root_path}.zip", 'r') as zf:
+                with ZipFile(f"{root_path}.zip", "r") as zf:
                     zf.extractall(new_root_path)
                 root_path = new_root_path
 
