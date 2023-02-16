@@ -1,7 +1,7 @@
 """Saves the Kermany pneumonia dataset in the unified format.
 
 INPUT DATA:
-Expects tar.gz file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
+Expects zip file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
 at ORIGINAL_DATA_PATH/Kermany_Pneumonia/ChestXRay2017.zip if zipped=True,
 or extracted folder in ORIGINAL_DATA_PATH/Kermany_Pneumonia if zipped=False.
 
