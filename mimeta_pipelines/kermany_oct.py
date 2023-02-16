@@ -27,7 +27,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "Kermany_OCT.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
