@@ -38,10 +38,10 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        in_path = f"{out_path}_temp"
+        temp_path = f"{out_path}_temp"
+        in_path = temp_path
         with tarfile.open(os.path.join(root_path, "OCT2017.tar.gz"), "r:gz") as tf:
             tf.extractall(in_path)
-    # change path to extracted folder
     in_path = os.path.join(in_path, "OCT2017")
 
     def pil_image(path: str):
@@ -81,7 +81,7 @@ def get_unified_data(
 
     # delete temporary folder
     if zipped:
-        rmtree(in_path)
+        rmtree(temp_path)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 INPUT DATA:
 Expects tar.gz file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
 at ORIGINAL_DATA_PATH/Kermany_Pneumonia/ChestXRay2017.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/Kermany_Pneumonia/ChestXRay2017 if zipped=False.
+or extracted folder in ORIGINAL_DATA_PATH/Kermany_Pneumonia if zipped=False.
 
 DATA MODIFICATIONS:
 - The 283 images in RGB format are converted to grayscale using the PIL.Image.convert method.
@@ -40,11 +40,11 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        in_path = f"{out_path}_temp"
+        temp_path = f"{out_path}_temp"
+        in_path = temp_path
         with ZipFile(os.path.join(root_path, "ChestXRay2017.zip"), "r") as tf:
             tf.extractall(in_path)
-    # change path to extracted folder
-    in_path = os.path.join(in_path, "ChestXRay2017", "chest_xray")
+    in_path = os.path.join(in_path, "chest_xray")
 
     def pil_image(path: str):
         img = Image.open(path)
@@ -91,7 +91,7 @@ def get_unified_data(
 
     # delete temporary folder
     if zipped:
-        rmtree(in_path)
+        rmtree(temp_path)
 
 
 if __name__ == "__main__":
