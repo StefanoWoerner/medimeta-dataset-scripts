@@ -168,7 +168,7 @@ class UnifiedDatasetWriter:
 
         # Filenames: {index_6_digits}.tiff
         filepaths = [
-            os.path.relpath(os.path.join(self.images_path, "{0:06d}.tiff".format(file_idx)), self.out_path)
+            os.path.relpath(os.path.join(self.images_path, f"{file_idx:06d}.tiff"), self.out_path)
             for file_idx in range(self.current_idx, self.current_idx + batch_size)
         ]
         self.current_idx += batch_size

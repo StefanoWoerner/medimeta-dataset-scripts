@@ -164,7 +164,7 @@ def get_unified_data(
             )
             rgba_counter += sum([res[4] for res in results])
 
-        print("Found {} RGBA images, converted them.".format(rgba_counter))
+        print(f"Found {rgba_counter} RGBA images, converted them.")
 
         # remove extracted folder to free up space
         if zipped:
