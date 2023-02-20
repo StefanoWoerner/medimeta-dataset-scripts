@@ -1,0 +1,39 @@
+name: LiTS Saggital Organ Slices
+description: ""
+
+tasks:
+  - task_name: "organ label"
+    task_target: MULTILABEL_CLASSIFICATION
+    labels:
+      0: heart
+      1: left lung
+      2: right lung
+      3: liver
+      4: spleen
+      5: pancreas
+      6: left kidney
+      7: right kidney
+      8: bladder
+      9: left femoral head
+      10: right femoral head
+
+input_size: [1, 224, 224]
+num_samples:
+  train: 131
+  val: 0
+  test: 70
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license:
+  LiTS: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+  Organ Annotations: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+original_paper:
+  LiTS: https://www.sciencedirect.com/science/article/pii/S1361841522003085
+  Organ Annotatioons: https://ieeexplore.ieee.org/document/8625393
+original_download_url:
+  LiTS: https://competitions.codalab.org/competitions/17094
+  # LiTS Train: https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
+  # LiTS Test: https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
+  Organ Annotations: https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset

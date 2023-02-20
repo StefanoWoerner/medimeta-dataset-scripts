@@ -1,0 +1,21 @@
+name: "Chaksu"
+description: "stuff goes here"
+
+tasks:
+  - task_name: "Glaukoma SOMETHING?"
+    task_target: MULTILABEL_CLASSIFICATION
+    labels:
+      0: ""
+
+input_size: [3,224,224]
+num_samples:
+  train: 0
+  val: 0
+  test: 0
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+original_paper: https://www.nature.com/articles/s41597-023-01943-4
+original_download_url: https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135
