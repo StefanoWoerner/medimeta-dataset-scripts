@@ -47,7 +47,7 @@ def get_unified_data(
         root_path = in_path
 
     with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=["first_reannotation", "second_reannotation", "original_size"]
+        out_path, info_path, add_annot_cols=["annotation", "first_reannotation", "second_reannotation", "original_size"]
     ) as writer:
         images_path = os.path.join(root_path, "AML-Cytomorphology")
         dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
@@ -59,8 +59,6 @@ def get_unified_data(
             names=["path", "annotation", "first_reannotation", "second_reannotation"],
             index_col=0,
         )
-        # class lookup
-        cls_to_idx = dataset.class_to_idx
 
         def get_img_annotation_pair(path: str):
             image = Image.open(path)
@@ -69,8 +67,9 @@ def get_unified_data(
             annot = annotations.loc[rel_path]
             # "" since NaN being a float, we would get a float column
             add_annot = [
-                cls_to_idx.get(annot.first_reannotation, ""),
-                cls_to_idx.get(annot.second_reannotation, ""),
+                annot.annotation,
+                annot.first_reannotation,
+                annot.second_reannotation,
                 orig_size,
             ]
             # resize
