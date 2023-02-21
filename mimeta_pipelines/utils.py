@@ -1,6 +1,8 @@
 """Utilities to save datasets in a unified format.
 """
 import os
+
+import numpy as np
 import pandas as pd
 import torch
 import yaml
@@ -126,11 +128,14 @@ class UnifiedDatasetWriter:
             # task labels (1 file per task)
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
-            for task_idx, task_name in enumerate(self.task_names):
-                torch.save(
-                    torch.Tensor([t_l[task_idx] for t_l in self.task_labels]),
-                    os.path.join(task_labels_path, f"{task_name}.pt"),
-                )
+            # for task_idx, task_name in enumerate(self.task_names):
+            #     torch.save(
+            #         torch.Tensor([t_l[task_idx] for t_l in self.task_labels]),
+            #         os.path.join(task_labels_path, f"{task_name}.pt"),
+            #     )
+            for task_name, task_labeling in zip(self.task_names, zip(*self.task_labels)):
+                np.save(os.path.join(task_labels_path, task_name), np.array(task_labeling))
+
             # annotations
             annotations_path = os.path.join(self.out_path, "annotations.csv")
             annotations_df = pd.DataFrame.from_records(
