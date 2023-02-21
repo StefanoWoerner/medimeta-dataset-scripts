@@ -3,7 +3,7 @@
 INPUT DATA:
 Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
 at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
-or extracted folder with the compressed subfolders extracted in /images
+or extracted folder with the compressed subfolders extracted in place
 in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
 
 DATA MODIFICATIONS:
@@ -32,8 +32,32 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=True,
 ):
+    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
+
+    root_path = in_path
+    images_path = os.path.join(root_path, "images")
+    # extract folder
+    if zipped:
+        # extract to out_path (temporary)
+        in_path = f"{out_path}_temp"
+        with ZipFile(os.path.join(root_path, "CXR8.zip"), "r") as zf:
+            zf.extractall(in_path)
+        # change path to extracted folder
+        root_path = os.path.join(in_path, "CXR8")
+        images_path = os.path.join(root_path, "images")
+        # extract subfolders
+        subfolder_zips = [os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"]
+
+        def unzip(subfolder_zip):
+            with tarfile.open(subfolder_zip, "r:gz") as tf:
+                tf.extractall(os.path.dirname(images_path))
+                os.remove(subfolder_zip)
+
+        with ThreadPool(len(subfolder_zips)) as pool:
+            results = pool.map(unzip, subfolder_zips)
 
     with UnifiedDatasetWriter(
         out_path,
@@ -48,28 +72,6 @@ def get_unified_data(
             "bounding_box",
         ],
     ) as writer:
-        root_path = in_path
-        images_path = os.path.join(root_path, "images")
-        # extract folder
-        if zipped:
-            # extract to out_path (temporary)
-            in_path = f"{out_path}_temp"
-            with ZipFile(os.path.join(root_path, "CXR8.zip"), "r") as zf:
-                zf.extractall(in_path)
-            # change path to extracted folder
-            root_path = os.path.join(in_path, "CXR8")
-            images_path = os.path.join(root_path, "images")
-            # extract subfolders
-            subfolder_zips = [os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"]
-
-            def unzip(subfolder_zip):
-                with tarfile.open(subfolder_zip, "r:gz") as tf:
-                    tf.extractall(os.path.dirname(images_path))
-                    os.remove(subfolder_zip)
-
-            with ThreadPool(len(subfolder_zips)) as pool:
-                results = pool.map(unzip, subfolder_zips)
-
         # relevant files
         # splits
         with open(os.path.join(root_path, "train_val_list.txt"), "r") as f:
@@ -107,9 +109,8 @@ def get_unified_data(
             },
             inplace=True,
         )
-        metadata["patient_gender"] = metadata["patient_gender"].apply(
-            lambda g: 0 if g == "M" else (1 if g == "F" else "")
-        )
+        gender_to_idx = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
+        metadata["patient_gender"] = metadata["patient_gender"].apply(lambda g: gender_to_idx[g])
         # bounding boxes
         bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
         bboxes["bounding_box"] = (
@@ -156,7 +157,7 @@ def get_unified_data(
             with ThreadPool() as pool:
                 results = pool.map(dataset_loader, paths)
             writer.write(
-                old_paths=list(paths),
+                old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=[res[2] for res in results],
                 task_labels=[res[1] for res in results],
                 images=[res[0] for res in results],
@@ -166,9 +167,9 @@ def get_unified_data(
 
         print(f"Found {rgba_counter} RGBA images, converted them.")
 
-        # remove extracted folder to free up space
-        if zipped:
-            rmtree(in_path, ignore_errors=True)
+    # remove extracted folder to free up space
+    if zipped:
+        rmtree(in_path, ignore_errors=True)
 
 
 if __name__ == "__main__":

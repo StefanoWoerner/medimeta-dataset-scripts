@@ -13,6 +13,7 @@ DATA MODIFICATIONS:
 
 import os
 import pandas as pd
+import yaml
 from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
@@ -30,6 +31,11 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=True,
 ):
+    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+
+    with open(info_path, "r") as f:
+        info_dict = yaml.safe_load(f)
+
     root_path = in_path
     # extract folder
     if zipped:
@@ -40,52 +46,53 @@ def get_unified_data(
         # change path to extracted folder
         root_path = in_path
 
-    images_path = os.path.join(root_path, "AML-Cytomorphology")
-    dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-    annotations = pd.read_csv(
-        os.path.join(root_path, "annotations.dat"),
-        sep=r"\s+",
-        names=["path", "annotation", "first_reannotation", "second_reannotation"],
-        index_col=0,
-    )
-    # class lookup
-    cls_to_idx = dataset.class_to_idx
-
-    def pil_image(path: str):
-        image = Image.open(path)
-        orig_size = image.size
-        rel_path = os.path.join(*(path.split(os.sep)[-2:]))
-        annot = annotations.loc[rel_path]
-        # "" since NaN being a float, we would get a float column
-        add_annot = [
-            cls_to_idx.get(annot.first_reannotation, ""),
-            cls_to_idx.get(annot.second_reannotation, ""),
-            orig_size,
-        ]
-        # resize
-        image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
-        # remove alpha channel
-        image = image.convert("RGB")
-        return image, add_annot
-
     with UnifiedDatasetWriter(
         out_path, info_path, add_annot_cols=["first_reannotation", "second_reannotation", "original_size"]
     ) as writer:
+        images_path = os.path.join(root_path, "AML-Cytomorphology")
+        dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
+        assert dataset.class_to_idx == {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        annotations = pd.read_csv(
+            os.path.join(root_path, "annotations.dat"),
+            sep=r"\s+",
+            names=["path", "annotation", "first_reannotation", "second_reannotation"],
+            index_col=0,
+        )
+        # class lookup
+        cls_to_idx = dataset.class_to_idx
+
+        def pil_image(path: str):
+            image = Image.open(path)
+            orig_size = image.size
+            rel_path = os.path.join(*(path.split(os.sep)[-2:]))
+            annot = annotations.loc[rel_path]
+            # "" since NaN being a float, we would get a float column
+            add_annot = [
+                cls_to_idx.get(annot.first_reannotation, ""),
+                cls_to_idx.get(annot.second_reannotation, ""),
+                orig_size,
+            ]
+            # resize
+            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
+            # remove alpha channel
+            image = image.convert("RGB")
+            return image, add_annot
+
         for _, labs, paths in tqdm(dataloader, desc="Processing AML-Cytomorphology_LMU"):
             with ThreadPool() as pool:
                 imgs_annots = pool.map(pil_image, paths)
             writer.write(
-                old_paths=list(paths),
+                old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
                 task_labels=[[int(lab)] for lab in labs],
                 images=[img_annot[0] for img_annot in imgs_annots],
                 add_annots=[img_annot[1] for img_annot in imgs_annots],
             )
 
-        # remove extracted folder to free up space
-        if zipped:
-            rmtree(in_path, ignore_errors=True)
+    # remove extracted folder to free up space
+    if zipped:
+        rmtree(in_path, ignore_errors=True)
 
 
 if __name__ == "__main__":

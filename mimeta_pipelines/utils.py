@@ -227,7 +227,7 @@ class UnifiedDatasetWriter:
         self.original_test += [fp for fp, split in zip(filepaths, original_splits) if split == "test"]
         self.task_labels += task_labels
         self.annotations += [
-            [fp, os.path.realpath(orig_path), orig_split] + list(task_lab) + list(add_annot)
+            [fp, orig_path, orig_split] + list(task_lab) + list(add_annot)
             for fp, orig_path, orig_split, task_lab, add_annot in zip(
                 filepaths, old_paths, original_splits, task_labels, add_annots
             )

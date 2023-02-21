@@ -9,7 +9,7 @@ tasks:
       0: CNV
       1: DME
       2: DRUSEN
-      4: NORMAL
+      3: NORMAL
 
 input_size: [1,224,224]
 num_samples:
