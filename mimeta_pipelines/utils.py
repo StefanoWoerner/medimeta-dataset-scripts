@@ -100,8 +100,8 @@ class UnifiedDatasetWriter:
         # Initialize task labels
         self.task_labels = []  # shape (n_dpoints, n_tasks)
         # Create the base dir of the images
-        self.images_path = os.path.join(out_path, "images")
-        os.makedirs(self.images_path)
+        self.images_relpath = "images"
+        os.makedirs(os.path.join(self.out_path, self.images_relpath))
         # Initialize image counter
         self.current_idx = 0
 
@@ -148,7 +148,7 @@ class UnifiedDatasetWriter:
             assert annot_df.columns[0] == "filename"
             assert (
                 len(annot_df)
-                == len(os.listdir(self.images_path))
+                == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
                 == (len(self.original_train) + len(self.original_val) + len(self.original_test))
             )
             # check coherent with info file
@@ -174,7 +174,7 @@ class UnifiedDatasetWriter:
 
         # Filenames: {index_6_digits}.tiff
         filepaths = [
-            os.path.relpath(os.path.join(self.images_path, f"{file_idx:06d}.tiff"), self.out_path)
+            os.path.join(self.images_relpath, f"{file_idx:06d}.tiff")
             for file_idx in range(self.current_idx, self.current_idx + batch_size)
         ]
         self.current_idx += batch_size
@@ -188,6 +188,7 @@ class UnifiedDatasetWriter:
         # Images
         # not passed => copy from original location
         if images is None:
+
             def copy_fun(orig_path, goal_path):
                 copyfile(orig_path, os.path.join(self.out_path, goal_path))
 
@@ -197,6 +198,7 @@ class UnifiedDatasetWriter:
 
         # passed as PIL images
         else:
+
             def save_fun(img, path):
                 assert len(img.getbands()) == self.info_dict["input_size"][0]
                 assert img.size == tuple(self.info_dict["input_size"][1:])
