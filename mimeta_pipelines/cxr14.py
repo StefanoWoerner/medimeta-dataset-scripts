@@ -66,6 +66,8 @@ def get_unified_data(
             "follow-up_nb",
             "patient_id",
             "patient_age",
+            "patient_gender_f_m",
+            "finding_labels",
             "view_position",
             "original_image_size",
             "original_pixel_spacing",
@@ -106,10 +108,12 @@ def get_unified_data(
                 "Patient Age": "patient_age",
                 "Patient Gender": "patient_gender",
                 "View Position": "view_position",
+                "Finding Labels": "finding_labels",
             },
             inplace=True,
         )
         gender_to_idx = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
+        metadata["patient_gender_f_m"] = metadata["patient_gender"]
         metadata["patient_gender"] = metadata["patient_gender"].apply(lambda g: gender_to_idx[g])
         # bounding boxes
         bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
@@ -129,6 +133,8 @@ def get_unified_data(
                 "follow-up_nb",
                 "patient_id",
                 "patient_age",
+                "patient_gender_f_m",
+                "finding_labels",
                 "view_position",
                 "original_image_size",
                 "original_pixel_spacing",
