@@ -135,7 +135,7 @@ def get_unified_data(
             ]
         ].join(bboxes[["bounding_box"]], how="left")
 
-        def dataset_loader(path: str):
+        def get_image_data(path: str):
             rgba = False
             image = Image.open(path)
             # some images are RGBA
@@ -155,7 +155,7 @@ def get_unified_data(
         rgba_counter = 0
         for paths in tqdm(batches, desc="CRX14"):
             with ThreadPool() as pool:
-                results = pool.map(dataset_loader, paths)
+                results = pool.map(get_image_data, paths)
             writer.write(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=[res[2] for res in results],

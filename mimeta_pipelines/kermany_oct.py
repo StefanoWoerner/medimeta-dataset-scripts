@@ -45,7 +45,7 @@ def get_unified_data(
         root_path = in_path
     in_path = os.path.join(in_path, "OCT2017")
 
-    def pil_image(path: str):
+    def get_img_annotation_pair(path: str):
         img = Image.open(path)
         # center-crop
         w, h = img.size
@@ -71,7 +71,7 @@ def get_unified_data(
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
             for _, labs, paths in tqdm(dataloader, desc=f"Processing Kermany_OCT ({split} split)"):
                 with ThreadPool() as pool:
-                    imgs_annots = pool.map(pil_image, paths)
+                    imgs_annots = pool.map(get_img_annotation_pair, paths)
                 writer.write(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),

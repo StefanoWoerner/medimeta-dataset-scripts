@@ -47,12 +47,12 @@ def get_unified_data(
         root_path = in_path
     in_path = os.path.join(in_path, "chest_xray")
 
-    def pil_image(path: str):
+    def get_img_annotation_isrgb_triple(path: str):
         img = Image.open(path)
         # some images are RGB
-        rgb = False
+        isrgb = False
         if img.mode == "RGB":
-            rgb = True
+            isrgb = True
             img = img.convert("L")
         # center-crop
         w, h = img.size
@@ -65,7 +65,7 @@ def get_unified_data(
         img = img.resize(out_img_size, Image.BICUBIC)
         # add annotation
         add_annot = [(w, h), w / h]
-        return img, add_annot, rgb
+        return img, add_annot, isrgb
 
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size", "original_ratio"]) as writer:
         for split, split_root_path in (
@@ -79,7 +79,7 @@ def get_unified_data(
             rgb_counter = 0
             for _, labs, paths in tqdm(dataloader, desc=f"Processing Kermany_Pneumonia ({split} split)"):
                 with ThreadPool() as pool:
-                    results = pool.map(pil_image, paths)
+                    results = pool.map(get_img_annotation_isrgb_triple, paths)
                 writer.write(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),

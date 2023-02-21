@@ -62,7 +62,7 @@ def get_unified_data(
         # class lookup
         cls_to_idx = dataset.class_to_idx
 
-        def pil_image(path: str):
+        def get_img_annotation_pair(path: str):
             image = Image.open(path)
             orig_size = image.size
             rel_path = os.path.join(*(path.split(os.sep)[-2:]))
@@ -81,7 +81,7 @@ def get_unified_data(
 
         for _, labs, paths in tqdm(dataloader, desc="Processing AML-Cytomorphology_LMU"):
             with ThreadPool() as pool:
-                imgs_annots = pool.map(pil_image, paths)
+                imgs_annots = pool.map(get_img_annotation_pair, paths)
             writer.write(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
