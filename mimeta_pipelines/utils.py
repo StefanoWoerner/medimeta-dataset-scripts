@@ -134,7 +134,8 @@ class UnifiedDatasetWriter:
             #         os.path.join(task_labels_path, f"{task_name}.pt"),
             #     )
             for task_name, task_labeling in zip(self.task_names, zip(*self.task_labels)):
-                np.save(os.path.join(task_labels_path, task_name), np.array(task_labeling))
+                npy_save_path = os.path.join(task_labels_path, task_name)
+                np.save(npy_save_path, np.array(task_labeling))
 
             # annotations
             annotations_path = os.path.join(self.out_path, "annotations.csv")
