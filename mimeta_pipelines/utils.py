@@ -182,28 +182,22 @@ class UnifiedDatasetWriter:
         # Images
         # not passed => copy from original location
         if images is None:
-            all_paths = zip(old_paths, filepaths)
-
-            def copy_fun(paths):
-                orig_path, goal_path = paths
+            def copy_fun(orig_path, goal_path):
                 copyfile(orig_path, os.path.join(self.out_path, goal_path))
 
             # multithreading since I/O bottleneck
             with ThreadPool() as pool:
-                pool.map(copy_fun, all_paths)
+                pool.starmap(copy_fun, zip(old_paths, filepaths))
 
         # passed as PIL images
         else:
-            imgs_paths = zip(images, filepaths)
-
-            def save_fun(img_path):
-                img, path = img_path
+            def save_fun(img, path):
                 assert len(img.getbands()) == self.info_dict["input_size"][0]
                 assert img.size == tuple(self.info_dict["input_size"][1:])
                 img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
 
             with ThreadPool() as pool:
-                pool.map(save_fun, imgs_paths)
+                pool.starmap(save_fun, zip(images, filepaths))
 
         # Check coherent lengths
         if not all(
