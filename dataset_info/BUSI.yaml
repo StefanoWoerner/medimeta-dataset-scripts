@@ -1,7 +1,13 @@
-name: BUSI
+name: Dataset of Breast Ultrasound Images
 description: "The data collected at baseline include breast ultrasound images among women in ages between 25 and 75 years old. This data was collected in 2018. The number of patients is 600 female patients. The dataset consists of 780 images with an average image size of 500*500 pixels. The images are in PNG format. The ground truth images are presented with original images. The images are categorized into three classes, which are normal, benign, and malignant."
 
 tasks:
+  - task_name: "case"
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: normal
+      1: benign
+      2: malignant
   - task_name: "malignancy"
     task_target: BINARY_CLASSIFICATION
     labels:
@@ -18,5 +24,5 @@ license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
 original_license: "CC0: Public Domain ?"
-original_paper: "https://pubmed.ncbi.nlm.nih.gov/31867417/"
+original_paper: https://www.sciencedirect.com/science/article/pii/S2352340919312181
 original_download_url: https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
