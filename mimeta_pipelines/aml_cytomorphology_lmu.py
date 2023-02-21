@@ -8,7 +8,7 @@ or that folder compressed at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytom
 
 DATA MODIFICATIONS:
 - The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
-- The images are converted to RGB using the PIL.Image.convert method.
+- The images are converted to RGB using the PIL.Image.convert method to remove the alpha channel.
 """
 
 import os
