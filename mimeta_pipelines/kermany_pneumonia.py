@@ -44,6 +44,7 @@ def get_unified_data(
         in_path = temp_path
         with ZipFile(os.path.join(root_path, "ChestXRay2017.zip"), "r") as tf:
             tf.extractall(in_path)
+        root_path = in_path
     in_path = os.path.join(in_path, "chest_xray")
 
     def pil_image(path: str):
@@ -63,16 +64,16 @@ def get_unified_data(
         # resize
         img = img.resize(out_img_size, Image.BICUBIC)
         # add annotation
-        add_annot = [img.size, img.size[0] / img.size[1]]
+        add_annot = [(w, h), w / h]
         return img, add_annot, rgb
 
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size", "original_ratio"]) as writer:
-        for split, root_path in (
+        for split, split_root_path in (
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
             # dummy loader to avoid actually loading the images
-            dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
+            dataset = ImageFolderPaths(root=split_root_path, loader=lambda p: os.path.exists(p))
             assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
             rgb_counter = 0
@@ -80,7 +81,7 @@ def get_unified_data(
                 with ThreadPool() as pool:
                     results = pool.map(pil_image, paths)
                 writer.write(
-                    old_paths=list(paths),
+                    old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
                     task_labels=[[int(lab)] for lab in labs],
                     images=[res[0] for res in results],

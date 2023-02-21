@@ -3,7 +3,7 @@
 INPUT DATA:
 Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
 at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
-or extracted folder with the compressed subfolders extracted in /images
+or extracted folder with the compressed subfolders extracted in place
 in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
 
 DATA MODIFICATIONS:
@@ -157,7 +157,7 @@ def get_unified_data(
             with ThreadPool() as pool:
                 results = pool.map(dataset_loader, paths)
             writer.write(
-                old_paths=list(paths),
+                old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=[res[2] for res in results],
                 task_labels=[res[1] for res in results],
                 images=[res[0] for res in results],

@@ -50,7 +50,7 @@ def get_unified_data(
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         for _, labs, paths in tqdm(dataloader, desc=f"Processing NCT-CRC ({split} split)"):
             writer.write(
-                old_paths=list(paths),
+                old_paths=[os.path.relpath(p, in_path) for p in paths],
                 original_splits=[split] * len(paths),
                 task_labels=[[int(lab)] for lab in labs],
             )

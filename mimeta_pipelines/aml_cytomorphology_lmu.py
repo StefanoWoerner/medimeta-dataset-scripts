@@ -51,7 +51,7 @@ def get_unified_data(
     ) as writer:
         images_path = os.path.join(root_path, "AML-Cytomorphology")
         dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
-        assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+        assert dataset.class_to_idx == {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
@@ -83,7 +83,7 @@ def get_unified_data(
             with ThreadPool() as pool:
                 imgs_annots = pool.map(pil_image, paths)
             writer.write(
-                old_paths=list(paths),
+                old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
                 task_labels=[[int(lab)] for lab in labs],
                 images=[img_annot[0] for img_annot in imgs_annots],

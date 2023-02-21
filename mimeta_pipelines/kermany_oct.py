@@ -42,6 +42,7 @@ def get_unified_data(
         in_path = temp_path
         with tarfile.open(os.path.join(root_path, "OCT2017.tar.gz"), "r:gz") as tf:
             tf.extractall(in_path)
+        root_path = in_path
     in_path = os.path.join(in_path, "OCT2017")
 
     def pil_image(path: str):
@@ -56,23 +57,23 @@ def get_unified_data(
         # resize
         img.thumbnail(out_img_size, Image.BICUBIC)
         # add annotation
-        add_annot = [img.size, img.size[0] / img.size[1]]
+        add_annot = [(w, h), w / h]
         return img, add_annot
 
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size", "original_ratio"]) as writer:
-        for split, root_path in (
+        for split, split_root_path in (
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
             # dummy loader to avoid actually loading the images
-            dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
+            dataset = ImageFolderPaths(root=split_root_path, loader=lambda p: os.path.exists(p))
             assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
             dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
             for _, labs, paths in tqdm(dataloader, desc=f"Processing Kermany_OCT ({split} split)"):
                 with ThreadPool() as pool:
                     imgs_annots = pool.map(pil_image, paths)
                 writer.write(
-                    old_paths=list(paths),
+                    old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
                     task_labels=[[int(lab)] for lab in labs],
                     images=[img_annot[0] for img_annot in imgs_annots],
