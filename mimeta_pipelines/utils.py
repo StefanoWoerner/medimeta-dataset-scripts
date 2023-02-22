@@ -4,13 +4,11 @@ import os
 
 import numpy as np
 import pandas as pd
-import torch
 import yaml
 from dotenv import load_dotenv
 from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from torchvision.datasets import ImageFolder
 
 
 # Base paths
@@ -25,13 +23,25 @@ else:
     UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
 
 
-class ImageFolderPaths(ImageFolder):
-    """Modified torchvision.datasets.ImageFolder that returns paths too."""
-
-    def __getitem__(self, index):
-        img, lab = super(ImageFolderPaths, self).__getitem__(index)
-        path = self.imgs[index][0]
-        return (img, lab, path)
+def folder_paths(root, batch_size, class_dict):
+    paths = []
+    labels = []
+    class_to_idx = {}
+    for i, dir_ in enumerate(sorted([d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))])):
+        class_to_idx[dir_] = i
+        new_paths = sorted(
+            [
+                os.path.join(root, dir_, f)
+                for f in os.listdir(os.path.join(root, dir_))
+                if f.split(".")[-1] in ("tif, tiff, png, jpeg")
+            ]
+        )
+        paths.extend(new_paths)
+        labels.extend([i] * len(new_paths))
+    # check that the class dictionary from the info file is complete and correct
+    assert class_to_idx == class_dict
+    batches = [(paths[i : i + batch_size], labels[i : i + batch_size]) for i in range(0, len(paths), batch_size)]
+    return batches
 
 
 class UnifiedDatasetWriter:

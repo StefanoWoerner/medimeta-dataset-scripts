@@ -17,8 +17,7 @@ from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from tqdm import tqdm
-from torch.utils.data import DataLoader
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, ImageFolderPaths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
 
 
 def get_unified_data(
@@ -68,19 +67,18 @@ def get_unified_data(
             ("test", os.path.join(in_path, "test")),
         ):
             # dummy loader to avoid actually loading the images
-            dataset = ImageFolderPaths(root=split_root_path, loader=lambda p: os.path.exists(p))
-            assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
-            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-            for _, labs, paths in tqdm(dataloader, desc=f"Processing Kermany_OCT ({split} split)"):
+            class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+            batches = folder_paths(root=split_root_path, batch_size=batch_size, class_dict=class_to_idx)
+            for paths, labs in tqdm(batches, desc=f"Processing Kermany_OCT ({split} split)"):
                 with ThreadPool() as pool:
                     imgs_annots = pool.map(get_img_annotation_pair, paths)
                 writer.write(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[lab.item()] for lab in labs],
+                    task_labels=[[lab] for lab in labs],
                     images=[img_annot[0] for img_annot in imgs_annots],
                     add_annots=[
-                        img_annot[1] + [info_dict["tasks"][0]["labels"][lab.item()]]
+                        img_annot[1] + [info_dict["tasks"][0]["labels"][lab]]
                         for img_annot, lab in zip(imgs_annots, labs)
                     ],
                 )

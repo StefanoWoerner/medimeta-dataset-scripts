@@ -15,9 +15,8 @@ import re
 import yaml
 from shutil import rmtree
 from tqdm import tqdm
-from torch.utils.data import DataLoader
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, ImageFolderPaths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
 
 
 def get_unified_data(
@@ -46,18 +45,14 @@ def get_unified_data(
 
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
         for split, root_path in split_paths.items():
-            # dummy loader to avoid actually loading the images, since just copied
-            dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
-            assert dataset.class_to_idx == {
-                re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()
-            }
-            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-            for _, labs, paths in tqdm(dataloader, desc=f"Processing NCT-CRC ({split} split)"):
+            class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()}
+            batches = folder_paths(root=root_path, batch_size=batch_size, class_dict=class_to_idx)
+            for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
                 writer.write(
                     old_paths=[os.path.relpath(p, in_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[lab.item()] for lab in labs],
-                    add_annots=[[info_dict["tasks"][0]["labels"][lab.item()]] for lab in labs],
+                    task_labels=[[lab] for lab in labs],
+                    add_annots=[[info_dict["tasks"][0]["labels"][lab]] for lab in labs],
                     images_in_base_path=in_path,
                 )
 

@@ -18,9 +18,8 @@ from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from tqdm import tqdm
-from torch.utils.data import DataLoader
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, ImageFolderPaths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
 
 
 def get_unified_data(
@@ -50,9 +49,8 @@ def get_unified_data(
         out_path, info_path, add_annot_cols=["annotation", "first_reannotation", "second_reannotation", "original_size"]
     ) as writer:
         images_path = os.path.join(root_path, "AML-Cytomorphology")
-        dataset = ImageFolderPaths(root=images_path, loader=lambda p: os.path.exists(p))
-        assert dataset.class_to_idx == {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        class_to_idx = {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
+        batches = folder_paths(root=images_path, batch_size=batch_size, class_dict=class_to_idx)
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
             sep=r"\s+",
@@ -78,13 +76,13 @@ def get_unified_data(
             image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             return image, add_annot
 
-        for _, labs, paths in tqdm(dataloader, desc="Processing AML-Cytomorphology_LMU"):
+        for paths, labs in tqdm(batches, desc="Processing AML-Cytomorphology_LMU"):
             with ThreadPool() as pool:
                 imgs_annots = pool.map(get_img_annotation_pair, paths)
             writer.write(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
-                task_labels=[[int(lab)] for lab in labs],
+                task_labels=[[lab] for lab in labs],
                 images=[img_annot[0] for img_annot in imgs_annots],
                 add_annots=[img_annot[1] for img_annot in imgs_annots],
             )

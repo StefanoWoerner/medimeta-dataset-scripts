@@ -18,9 +18,8 @@ from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from tqdm import tqdm
-from torch.utils.data import DataLoader
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, ImageFolderPaths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
 
 
 def get_unified_data(
@@ -75,21 +74,18 @@ def get_unified_data(
             ("test", os.path.join(in_path, "test")),
         ):
             # dummy loader to avoid actually loading the images
-            dataset = ImageFolderPaths(root=split_root_path, loader=lambda p: os.path.exists(p))
-            assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
-            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+            class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+            batches = folder_paths(root=split_root_path, batch_size=batch_size, class_dict=class_to_idx)
             rgb_counter = 0
-            for _, labs, paths in tqdm(dataloader, desc=f"Processing Kermany_Pneumonia ({split} split)"):
+            for paths, labs in tqdm(batches, desc=f"Processing Kermany_Pneumonia ({split} split)"):
                 with ThreadPool() as pool:
                     results = pool.map(get_img_annotation_isrgb_triple, paths)
                 writer.write(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[lab.item()] for lab in labs],
+                    task_labels=[[lab] for lab in labs],
                     images=[res[0] for res in results],
-                    add_annots=[
-                        res[1] + [info_dict["tasks"][0]["labels"][lab.item()]] for res, lab in zip(results, labs)
-                    ],
+                    add_annots=[res[1] + [info_dict["tasks"][0]["labels"][lab]] for res, lab in zip(results, labs)],
                 )
                 rgb_counter += sum([res[2] for res in results])
             print("Found {} RGB images, converted them.".format(rgb_counter))
