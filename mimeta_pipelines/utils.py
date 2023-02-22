@@ -168,6 +168,7 @@ class UnifiedDatasetWriter:
         task_labels: list[list[int]],
         add_annots: list | None = None,
         images: list[Image.Image] | None = None,
+        images_in_base_path: str | None = None,
     ):
         """Add labels, additional, meta information, and images."""
         batch_size = len(old_paths)
@@ -190,7 +191,7 @@ class UnifiedDatasetWriter:
         if images is None:
 
             def copy_fun(orig_path, goal_path):
-                copyfile(orig_path, os.path.join(self.out_path, goal_path))
+                copyfile(os.path.join(images_in_base_path, orig_path), os.path.join(self.out_path, goal_path))
 
             # multithreading since I/O bottleneck
             with ThreadPool() as pool:

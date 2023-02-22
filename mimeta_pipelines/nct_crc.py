@@ -11,6 +11,7 @@ None.
 """
 
 import os
+import re
 import yaml
 from shutil import rmtree
 from tqdm import tqdm
@@ -31,29 +32,33 @@ def get_unified_data(
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
 
-    split_path = (
-        ("train", os.path.join(in_path, "NCT-CRC-HE-100K")),
-        ("validation", os.path.join(in_path, "CRC-VAL-HE-7K")),
-    )
+    split_paths = {
+        "train": os.path.join(in_path, "NCT-CRC-HE-100K"),
+        "validation": os.path.join(in_path, "CRC-VAL-HE-7K"),
+    }
     if zipped:
         new_in_path = os.path.join(out_path, "..", "NCT-CRC_temp")
-        for split, root_path in split_path:
+        for split, root_path in split_paths.items():
             with ZipFile(f"{root_path}.zip", "r") as zf:
                 zf.extractall(new_in_path)
-                split_path[split] = split_path[split].replace(in_path, new_in_path)
+                split_paths[split] = split_paths[split].replace(in_path, new_in_path)
         in_path = new_in_path
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
-        # dummy loader to avoid actually loading the images, since just copied
-        dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
-        assert dataset.class_to_idx == {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        for _, labs, paths in tqdm(dataloader, desc=f"Processing NCT-CRC ({split} split)"):
-            writer.write(
-                old_paths=[os.path.relpath(p, in_path) for p in paths],
-                original_splits=[split] * len(paths),
-                task_labels=[[int(lab)] for lab in labs],
-            )
+        for split, root_path in split_paths.items():
+            # dummy loader to avoid actually loading the images, since just copied
+            dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
+            assert dataset.class_to_idx == {
+                re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()
+            }
+            dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+            for _, labs, paths in tqdm(dataloader, desc=f"Processing NCT-CRC ({split} split)"):
+                writer.write(
+                    old_paths=[os.path.relpath(p, in_path) for p in paths],
+                    original_splits=[split] * len(paths),
+                    task_labels=[[int(lab)] for lab in labs],
+                    images_in_base_path=in_path,
+                )
 
     # remove extracted folder to free up space
     if zipped:
