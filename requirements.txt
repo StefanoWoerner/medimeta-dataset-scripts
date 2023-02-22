@@ -9,5 +9,3 @@ pyyaml
 scikit-image~=0.19.3
 SimpleITK
 tqdm
-torch
-torchvision
