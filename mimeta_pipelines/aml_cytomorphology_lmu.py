@@ -72,10 +72,10 @@ def get_unified_data(
                 annot.second_reannotation,
                 orig_size,
             ]
-            # resize
-            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             # remove alpha channel
             image = image.convert("RGB")
+            # resize
+            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             return image, add_annot
 
         for _, labs, paths in tqdm(dataloader, desc="Processing AML-Cytomorphology_LMU"):
