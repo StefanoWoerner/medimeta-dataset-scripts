@@ -30,5 +30,9 @@ license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
 original_license: "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
-original_paper:
+original_paper: https://www.nature.com/articles/s42256-019-0101-9
 original_download_url: https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
+original_citation:
+  data: "Matek, C., Schwarz, S., Marr, C., & Spiekermann, K. (2019). A Single-cell Morphological Dataset of Leukocytes from AML Patients and Non-malignant Controls [Data set]. The Cancer Imaging Archive. https://doi.org/10.7937/tcia.2019.36f5o9ld"
+  publication: "Matek, C., Schwarz, S., Spiekermann, K.  et al.  Human-level recognition of blast cells in acute myeloid leukaemia with convolutional neural networks.  Nat Mach Intell   1,  538–544 (2019). https://doi.org/10.1038/s42256-019-0101-9"
+  TCIA: "Clark K, Vendt B, Smith K, Freymann J, Kirby J, Koppel P, Moore S, Phillips S, Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA): Maintaining and Operating a Public Information Repository, Journal of Digital Imaging, Volume 26, Number 6, December, 2013, pp 1045-1057. DOI: 10.1007/s10278-013-9622-7"
