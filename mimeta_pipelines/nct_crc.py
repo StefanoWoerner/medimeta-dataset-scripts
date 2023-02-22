@@ -25,7 +25,7 @@ def get_unified_data(
     out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=2048,
-    zipped=False,
+    zipped=True,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
