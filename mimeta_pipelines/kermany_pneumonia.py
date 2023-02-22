@@ -29,7 +29,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "Kermany_Pneumonia.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
-    zipped=True,
+    zipped=False,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
@@ -67,7 +67,9 @@ def get_unified_data(
         add_annot = [(w, h), w / h]
         return img, add_annot, isrgb
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size", "original_ratio"]) as writer:
+    with UnifiedDatasetWriter(
+        out_path, info_path, add_annot_cols=["original_size", "original_ratio", "disease_label"]
+    ) as writer:
         for split, split_root_path in (
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
@@ -83,9 +85,11 @@ def get_unified_data(
                 writer.write(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[int(lab)] for lab in labs],
+                    task_labels=[[lab.item()] for lab in labs],
                     images=[res[0] for res in results],
-                    add_annots=[res[1] for res in results],
+                    add_annots=[
+                        res[1] + [info_dict["tasks"][0]["labels"][lab.item()]] for res, lab in zip(results, labs)
+                    ],
                 )
                 rgb_counter += sum([res[2] for res in results])
             print("Found {} RGB images, converted them.".format(rgb_counter))

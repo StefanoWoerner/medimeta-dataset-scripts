@@ -25,7 +25,7 @@ def get_unified_data(
     out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=2048,
-    zipped=True,
+    zipped=False,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
@@ -44,7 +44,7 @@ def get_unified_data(
                 split_paths[split] = split_paths[split].replace(in_path, new_in_path)
         in_path = new_in_path
 
-    with UnifiedDatasetWriter(out_path, info_path) as writer:
+    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
         for split, root_path in split_paths.items():
             # dummy loader to avoid actually loading the images, since just copied
             dataset = ImageFolderPaths(root=root_path, loader=lambda p: os.path.exists(p))
@@ -56,7 +56,8 @@ def get_unified_data(
                 writer.write(
                     old_paths=[os.path.relpath(p, in_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[int(lab)] for lab in labs],
+                    task_labels=[[lab.item()] for lab in labs],
+                    add_annots=[[info_dict["tasks"][0]["labels"][lab.item()]] for lab in labs],
                     images_in_base_path=in_path,
                 )
 
