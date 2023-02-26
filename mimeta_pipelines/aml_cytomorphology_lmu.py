@@ -11,6 +11,7 @@ DATA MODIFICATIONS:
 - The images are converted to RGB using the PIL.Image.convert method to remove the alpha channel.
 """
 
+import numpy as np
 import os
 import pandas as pd
 import yaml
@@ -19,7 +20,7 @@ from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, center_crop, folder_paths
 
 
 def get_unified_data(
@@ -60,7 +61,20 @@ def get_unified_data(
 
         def get_img_annotation_pair(path: str):
             image = Image.open(path)
-            orig_size = image.size
+            # cut alpha borders
+            mask = np.array(image.getchannel("A")) == 255
+            content_rows = np.argwhere(mask.any(axis=0))
+            content_cols = np.argwhere(mask.any(axis=1))
+            # crop black pixels out
+            image = image.crop((content_rows.min(), content_cols.min(), content_rows.max() + 1, content_cols.max() + 1))
+            # make squared
+            image, w, h = center_crop(image)
+            # remove alpha channel
+            image = image.convert("RGB")
+            # resize
+            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
+
+            orig_size = (w, h)
             rel_path = os.path.join(*(path.split(os.sep)[-2:]))
             annot = annotations.loc[rel_path]
             # "" since NaN being a float, we would get a float column
@@ -70,10 +84,6 @@ def get_unified_data(
                 annot.second_reannotation,
                 orig_size,
             ]
-            # remove alpha channel
-            image = image.convert("RGB")
-            # resize
-            image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             return image, add_annot
 
         for paths, labs in tqdm(batches, desc="Processing AML-Cytomorphology_LMU"):
