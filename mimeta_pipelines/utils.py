@@ -23,6 +23,19 @@ else:
     UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
 
 
+def center_crop(img):
+    """Center crop an image to make it square.
+    Returns: cropped image, original width, original height.
+    """
+    w, h = img.size
+    if w < h:
+        img = img.crop((0, (h - w) // 2, w, (h - w) // 2 + w))
+    elif w > h:
+        img = img.crop(((w - h) // 2, 0, (w - h) // 2 + h, h))
+    assert img.size[0] == img.size[1] == min(img.size)
+    return img, w, h
+
+
 def folder_paths(root, batch_size, class_dict):
     paths = []
     labels = []

@@ -19,7 +19,7 @@ from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
-from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, folder_paths
+from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedDatasetWriter, center_crop, folder_paths
 
 
 def get_unified_data(
@@ -54,12 +54,7 @@ def get_unified_data(
             isrgb = True
             img = img.convert("L")
         # center-crop
-        w, h = img.size
-        if w < h:
-            img = img.crop((0, (h - w) // 2, w, (h - w) // 2 + w))
-        elif w > h:
-            img = img.crop(((w - h) // 2, 0, (w - h) // 2 + h, h))
-        assert img.size[0] == img.size[1] == min(img.size)
+        img, w, h = center_crop(img)
         # resize
         img = img.resize(out_img_size, Image.BICUBIC)
         # add annotation
