@@ -103,9 +103,9 @@ class UnifiedDatasetWriter:
         self.task_names = [task["task_name"] for task in self.info_dict["tasks"]]
         self.annotations = []
         self.annotations_cols = (
-            ["filename", "original_image_path", "original_split"]
+            ["filepath", "original_filepath", "original_split"]
             + list(self.task_names)
-            + (list(add_annot_cols) if add_annot_cols else [])
+            + (list(self.add_annot_cols) if self.add_annot_cols else [])
         )
         # Initialize task labels
         self.task_labels = []  # shape (n_dpoints, n_tasks)
@@ -138,11 +138,6 @@ class UnifiedDatasetWriter:
             # task labels (1 file per task)
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
-            # for task_idx, task_name in enumerate(self.task_names):
-            #     torch.save(
-            #         torch.Tensor([t_l[task_idx] for t_l in self.task_labels]),
-            #         os.path.join(task_labels_path, f"{task_name}.pt"),
-            #     )
             for task_name, task_labeling in zip(self.task_names, zip(*self.task_labels)):
                 npy_save_path = os.path.join(task_labels_path, task_name)
                 np.save(npy_save_path, np.array(task_labeling))
@@ -152,10 +147,20 @@ class UnifiedDatasetWriter:
             annotations_df = pd.DataFrame.from_records(
                 data=self.annotations, columns=self.annotations_cols, index=self.annotations_cols[0]
             )
+            # reorder columns
+            task_names = [f"tasks/{task_name}" for task_name in self.task_names]
+            annotations_df.rename(columns=dict(zip(self.task_names, task_names)), inplace=True)
+            ordered_annot_cols = (
+                ["patient_id", *sorted(set(self.add_annot_cols) - set(["patient_id"]))]
+                if "patient_id" in self.add_annot_cols
+                else list(sorted(self.add_annot_cols))
+            )
+            ordered_cols = [*task_names, "original_filepath", "original_split", *ordered_annot_cols]
+            annotations_df = annotations_df[ordered_cols]
             annotations_df.to_csv(annotations_path)
             # test well-formed
             annot_df = pd.read_csv(annotations_path)
-            assert annot_df.columns[0] == "filename"
+            assert annot_df.columns[0] == "filepath"
             assert (
                 len(annot_df)
                 == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
