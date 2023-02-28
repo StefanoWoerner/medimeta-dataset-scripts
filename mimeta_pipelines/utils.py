@@ -38,18 +38,25 @@ def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
 
 
 def folder_paths(
-    root: str, batch_size: int, dir_to_cl_idx: dict[str, int], check_alphabetical: bool = True
+    root: str,
+    batch_size: int,
+    dir_to_cl_idx: dict[str, int],
+    check_alphabetical: bool = True,
+    check_cl_idxs_range: bool = True,
 ) -> list[tuple[list[str], list[int]]]:
     """Get batches of (paths, labels) from a folder class structure.
     :param root: root folder.
     :param batch_size: batch size.
     :param dir_to_cl_idx: dictionary mapping directories to class indices.
     :param check_alphabetical: check that the class names are in alphabetical order, and the indices range(len(classes)).
+    :param check_cl_idxs_range: check that the class keys (indices) are equal to range(len(classes)).
     :returns: list of batches, each batch is a tuple of (paths, labels).
     """
     # alphabetical class order check
     if check_alphabetical:
         assert sorted(dir_to_cl_idx.items(), key=lambda x: x[1]) == sorted(dir_to_cl_idx.items(), key=lambda x: x[0])
+    # class indices range check
+    if check_cl_idxs_range:
         assert sorted(dir_to_cl_idx.values()) == list(range(len(dir_to_cl_idx)))
     # get paths and labels
     paths = []
