@@ -13,6 +13,8 @@ None.
 import os
 import re
 import yaml
+from multiprocessing.pool import ThreadPool
+from PIL import Image
 from shutil import rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
@@ -23,7 +25,7 @@ def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "NCT-CRC"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
-    batch_size=2048,
+    batch_size=1,  # somehow multiprocessing doesn't work here (OSErrors when saving images)
     zipped=True,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
@@ -43,17 +45,23 @@ def get_unified_data(
                 split_paths[split] = split_paths[split].replace(in_path, new_in_path)
         in_path = new_in_path
 
+    def get_img(path: str):
+        img = Image.open(path)
+        return img
+
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
         for split, root_path in split_paths.items():
             class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()}
             batches = folder_paths(root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
+                with ThreadPool() as pool:
+                    imgs = pool.map(get_img, paths)
                 writer.write(
                     old_paths=[os.path.relpath(p, in_path) for p in paths],
                     original_splits=[split] * len(paths),
                     task_labels=[[lab] for lab in labs],
                     add_annots=[[info_dict["tasks"][0]["labels"][lab]] for lab in labs],
-                    images_in_base_path=in_path,
+                    images=imgs,
                 )
 
     # remove extracted folder to free up space
