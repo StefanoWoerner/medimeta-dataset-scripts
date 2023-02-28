@@ -23,7 +23,7 @@ else:
     UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
 
 
-def center_crop(img):
+def center_crop(img: Image.Image):
     """Center crop an image to make it square.
     :param img: PIL image.
     :returns: cropped image, original width, original height.
@@ -37,7 +37,7 @@ def center_crop(img):
     return img, w, h
 
 
-def folder_paths(root, batch_size, class_dict, check_alphabetical=True):
+def folder_paths(root: str, batch_size: int, class_dict: dict[str, int], check_alphabetical: bool = True):
     """Get batches of (paths, labels) from a folder class structure.
     :param root: root folder.
     :param batch_size: batch size.
