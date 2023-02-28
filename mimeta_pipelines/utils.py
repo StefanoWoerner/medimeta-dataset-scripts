@@ -143,7 +143,7 @@ class UnifiedDatasetWriter:
                 with open(os.path.join(self.original_splits_path, "train.txt"), "w") as f:
                     f.write("\n".join(self.original_train))
             if self.original_val:
-                with open(os.path.join(self.original_splits_path, "validation.txt"), "w") as f:
+                with open(os.path.join(self.original_splits_path, "val.txt"), "w") as f:
                     f.write("\n".join(self.original_val))
             if self.original_test:
                 with open(os.path.join(self.original_splits_path, "test.txt"), "w") as f:
@@ -249,12 +249,12 @@ class UnifiedDatasetWriter:
         ) or (images and len(images) != batch_size):
             raise ValueError("All arguments should have the same length.")
         # Check splits valid
-        if not all(split in ("train", "validation", "test") for split in original_splits):
-            raise ValueError("Original splits must be of ('train', 'validation', 'test').")
+        if not all(split in ("train", "val", "test") for split in original_splits):
+            raise ValueError("Original splits must be of ('train', 'val', 'test').")
 
         # Register new information
         self.original_train += [fp for fp, split in zip(filepaths, original_splits) if split == "train"]
-        self.original_val += [fp for fp, split in zip(filepaths, original_splits) if split == "validation"]
+        self.original_val += [fp for fp, split in zip(filepaths, original_splits) if split == "val"]
         self.original_test += [fp for fp, split in zip(filepaths, original_splits) if split == "test"]
         self.task_labels += task_labels
         self.annotations += [

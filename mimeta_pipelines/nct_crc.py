@@ -33,7 +33,7 @@ def get_unified_data(
 
     split_paths = {
         "train": os.path.join(in_path, "NCT-CRC-HE-100K"),
-        "validation": os.path.join(in_path, "CRC-VAL-HE-7K"),
+        "val": os.path.join(in_path, "CRC-VAL-HE-7K"),
     }
     if zipped:
         new_in_path = os.path.join(out_path, "..", "NCT-CRC_temp")
