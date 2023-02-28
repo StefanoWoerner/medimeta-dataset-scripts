@@ -1,5 +1,11 @@
-numpy~=1.23.1
 matplotlib~=3.5.2
+more_itertools
 nibabel~=4.0.2
+numpy~=1.23.1
+pandas
+Pillow
+python-dotenv
+pyyaml
 scikit-image~=0.19.3
 SimpleITK
+tqdm

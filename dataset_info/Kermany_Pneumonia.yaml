@@ -11,7 +11,7 @@ tasks:
 
 input_size: [1,224,224]
 num_samples:
-  train: 5233
+  train: 5232
   val: 0
   test: 624
 
