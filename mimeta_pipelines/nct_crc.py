@@ -46,7 +46,7 @@ def get_unified_data(
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
         for split, root_path in split_paths.items():
             class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()}
-            batches = folder_paths(root=root_path, batch_size=batch_size, class_dict=class_to_idx)
+            batches = folder_paths(root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
                 writer.write(
                     old_paths=[os.path.relpath(p, in_path) for p in paths],
