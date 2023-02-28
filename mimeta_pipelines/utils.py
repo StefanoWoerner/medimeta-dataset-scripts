@@ -37,23 +37,23 @@ def center_crop(img: Image.Image):
     return img, w, h
 
 
-def folder_paths(root: str, batch_size: int, class_dict: dict[str, int], check_alphabetical: bool = True):
+def folder_paths(root: str, batch_size: int, dir_to_cl_idx: dict[str, int], check_alphabetical: bool = True):
     """Get batches of (paths, labels) from a folder class structure.
     :param root: root folder.
     :param batch_size: batch size.
-    :param class_dict: dictionary mapping class names to class indices.
+    :param dir_to_cl_idx: dictionary mapping directories to class indices.
     :param check_alphabetical: check that the class names are in alphabetical order, and the indices range(len(classes)).
     :returns: list of batches, each batch is a tuple of (paths, labels).
     """
     # alphabetical class order check
     if check_alphabetical:
-        assert sorted(class_dict.items(), key=lambda x: x[1]) == sorted(class_dict.items(), key=lambda x: x[0])
-        assert sorted(class_dict.values()) == list(range(len(class_dict)))
+        assert sorted(dir_to_cl_idx.items(), key=lambda x: x[1]) == sorted(dir_to_cl_idx.items(), key=lambda x: x[0])
+        assert sorted(dir_to_cl_idx.values()) == list(range(len(dir_to_cl_idx)))
     # get paths and labels
     paths = []
     labels = []
     dirs = sorted([d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))])
-    assert set(dirs) == set(class_dict.keys())  # class_dict correct and complete
+    assert set(dirs) == set(dir_to_cl_idx.keys())  # class_dict correct and complete
     for dir_ in dirs:
         new_paths = sorted(
             [
@@ -63,7 +63,7 @@ def folder_paths(root: str, batch_size: int, class_dict: dict[str, int], check_a
             ]
         )
         paths.extend(new_paths)
-        labels.extend([class_dict[dir_]] * len(new_paths))
+        labels.extend([dir_to_cl_idx[dir_]] * len(new_paths))
     # create batches
     batches = [(paths[i : i + batch_size], labels[i : i + batch_size]) for i in range(0, len(paths), batch_size)]
     return batches
