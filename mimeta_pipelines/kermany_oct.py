@@ -37,7 +37,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        temp_path = f"{out_path}_temp"
+        temp_path = os.path.join(out_path, "in_temp")
         in_path = temp_path
         with tarfile.open(os.path.join(root_path, "OCT2017.tar.gz"), "r:gz") as tf:
             tf.extractall(in_path)

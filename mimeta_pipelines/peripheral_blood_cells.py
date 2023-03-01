@@ -39,7 +39,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        in_path = f"{out_path}_temp"
+        in_path = os.path.join(out_path, "in_temp")
         with ZipFile(os.path.join(root_path, "PBC_dataset_normal_DIB.zip"), "r") as zf:
             zf.extractall(in_path)
     # data path

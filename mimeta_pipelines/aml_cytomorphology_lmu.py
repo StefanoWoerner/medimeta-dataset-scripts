@@ -39,7 +39,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        in_path = f"{out_path}_temp"
+        in_path = os.path.join(out_path, "in_temp")
         with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), "r") as zf:
             zf.extractall(in_path)
         # change path to extracted folder

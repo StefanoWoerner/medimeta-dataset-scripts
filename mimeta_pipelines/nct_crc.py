@@ -36,7 +36,7 @@ def get_unified_data(
         "val": os.path.join(in_path, "CRC-VAL-HE-7K"),
     }
     if zipped:
-        new_in_path = os.path.join(out_path, "..", "NCT-CRC_temp")
+        new_in_path = os.path.join(out_path, "in_temp")
         for split, root_path in split_paths.items():
             with ZipFile(f"{root_path}.zip", "r") as zf:
                 zf.extractall(new_in_path)

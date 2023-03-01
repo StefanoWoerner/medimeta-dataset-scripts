@@ -43,7 +43,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary: it is going to be in out_path/DeepDRid_ultra_widefield_temp)
-        in_path = f"{out_path}_temp"
+        in_path = os.path.join(out_paths[0], "in_temp")
         with ZipFile(os.path.join(root_path, "DeepDRiD-master.zip"), "r") as zf:
             zf.extractall(in_path)
     root_path = os.path.join(in_path, "DeepDRiD-master")
