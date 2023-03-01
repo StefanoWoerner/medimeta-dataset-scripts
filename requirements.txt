@@ -2,6 +2,7 @@ matplotlib~=3.5.2
 more_itertools
 nibabel~=4.0.2
 numpy~=1.23.1
+openpyxl
 pandas
 Pillow
 python-dotenv

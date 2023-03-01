@@ -39,7 +39,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        in_path = f"{out_path}_temp"
+        in_path = os.path.join(out_path, "in_temp")
         with ZipFile(os.path.join(root_path, "AML-Cytomorphology_LMU.zip"), "r") as zf:
             zf.extractall(in_path)
         # change path to extracted folder
@@ -50,7 +50,7 @@ def get_unified_data(
     ) as writer:
         images_path = os.path.join(root_path, "AML-Cytomorphology")
         class_to_idx = {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
-        batches = folder_paths(root=images_path, batch_size=batch_size, class_dict=class_to_idx)
+        batches = folder_paths(root=images_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
             sep=r"\s+",

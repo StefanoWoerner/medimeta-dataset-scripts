@@ -39,7 +39,7 @@ def get_unified_data(
     # extract folder
     if zipped:
         # extract to out_path (temporary)
-        temp_path = f"{out_path}_temp"
+        temp_path = os.path.join(out_path, "in_temp")
         in_path = temp_path
         with ZipFile(os.path.join(root_path, "ChestXRay2017.zip"), "r") as tf:
             tf.extractall(in_path)
@@ -56,7 +56,7 @@ def get_unified_data(
         # center-crop
         img, w, h = center_crop(img)
         # resize
-        img = img.resize(out_img_size, Image.BICUBIC)
+        img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         # add annotation
         add_annot = [(w, h), w / h]
         return img, add_annot, isrgb
@@ -68,9 +68,8 @@ def get_unified_data(
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
-            # dummy loader to avoid actually loading the images
             class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
-            batches = folder_paths(root=split_root_path, batch_size=batch_size, class_dict=class_to_idx)
+            batches = folder_paths(root=split_root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             rgb_counter = 0
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_Pneumonia ({split} split)"):
                 with ThreadPool() as pool:

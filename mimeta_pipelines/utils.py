@@ -68,7 +68,7 @@ def folder_paths(
             [
                 os.path.join(root, dir_, f)
                 for f in os.listdir(os.path.join(root, dir_))
-                if f.split(".")[-1] in ("tif, tiff, png, jpeg")
+                if f.split(".")[-1] in ("tif", "tiff", "png", "jpeg", "jpg") and not f.startswith(".")
             ]
         )
         paths.extend(new_paths)
