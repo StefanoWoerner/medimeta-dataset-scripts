@@ -157,14 +157,13 @@ class UnifiedDatasetWriter:
         self.out_img_shape = self.info_dict["input_size"]
         self.hdf5_path = os.path.join(self.out_path, "images.hdf5")
         self.hdf5_dataset_name = "images"
-        with h5py.File(self.hdf5_path, "w") as f:
-            f.create_dataset(
-                self.hdf5_dataset_name,
-                shape=(0, *self.out_img_shape),
-                maxshape=(None, *self.out_img_shape),
-                chunks=(1, *self.out_img_shape),
-                dtype=dtype,
-            )
+        self.dataset_file = h5py.File(self.hdf5_path, "w")
+        dataset_length = sum(list(self.info_dict["num_samples"].values()))
+        self.dataset_file.create_dataset(
+            self.hdf5_dataset_name,
+            shape=(dataset_length, *self.out_img_shape),
+            dtype=dtype,
+        )
         # Initialize image counter
         self.current_idx = 0
 
@@ -176,6 +175,8 @@ class UnifiedDatasetWriter:
         if exc_type is not None:
             rmtree(self.out_path, ignore_errors=True)
             return
+        # Close HDF5 file
+        self.dataset_file.close()
         # Write out files
         try:
             # original splits
@@ -276,10 +277,8 @@ class UnifiedDatasetWriter:
                 np.transpose(np.array(img), (2, 0, 1)) if len(img.getbands()) == 3 else np.expand_dims(np.array(img), 0)
             )
 
-        with h5py.File(self.hdf5_path, "a") as f:
-            ds = f[self.hdf5_dataset_name]
-            ds.resize((ds.shape[0] + batch_size, *self.out_img_shape))
-            ds[self.current_idx - batch_size : self.current_idx, :, :] = [img_to_np(img) for img in images]
+        ds = self.dataset_file[self.hdf5_dataset_name]
+        ds[self.current_idx - batch_size : self.current_idx, :, :] = [img_to_np(img) for img in images]
 
         # Check coherent lengths
         if not all(
