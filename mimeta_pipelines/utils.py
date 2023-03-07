@@ -278,7 +278,7 @@ class UnifiedDatasetWriter:
             )
 
         ds = self.dataset_file[self.hdf5_dataset_name]
-        ds[self.current_idx - batch_size : self.current_idx, :, :] = [img_to_np(img) for img in images]
+        ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
 
         # Check coherent lengths
         if not all(
