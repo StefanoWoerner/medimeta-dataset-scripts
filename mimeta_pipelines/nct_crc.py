@@ -25,7 +25,7 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "NCT-CRC"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "NCT-CRC"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "nct_crc"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=256,
     zipped=True,
