@@ -1,4 +1,6 @@
-name: "DeepDRid regular fundus"
+id: deepdrid_regular
+name: DeepDRiD regular fundus
+summary: "DeepDRiD regular fundus"
 description: "stuff goes here"
 
 tasks:

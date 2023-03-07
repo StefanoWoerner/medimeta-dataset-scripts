@@ -1,4 +1,6 @@
+id: lits_organs_saggital
 name: LiTS Saggital Organ Slices
+summary: Saggital Organ Slices from the Liver Tumor Segmentation Benchmark (LiTS) dataset
 description: ""
 
 tasks:

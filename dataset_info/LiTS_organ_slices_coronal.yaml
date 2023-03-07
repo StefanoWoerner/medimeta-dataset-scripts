@@ -1,4 +1,6 @@
+id: lits_organs_coronal
 name: LiTS Coronal Organ Slices
+summary: Coronal Organ Slices from the Liver Tumor Segmentation Benchmark (LiTS) dataset
 description: ""
 
 tasks:

@@ -1,4 +1,6 @@
-name: "DeepDRid ultra-widefield"
+id: deepdrid_uwf
+name: DeepDRiD ultra-widefield
+summary: "DeepDRiD ultra-widefield"
 description: "stuff goes here"
 
 tasks:
