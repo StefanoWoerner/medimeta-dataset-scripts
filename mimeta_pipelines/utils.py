@@ -161,7 +161,7 @@ class UnifiedDatasetWriter:
         dataset_length = sum(list(self.info_dict["num_samples"].values()))
         self.dataset_file.create_dataset(
             self.hdf5_dataset_name,
-            shape=(dataset_length, *self.out_img_shape),
+            shape=(dataset_length, *self.out_img_shape[1:], self.out_img_shape[0]),  # (n_dpoints, H, W, C) size
             dtype=dtype,
         )
         # Initialize image counter
@@ -273,9 +273,10 @@ class UnifiedDatasetWriter:
 
         # in hdf5
         def img_to_np(img):
-            return (
-                np.transpose(np.array(img), (2, 0, 1)) if len(img.getbands()) == 3 else np.expand_dims(np.array(img), 0)
-            )
+            arr_img = np.array(img)
+            if len(img.getbands()) == 1:
+                arr_img = np.expand_dims(arr_img, 0)
+            return arr_img
 
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
