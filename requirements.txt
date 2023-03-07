@@ -4,7 +4,7 @@ nibabel~=4.0.2
 numpy~=1.24.1
 pandas~=1.5.3
 Pillow~=9.4.0
-python-dotenv
+python-dotenv~=1.0.0
 pyyaml~=6.0
 scikit-image~=0.19.3
 SimpleITK
