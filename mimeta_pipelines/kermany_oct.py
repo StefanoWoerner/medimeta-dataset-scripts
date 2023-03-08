@@ -49,7 +49,7 @@ def get_unified_data(
         # center-crop
         img, w, h = center_crop(img)
         # resize
-        img.thumbnail(out_img_size, Image.BICUBIC)
+        img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # add annotation
         add_annot = [(w, h), w / h]
         return img, add_annot
@@ -61,9 +61,8 @@ def get_unified_data(
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
-            # dummy loader to avoid actually loading the images
             class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
-            batches = folder_paths(root=split_root_path, batch_size=batch_size, class_dict=class_to_idx)
+            batches = folder_paths(root=split_root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_OCT ({split} split)"):
                 with ThreadPool() as pool:
                     imgs_annots = pool.map(get_img_annotation_pair, paths)
