@@ -1,45 +1,14 @@
-name: "AIROGS"
+id: airogs
+name: AIROGS
+summary: Rotterdam EyePACS AIROGS train set
 description: "The Rotterdam EyePACS AIROGS train set contains 101,442 color fundus images from 54,274 subjects and approximately 500 different sites with a heterogeneous ethnicity. All images were assigned by human experts with the labels referable glaucoma, no referable glaucoma, or ungradable. This dataset contains the data for training data of the AIROGS challenge, which is held as part of ISBI 2022."
 
 tasks:
-  - task_name: "DR level"
-    task_target: ORDINAL_REGRESSION
-    labels:
-      0: "Grade – 0: No apparent retinopathy"
-      1: "Grade – 1: Mild – NPDR"
-      2: "Grade – 2: Moderate – NPDR"
-      3: "Grade – 3: Severe – NPDR"
-      4: "Grade – 4: PDR"
-  - task_name: "Overall quality"
+  - task_name: "Referable glaucoma SOMETHING SOMETHING"
     task_target: BINARY_CLASSIFICATION
     labels:
-      0: "Quality is not good enough for the diagnosis of retinal diseases"
-      1: "Quality is good enough for the diagnosis of retinal diseases"
-  - task_name: "Artifact"
-    task_target: ORDINAL_REGRESSION
-    labels:
-      0: Do not contain artifacts
-      1: Outside the aortic arch with range less than 1/4 of the image
-      4: Do not affect the macular area with scope less than 1/4
-      6: Cover more than 1/4, less than 1/2 of the image
-      8: Cover more than 1/2 without fully cover the posterior pole
-      10: Cover the entire posterior pole
-  - task_name: Clarity
-    task_target: ORDINAL_REGRESSION
-    labels:
-      1: Only Level 1 vascular arch can be identified
-      4: Can identify Level 2 vascular arch and a small number of lesions
-      6: Can identify Level 3 vascular arch and some lesions
-      8: Can identify Level 3 vascular arch and most lesions
-      10: Can identify Level 3 vascular arch and all lesions
-  - task_name: Field definition
-    task_target: ORDINAL_REGRESSION
-    labels:
-      1: Do not include the optic disc and macular
-      4: Only contain either optic disc or macula
-      6: Contain both optic disc and macula
-      8: The optic disc and macula are within 2PD of the center
-      10: The optic disc and macula are within 1PD of the center
+      0: "No referable glaucoma"
+      1: "Referable glaucoma"
 
 input_size: [3,224,224]
 num_samples:

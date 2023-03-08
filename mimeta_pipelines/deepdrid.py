@@ -36,6 +36,7 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=True,
 ):
+    # Dataset preparation
     for out_path in out_paths:
         assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
@@ -47,33 +48,11 @@ def get_unified_data(
         with ZipFile(os.path.join(root_path, "DeepDRiD-master.zip"), "r") as zf:
             zf.extractall(in_path)
     root_path = os.path.join(in_path, "DeepDRiD-master")
-    dataset_paths = [
-        os.path.join(root_path, dir_name) for dir_name in ["regular_fundus_images", "ultra-widefield_images"]
-    ]
 
-    # define annotation columns and task-dataset column mappings
-    reg_annot_cols = [
-        "patient_id",
-        "image_id",
-        "left_eye_dr_level",
-        "right_eye_dr_level",
-        "source",
-    ]
-    reg_tasks_mapper = {
-        orig_name: orig_name.lower().replace(" ", "_")
-        for orig_name in ("DR level", "Overall quality", "Artifact", "Clarity", "Field definition")
-    }
-    ultra_annot_cols = ["patient_id", "image_id", "position"]
-    ultra_tasks_mapper = {"DR level": "dr_level"}
-
-    # similar work for regular fundus and ultrawidefield
-    for dataset_path, out_path, info_path, annot_cols, tasks_mapper in zip(
-        dataset_paths,
-        out_paths,
-        info_paths,
-        (reg_annot_cols, ultra_annot_cols),
-        (reg_tasks_mapper, ultra_tasks_mapper),
+    def create_unified_dataset(
+        dataset_path: str, out_path: str, info_path: str, annot_cols: list[str], tasks_mapper: dict[str, str]
     ):
+        """Creates a unified dataset from the DeepDRiD datasets."""
         # add one column per task with human-readable labels
         annot_cols += [task_name + "_label" for task_name in tasks_mapper.values()]
 
@@ -197,6 +176,32 @@ def get_unified_data(
                             for df_annot, img_annot in zip(batch[sorted(annot_cols)].values.tolist(), images_annots)
                         ],
                     )
+
+    # Regular fundus
+    reg_dataset_path = os.path.join(root_path, "regular_fundus_images")
+    reg_out_path = out_paths[0]
+    reg_info_path = info_paths[0]
+    reg_annot_cols = [
+        "patient_id",
+        "image_id",
+        "left_eye_dr_level",
+        "right_eye_dr_level",
+        "source",
+    ]
+    reg_tasks_mapper = {
+        orig_name: orig_name.lower().replace(" ", "_")
+        for orig_name in ("DR level", "Overall quality", "Artifact", "Clarity", "Field definition")
+    }
+    create_unified_dataset(reg_dataset_path, reg_out_path, reg_info_path, reg_annot_cols, reg_tasks_mapper)
+
+    # Ultra-widefield
+    uwf_dataset_path = os.path.join(root_path, "ultra-widefield_images")
+    uwf_out_path = out_paths[1]
+    uwf_info_path = info_paths[1]
+    uwf_annot_cols = ["patient_id", "image_id", "position"]
+    uwf_tasks_mapper = {"DR level": "dr_level"}
+    create_unified_dataset(uwf_dataset_path, uwf_out_path, uwf_info_path, uwf_annot_cols, uwf_tasks_mapper)
+
     # remove extracted folder to free up space
     if zipped:
         rmtree(in_path, ignore_errors=True)

@@ -1,4 +1,6 @@
-name: ChestXRay14
+id: cxr14
+name: ChestX-ray14
+summary: "Hospital-scale Chest X-ray Database of Common Thorax Diseases"
 description: "ChestX-ray dataset comprises 112,120 frontal-view X-ray images of 30,805 unique
 patients with the text-mined fourteen disease image labels (where each image can have multi-
 labels), mined from the associated radiological reports using natural language processing.

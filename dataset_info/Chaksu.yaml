@@ -1,5 +1,11 @@
+id: chaksu
 name: "Chaksu"
-description: "stuff goes here"
+summary: "Chákṣu: A glaucoma specific fundus image database"
+description: "Chákṣu IMAGE, a new Indian ethnicity retinal fundus image database, has been established for the evaluation of computer-assisted glaucoma prescreening methods. ‘Chákṣu ’ is a Sanskrit word for the ‘Eye’ and ‘IMAGE’ is an acronym for IISc-MAHE Glaucoma Evaluation database. This database is a result of an interdisciplinary collaboration between Indian Institute of Science (IISc) and Manipal Academy of Higher Education (MAHE). The database consists of retinal color fundus images acquired using three different devices. Five expert ophthalmologists provided the OD and optic cup (OC) ground-truth for the evaluation of segmentation performance and a binary decision (normal/glaucomatous). The uncompressed and compressed versions of the size of the database are about 230 GB and 12 GB, respectively. 
+
+Chákṣu IMAGE consists of 1345 retinal fundus images stored in JPEG/PNG format, with 8 bits per color channel, acquired using three devices: Remidio non-mydriatic Fundus-on-Phone camera with a resolution of 2448×3264 pixels (1074 images), Forus 3Nethra Classic non-mydriatic fundus camera with a resolution of 2048×1536 pixels (126 images), and a Bosch handheld fundus camera with a resolution of 1920×1440 pixels (145 images). This is by far the largest Indian ethnicity-specific fundus image database. Most of the images acquired by these devices are OD-centered and particular to the assessment of OD and glaucoma. The patient’s personal information was anonymized. Five expert ophthalmologists provided manual OD and OC annotations and a decision on whether the subject is glaucoma suspect or not. Their experience ranges from 5 to 15 years. 
+
+The entire database of 1345 fundus images is divided into training and test subsets comprising 1009 images and 336 images, respectively. The train and test subsets are approximately in the ratio of 3:1. The database provides information about OD and OC height/width/area, and neuroretinal rim area leading to the computation of clinically relevant glaucoma parameters such as vertical cup-to-disc ratio (VCDR), horizontal cup-to-disc ratio (HCDR), and area cup-to-disc ratio (ACDR) from the experts’ annotations. "
 
 tasks:
   - task_name: "Glaukoma SOMETHING?"

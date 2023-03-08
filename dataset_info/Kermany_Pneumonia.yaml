@@ -1,4 +1,6 @@
+id: kermany_pneumonia
 name: Kermany_Pneumonia
+summary: Labelled pediatric chest X-ray images for pneumonia classification
 description: "Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification
 Dataset of validated OCT and Chest X-Ray images  described and analyzed in \"Deep learning-based classification and referral of treatable human diseases\". The OCT Images are split into a training set and a testing set of independent patients. OCT Images are labeled as (disease)-(randomized patient ID)-(image number by this patient) and split into 4 directories: CNV, DME, DRUSEN, and NORMAL."
 

@@ -1,4 +1,6 @@
+id: lits_organs_axial
 name: LiTS Axial Organ Slices
+summary: Axial Organ Slices from the Liver Tumor Segmentation Benchmark (LiTS) dataset
 description: ""
 
 tasks:
