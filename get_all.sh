@@ -19,11 +19,11 @@ conda activate meta_learning
 scontrol show job $SLURM_JOB_ID
 
 declare -ar non_script_py_files=("utils.py")
-for f in mimeta_pipelines/*.py
+for f in mimeta_pipelines/datasets/*.py
 do
     if ! [[ " ${non_script_py_files[*]} " =~ " $f " ]]
     then
-        python -m "mimeta_pipelines.$(basename "$f" .py)";
+        python -m "mimeta_pipelines.datasets.$(basename "$f" .py)";
     fi
 done
 
