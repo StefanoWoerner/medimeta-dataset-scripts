@@ -275,7 +275,7 @@ class UnifiedDatasetWriter:
         def img_to_np(img):
             arr_img = np.array(img)
             if len(img.getbands()) == 1:
-                arr_img = np.expand_dims(arr_img, 0)
+                arr_img = arr_img[:, :, np.newaxis]
             return arr_img
 
         ds = self.dataset_file[self.hdf5_dataset_name]
