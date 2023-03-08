@@ -24,7 +24,7 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "AML-Cytomorphology_LMU"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "AML-Cytomorphology_LMU"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "aml_cyto"),
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
     batch_size=512,
     out_img_size=(224, 224),

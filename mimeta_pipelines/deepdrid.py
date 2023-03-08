@@ -25,8 +25,8 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "DeepDRiD"),
     out_paths=[
-        os.path.join(UNIFIED_DATA_PATH, "DeepDRiD_regular-fundus"),
-        os.path.join(UNIFIED_DATA_PATH, "DeepDRiD_ultra-widefield"),
+        os.path.join(UNIFIED_DATA_PATH, "deepdrid_regular"),
+        os.path.join(UNIFIED_DATA_PATH, "deepdrid_uwf"),
     ],
     info_paths=[
         os.path.join(INFO_PATH, "DeepDRiD_regular-fundus.yaml"),

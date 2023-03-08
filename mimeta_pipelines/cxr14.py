@@ -26,7 +26,7 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "CXR14"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "CXR14"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "cxr14"),
     info_path=os.path.join(INFO_PATH, "CXR14.yaml"),
     batch_size=256,
     out_img_size=(224, 224),

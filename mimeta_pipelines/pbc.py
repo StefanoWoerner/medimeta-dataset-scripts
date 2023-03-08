@@ -24,7 +24,7 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "peripheral_blood_cells"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "peripheral_blood_cells"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "pbc"),
     info_path=os.path.join(INFO_PATH, "peripheral_blood_cells.yaml"),
     batch_size=512,
     out_img_size=(224, 224),

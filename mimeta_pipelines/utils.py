@@ -1,7 +1,7 @@
 """Utilities to save datasets in a unified format.
 """
 import os
-
+import h5py
 import numpy as np
 import pandas as pd
 import yaml
@@ -116,7 +116,14 @@ class UnifiedDatasetWriter:
         out_path: str,
         info_path: str,
         add_annot_cols: list[str] | None = None,
+        dtype=np.uint8,
     ):
+        """Initialize the dataset writer.
+        :param out_path: path to the output directory.
+        :param info_path: path to the info file.
+        :param add_annot_cols: list of additional columns to add to the annotations file.
+        :param dtype: dtype of the images (for HDF5).
+        """
         # Check output directory does not exist and create it
         self.out_path = out_path
         os.makedirs(self.out_path, exist_ok=False)
@@ -146,6 +153,17 @@ class UnifiedDatasetWriter:
         # Create the base dir of the images
         self.images_relpath = "images"
         os.makedirs(os.path.join(self.out_path, self.images_relpath))
+        # Initialize HDF5 file
+        self.out_img_shape = self.info_dict["input_size"]
+        self.hdf5_path = os.path.join(self.out_path, "images.hdf5")
+        self.hdf5_dataset_name = "images"
+        self.dataset_file = h5py.File(self.hdf5_path, "w")
+        dataset_length = sum(list(self.info_dict["num_samples"].values()))
+        self.dataset_file.create_dataset(
+            self.hdf5_dataset_name,
+            shape=(dataset_length, *self.out_img_shape[1:], self.out_img_shape[0]),  # (n_dpoints, H, W, C) size
+            dtype=dtype,
+        )
         # Initialize image counter
         self.current_idx = 0
 
@@ -157,6 +175,8 @@ class UnifiedDatasetWriter:
         if exc_type is not None:
             rmtree(self.out_path, ignore_errors=True)
             return
+        # Close HDF5 file
+        self.dataset_file.close()
         # Write out files
         try:
             # original splits
@@ -217,9 +237,14 @@ class UnifiedDatasetWriter:
         task_labels: list[list[int]],
         add_annots: list | None = None,
         images: list[Image.Image] | None = None,
-        images_in_base_path: str | None = None,
     ):
-        """Add labels, additional, meta information, and images."""
+        """Add labels, additional information, and images.
+        :param old_paths: list of paths to the original images (relative)
+        :param original_splits: list of original splits (train, val, test)
+        :param task_labels: list of task labels (1 list per sample)
+        :param add_annots: list of additional annotations (1 list per sample)
+        :param images: list of PIL images
+        """
         batch_size = len(old_paths)
 
         # Filenames: {index_6_digits}.tiff
@@ -236,26 +261,25 @@ class UnifiedDatasetWriter:
             add_annots = [[]] * batch_size
 
         # Images
-        # not passed => copy from original location
-        if images is None:
+        def save_fun(img, path):
+            assert len(img.getbands()) == self.info_dict["input_size"][0]
+            assert img.size == tuple(self.info_dict["input_size"][1:])
+            img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
 
-            def copy_fun(orig_path, goal_path):
-                copyfile(os.path.join(images_in_base_path, orig_path), os.path.join(self.out_path, goal_path))
+        # in directory
+        with ThreadPool() as pool:
+            assert len(set(filepaths)) == len(filepaths)
+            pool.starmap(save_fun, zip(images, filepaths))
 
-            # multithreading since I/O bottleneck
-            with ThreadPool() as pool:
-                pool.starmap(copy_fun, zip(old_paths, filepaths))
+        # in hdf5
+        def img_to_np(img):
+            arr_img = np.array(img)
+            if len(img.getbands()) == 1:
+                arr_img = arr_img[:, :, np.newaxis]
+            return arr_img
 
-        # passed as PIL images
-        else:
-
-            def save_fun(img, path):
-                assert len(img.getbands()) == self.info_dict["input_size"][0]
-                assert img.size == tuple(self.info_dict["input_size"][1:])
-                img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
-
-            with ThreadPool() as pool:
-                pool.starmap(save_fun, zip(images, filepaths))
+        ds = self.dataset_file[self.hdf5_dataset_name]
+        ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
 
         # Check coherent lengths
         if not all(

@@ -22,7 +22,7 @@ from .utils import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, UnifiedData
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "Kermany_OCT"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "Kermany_OCT"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "kermany_oct"),
     info_path=os.path.join(INFO_PATH, "Kermany_OCT.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
