@@ -21,9 +21,9 @@ tasks:
 
 input_size: [1, 224, 224]
 num_samples:
-  train: 131
+  train: 1133
   val: 0
-  test: 70
+  test: 618
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
