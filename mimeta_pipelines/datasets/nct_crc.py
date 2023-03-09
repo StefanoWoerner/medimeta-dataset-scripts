@@ -7,7 +7,7 @@ or extracted folders in ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K and ORIGINAL_
 if zipped=False.
 
 DATA MODIFICATIONS:
-None.
+- The images are opened and resaved using PIL to avoid errors in multiprocessing.
 """
 
 import glob

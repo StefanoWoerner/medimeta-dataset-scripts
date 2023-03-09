@@ -167,8 +167,8 @@ class UnifiedDatasetWriter:
         old_paths: list[str],
         original_splits: list[str],
         task_labels: list[list[int]],
+        images: list[Image.Image],
         add_annots: list | None = None,
-        images: list[Image.Image] | None = None,
     ):
         """Add labels, additional information, and images.
         :param old_paths: list of paths to the original images (relative)
@@ -214,17 +214,9 @@ class UnifiedDatasetWriter:
         ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
 
         # Check coherent lengths
-        if not all(
-            len(ls) == batch_size
-            for ls in (
-                filepaths,
-                old_paths,
-                original_splits,
-                task_labels,
-                add_annots,
-            )
-        ) or (images and len(images) != batch_size):
-            raise ValueError("All arguments should have the same length.")
+        lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots)]
+        if not all(length == batch_size for length in lengths) or (len(images) != batch_size):
+            raise ValueError(f"All arguments should have the same length, got {lengths}.")
         # Check splits valid
         if not all(split in ("train", "val", "test") for split in original_splits):
             raise ValueError("Original splits must be of ('train', 'val', 'test').")
