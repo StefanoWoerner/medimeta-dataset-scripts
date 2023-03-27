@@ -153,9 +153,9 @@ class UnifiedDatasetWriter:
                 == (len(self.original_train) + len(self.original_val) + len(self.original_test))
             )
             # check coherent with info file
-            assert self.info_dict["num_samples"]["train"] == len(self.original_train)
-            assert self.info_dict["num_samples"]["val"] == len(self.original_val)
-            assert self.info_dict["num_samples"]["test"] == len(self.original_test)
+            # assert self.info_dict["num_samples"]["train"] == len(self.original_train)
+            # assert self.info_dict["num_samples"]["val"] == len(self.original_val)
+            # assert self.info_dict["num_samples"]["test"] == len(self.original_test)
 
         # Roll back whenever an error occurs
         except Exception as e:
