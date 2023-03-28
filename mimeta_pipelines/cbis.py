@@ -1,40 +1,30 @@
-"""Saves the ChestXRay14 dataset in the unified format.
+"""Saves the CBIS-DDSM dataset in the unified format.
 
 INPUT DATA:
-Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
-at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
-or extracted folder with the compressed subfolders extracted in place
-in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
+Expects directory as downloaded from TCIA using the downloader at
+ORIGINAL_DATA_PATH/CBIS-DDSM if sorted=False or the properly sorted and renamed folder
+in ORIGINAL_DATA_PATH/CBIOS-DDSM if sorted=True.
 
 DATA MODIFICATIONS:
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
-- The 519 images in RGBA format are converted to grayscale using the PIL.Image.convert method.
+- The region crops are resized to 224x224 using the PIL.Image.resize method with BICUBIC interpolation.
 """
 import glob
 import os
+from shutil import copytree
 
 import numpy as np
 import pandas as pd
-import tarfile
-
 import pydicom
 import yaml
 from PIL import Image
-from more_itertools import chunked
-from multiprocessing.pool import ThreadPool
-from shutil import copyfile, rmtree, copytree
 from tqdm import tqdm
-from zipfile import ZipFile
+
 from .utils import (
     INFO_PATH,
     ORIGINAL_DATA_PATH,
     UNIFIED_DATA_PATH,
     UnifiedDatasetWriter,
 )
-
-
-ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
-UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
 
 
 def sort_cbis(root_path):
@@ -73,14 +63,14 @@ def sort_cbis(root_path):
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "CBIS-DDSM"),
-    out_paths=[
+    out_paths=(
         os.path.join(UNIFIED_DATA_PATH, "cbis_mass_crop"),
         os.path.join(UNIFIED_DATA_PATH, "cbis_calc_crop"),
-    ],
-    info_paths=[
+    ),
+    info_paths=(
         os.path.join(INFO_PATH, "CBIS-DDSM_mass_cropped.yaml"),
         os.path.join(INFO_PATH, "CBIS-DDSM_calc_cropped.yaml"),
-    ],
+    ),
     batch_size=256,
     out_img_size=(224, 224),
     is_sorted=False,
@@ -93,6 +83,34 @@ def get_unified_data(
     else:
         root_path = in_path
 
+    mass_annotation_columns = {
+        "patient_id": "patient_id",
+        "breast_density": "breast_density",
+        "left or right breast": "left_or_right_breast",
+        "image view": "image_view",
+        "abnormality id": "abnormality_id",
+        "abnormality type": "abnormality_type",
+        "mass shape": "mass_shape",
+        "mass margins": "mass_margins",
+        "assessment": "assessment",
+        "pathology": "pathology",
+        "subtlety": "subtlety",
+    }
+
+    calc_annotation_columns = {
+        "patient_id": "patient_id",
+        "breast density": "breast_density",
+        "left or right breast": "left_or_right_breast",
+        "image view": "image_view",
+        "abnormality id": "abnormality_id",
+        "abnormality type": "abnormality_type",
+        "calc type": "calc_type",
+        "calc distribution": "calc_distribution",
+        "assessment": "assessment",
+        "pathology": "pathology",
+        "subtlety": "subtlety",
+    }
+
     _get_unified_data(
         root_path,
         out_paths[0],
@@ -101,6 +119,7 @@ def get_unified_data(
         out_img_size,
         label_file_train=os.path.join(root_path, "mass_case_description_train_set.csv"),
         label_file_test=os.path.join(root_path, "mass_case_description_test_set.csv"),
+        annotation_columns=mass_annotation_columns,
     )
     _get_unified_data(
         root_path,
@@ -110,6 +129,7 @@ def get_unified_data(
         out_img_size,
         label_file_train=os.path.join(root_path, "calc_case_description_train_set.csv"),
         label_file_test=os.path.join(root_path, "calc_case_description_test_set.csv"),
+        annotation_columns=calc_annotation_columns,
     )
 
 
@@ -121,6 +141,7 @@ def _get_unified_data(
     out_img_size,
     label_file_train,
     label_file_test,
+    annotation_columns,
 ):
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
@@ -131,12 +152,21 @@ def _get_unified_data(
     df_test.insert(0, "original_split", "test")
     df = pd.concat([df_train, df_test], axis=0)
 
-    task_names = [task["task_name"] for task in info_dict["tasks"] if task["task_name"] != "pathology"]
-    task_labels = [df["pathology"].apply(lambda x: 1 if x == "MALIGNANT" else 0).tolist()]
+    task_names = [
+        task["task_name"]
+        for task in info_dict["tasks"]
+        if task["task_name"] != "pathology"
+    ]
+    task_labels = [
+        df["pathology"].apply(lambda x: 1 if x == "MALIGNANT" else 0).tolist()
+    ]
     for i, task_name in enumerate(task_names):
-        concepts = info_dict["tasks"][i+1]["labels"].values()
-        task_labels.append(df[task_name].apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts]).tolist())
-
+        concepts = info_dict["tasks"][i + 1]["labels"].values()
+        task_labels.append(
+            df[task_name]
+            .apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts])
+            .tolist()
+        )
 
     cropped_img_paths = df["cropped image file path"]
     cropped_img_paths = [
@@ -155,7 +185,9 @@ def _get_unified_data(
         for p in uncropped_img_paths
     ]
 
-    splits = df['original_split'].tolist()
+    splits = df["original_split"].tolist()
+
+    annotations = df[list(annotation_columns.keys())]
 
     def get_image_data(i):
         s = sorted(
@@ -164,20 +196,24 @@ def _get_unified_data(
         )
         dcm = pydicom.read_file(s[0][1])
         im = Image.fromarray(dcm.pixel_array.astype(np.float32) / 255)
-        im = im.convert('L')
+        im = im.convert("L")
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = [tl[i] for tl in task_labels]
-        return s[0][1], splits[i], im, labels
+        return s[0][1], splits[i], im, labels, annotations.iloc[i]
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=[]) as writer:
+    with UnifiedDatasetWriter(
+        out_path, info_path, add_annot_cols=list(annotation_columns.values())
+    ) as writer:
         for i in tqdm(range(len(df))):
-            p, s, im, l = get_image_data(i)
+            p, s, im, l, a = get_image_data(i)
             writer.write(
                 old_paths=[p],
                 original_splits=[s],
                 task_labels=[l],
+                add_annots=[a],
                 images=[im],
             )
+
 
 if __name__ == "__main__":
     get_unified_data()
