@@ -209,7 +209,7 @@ class UnifiedDatasetWriter:
                 if "patient_id" in self.add_annot_cols
                 else list(sorted(self.add_annot_cols))
             )
-            ordered_cols = [*task_names, "original_filepath", "original_split", *ordered_annot_cols]
+            ordered_cols = [*self.task_column_names, "original_filepath", "original_split", *ordered_annot_cols]
             annotations_df = annotations_df[ordered_cols]
             annotations_df.to_csv(annotations_path)
             # test well-formed
