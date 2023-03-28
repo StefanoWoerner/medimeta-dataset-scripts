@@ -118,6 +118,7 @@ def get_unified_data(
         annot_path = os.path.join(
             root_path,
             annotations_folder,
+            f"annotations_of_{'testing' if 'test' in volume_path else 'training'}_set",
             os.path.split(volume_path)[1].replace("volume", "segmentation").replace(".nii", ".txt"),
         )
         organs_out = []
