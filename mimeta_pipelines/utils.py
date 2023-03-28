@@ -143,9 +143,10 @@ class UnifiedDatasetWriter:
         self.add_annot_cols = add_annot_cols
         self.task_names = [task["task_name"] for task in self.info_dict["tasks"]]
         self.annotations = []
+        self.task_column_names = [f"tasks/{task_name}" for task_name in self.task_names]
         self.annotations_cols = (
             ["filepath", "original_filepath", "original_split"]
-            + [f"tasks/{task_name}" for task_name in self.task_names]
+            + self.task_column_names
             + (list(self.add_annot_cols) if self.add_annot_cols else [])
         )
         # Initialize task labels
@@ -202,7 +203,7 @@ class UnifiedDatasetWriter:
                 data=self.annotations, columns=self.annotations_cols, index=self.annotations_cols[0]
             )
             # reorder columns
-            task_names = [f"tasks/{task_name}" for task_name in self.task_names]
+            task_names = self.task_column_names
             ordered_annot_cols = (
                 ["patient_id", *sorted(set(self.add_annot_cols) - set(["patient_id"]))]
                 if "patient_id" in self.add_annot_cols
