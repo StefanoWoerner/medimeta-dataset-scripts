@@ -1,6 +1,5 @@
 """Utilities to transform images.
 """
-import nibabel as nib
 import numpy as np
 from enum import Enum
 from PIL import Image
@@ -62,31 +61,32 @@ def ct_windowing(img: np.ndarray, window_width: float = 400, window_level: float
     return img
 
 
-def square_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]]) -> np.ndarray:
-    """Cut a square out of an image based on (non-square) bounding box (endpoint inclusive).
+def ratio_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], ratio: float = 1.0) -> np.ndarray:
+    """Cut a crop with ratio width/height of an image based on a bounding box (endpoint inclusive).
     :param img: 2D numpy array.
     :param bbox: bounding box of the image in the format ((x_min, x_max), (y_min, y_max)); max values are inclusive.
+    :param ratio: ratio width/height of the crop.
     :returns: cropped image.
     """
     img_shape = np.array(img.shape)
     # compute out bbox indices
-    square_bbox = [list(bbox[0]), list(bbox[1])]
+    out_bbox = [list(bbox[i]) for i in range(2)]
     bbox_centers = ((bbox[0][0] + bbox[0][1]) // 2, (bbox[1][0] + bbox[1][1]) // 2)
     bbox_diff = (bbox[0][1] - bbox[0][0], bbox[1][1] - bbox[1][0])
-    if bbox_diff[0] >= bbox_diff[1]:
-        square_bbox[1] = (bbox_centers[1] - bbox_diff[0] // 2, bbox_diff[0] + bbox_centers[1] - bbox_diff[0] // 2)
+    if bbox_diff[0] * ratio >= bbox_diff[1]:
+        out_bbox[1][0] = round(bbox_centers[1] - bbox_diff[0] * ratio / 2)
+        out_bbox[1][1] = out_bbox[1][0] + round(bbox_diff[0] * ratio)
     else:
-        square_bbox[0] = (bbox_centers[0] - bbox_diff[1] // 2, bbox_diff[1] + bbox_centers[0] - bbox_diff[1] // 2)
+        out_bbox[0][0] = round(bbox_centers[0] - bbox_diff[1] / ratio / 2)
+        out_bbox[0][1] = out_bbox[0][0] + round(bbox_diff[1] / ratio)
     # initialize crop
-    crop_shape = np.array((max(*bbox_diff) + 1,) * 2)  # +1 since enpoint is inclusive
+    crop_shape = np.array([out_bbox[0][1] - out_bbox[0][0] + 1, out_bbox[1][1] - out_bbox[1][0] + 1])
     crop = np.zeros(crop_shape, dtype=np.uint8)
     # calculate img slice positions
-    start = np.clip(
-        np.array([square_bbox[0][0], square_bbox[1][0]]), a_min=0, a_max=img_shape - 1
-    )  # where to start in img
-    end = np.clip(np.array([square_bbox[0][1], square_bbox[1][1]]), a_min=0, a_max=img_shape - 1)  # where to end in img
+    start = np.clip(np.array([out_bbox[0][0], out_bbox[1][0]]), a_min=0, a_max=img_shape - 1)  # where to start in img
+    end = np.clip(np.array([out_bbox[0][1], out_bbox[1][1]]), a_min=0, a_max=img_shape - 1)  # where to end in img
     # calculate crop slice positions
-    crop_low = start - np.array([square_bbox[0][0], square_bbox[1][0]])  # where to start in crop
+    crop_low = start - np.array([out_bbox[0][0], out_bbox[1][0]])  # where to start in crop
     crop_high = crop_low + (end - start)  # where to end in crop
     crop[crop_low[0] : crop_high[0] + 1, crop_low[1] : crop_high[1] + 1] = img[
         start[0] : end[0] + 1, start[1] : end[1] + 1
@@ -94,38 +94,24 @@ def square_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]]) -
     return crop
 
 
-def test_square_cut():
+def test_ratio_cut():
     img = np.array([[i] * 10 for i in range(10)])
     # inside
     crop1 = ((1, 2), (1, 2))
-    assert (square_cut(img, crop1) == np.array([[1, 1], [2, 2]])).all()
+    assert (ratio_cut(img, crop1, (2, 2)) == np.array([[1, 1], [2, 2]])).all()
     # non-square
     crop2 = ((1, 1), (2, 3))
-    assert (square_cut(img, crop2) == np.array([[1, 1], [2, 2]])).all()
+    assert (ratio_cut(img, crop2, (2, 2)) == np.array([[1, 1], [2, 2]])).all()
     # over left border
     crop3 = ((0, 0), (0, 2))
-    assert (square_cut(img, crop3) == np.array([[0, 0, 0], [0, 0, 0], [1, 1, 1]])).all()
+    assert (ratio_cut(img, crop3, (3, 3)) == np.array([[0, 0, 0], [0, 0, 0], [1, 1, 1]])).all()
     # over right border
     crop4 = ((8, 9), (9, 9))
-    assert (square_cut(img, crop4) == np.array([[8, 0], [9, 0]])).all()
-
-
-def draw_bounding_box(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]]) -> np.ndarray:
-    """Draw a bounding box on an image.
-    :param img: 2D numpy array.
-    :param bbox: bounding box of the image in the format ((x_min, x_max), (y_min, y_max)); max values are inclusive.
-    :returns: image with bounding box.
-    """
-    img = img.copy()
-    img[bbox[0][0] : bbox[0][1] + 1, bbox[1][0]] = 255
-    img[bbox[0][0] : bbox[0][1] + 1, bbox[1][1]] = 255
-    img[bbox[0][0], bbox[1][0] : bbox[1][1] + 1] = 255
-    img[bbox[0][1], bbox[1][0] : bbox[1][1] + 1] = 255
-    return img
+    assert (ratio_cut(img, crop4, (2, 2)) == np.array([[8, 0], [9, 0]])).all()
 
 
 def draw_colored_bounding_box(
-    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], color: np.ndarray
+    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], color: np.ndarray | int = 255
 ) -> np.ndarray:
     """Draw a bounding box on an image.
     :param img: 3D numpy array (color channel last).

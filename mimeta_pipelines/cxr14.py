@@ -21,8 +21,8 @@ from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
-from ..paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
-from ..writer import UnifiedDatasetWriter
+from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
