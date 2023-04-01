@@ -26,7 +26,6 @@ import numpy as np
 import os
 import pandas as pd
 import re
-import SimpleITK as sitk
 import yaml
 from math import ceil
 from multiprocessing.pool import ThreadPool
@@ -101,8 +100,8 @@ def get_unified_data(
             def get_volume_writer_input(volume_path):
                 # used for volume-related information (same for every organ)
                 row = axis_df[axis_df.volume_path == volume_path].iloc[0]
-                img = nib.load(os.path.join(root_path, volume_path)).get_fdata()
-                mask = nib.load(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
+                img = _load_nii_image(os.path.join(root_path, volume_path)).get_fdata()
+                mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
 
                 # prepare image that will show all bounding boxes
                 if axis == Slice.AXIAL:
@@ -169,8 +168,17 @@ def get_unified_data(
     _get_unified_data(out_paths[2], info_paths[2], Slice.SAGITTAL)
 
 
+def _load_nii_image(abs_path):
+    # test-volume-59 has swapped axes...correct
+    if os.path.split(abs_path)[1] == "test-volume-59.nii":
+        nii_volume = nib.load(abs_path).as_reoriented(np.array([[0, 1], [2, 1], [1, 1]]))
+    else:
+        nii_volume = nib.load(abs_path)
+    return nii_volume
+
+
 def _get_voxeldims_ratios(volume_path):
-    voxel_dims = nib.load(volume_path).header.get_zooms()
+    voxel_dims = _load_nii_image(volume_path).header.get_zooms()
     ratios = (
         voxel_dims[0] / voxel_dims[1],  # axial
         voxel_dims[0] / voxel_dims[2],  # coronal
@@ -202,12 +210,6 @@ def _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_fo
                 )
                 mask_path = None
                 organs_rel_path = os.path.join(annots_test_folder, organs_path)
-            # wrong in data...correct
-            if os.path.split(volume_path)[1] == "test-volume-59.nii":
-                nii_volume = sitk.ReadImage(os.path.join(root_path, volume_path))
-                volume_path = "test-volume-59-swapped-axes.nii"
-                nii_volume = sitk.PermuteAxes(nii_volume, [0, 2, 1])
-                sitk.WriteImage(nii_volume, os.path.join(root_path, volume_path))
             volume_paths.append(volume_path)
             organs_paths.append(organs_rel_path)
             mask_paths.append(mask_path)
