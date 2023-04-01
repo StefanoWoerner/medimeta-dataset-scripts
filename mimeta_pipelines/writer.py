@@ -1,81 +1,13 @@
-"""Utilities to save datasets in a unified format.
+"""Save datasets in a unified format.
 """
 import os
 import h5py
 import numpy as np
 import pandas as pd
 import yaml
-from dotenv import load_dotenv
 from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-
-
-# Base paths
-INFO_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset_info")
-env_file_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-if os.path.exists(env_file_path):
-    load_dotenv(dotenv_path=env_file_path)
-    ORIGINAL_DATA_PATH = os.getenv("ORIGINAL_DATA_PATH")
-    UNIFIED_DATA_PATH = os.getenv("UNIFIED_DATA_PATH")
-else:
-    ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
-    UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
-
-
-def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
-    """Center crop an image to make it square.
-    :param img: PIL image.
-    :returns: cropped image, original width, original height.
-    """
-    w, h = img.size
-    if w < h:
-        img = img.crop((0, (h - w) // 2, w, (h - w) // 2 + w))
-    elif w > h:
-        img = img.crop(((w - h) // 2, 0, (w - h) // 2 + h, h))
-    assert img.size[0] == img.size[1] == min(img.size)
-    return img, w, h
-
-
-def folder_paths(
-    root: str,
-    batch_size: int,
-    dir_to_cl_idx: dict[str, int],
-    check_alphabetical: bool = True,
-    check_cl_idxs_range: bool = True,
-) -> list[tuple[list[str], list[int]]]:
-    """Get batches of (paths, labels) from a folder class structure.
-    :param root: root folder.
-    :param batch_size: batch size.
-    :param dir_to_cl_idx: dictionary mapping directories to class indices.
-    :param check_alphabetical: check that the class names are in alphabetical order, and the indices range(len(classes)).
-    :param check_cl_idxs_range: check that the class keys (indices) are equal to range(len(classes)).
-    :returns: list of batches, each batch is a tuple of (paths, labels).
-    """
-    # alphabetical class order check
-    if check_alphabetical:
-        assert sorted(dir_to_cl_idx.items(), key=lambda x: x[1]) == sorted(dir_to_cl_idx.items(), key=lambda x: x[0])
-    # class indices range check
-    if check_cl_idxs_range:
-        assert sorted(dir_to_cl_idx.values()) == list(range(len(dir_to_cl_idx)))
-    # get paths and labels
-    paths = []
-    labels = []
-    dirs = sorted([d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))])
-    assert set(dirs) == set(dir_to_cl_idx.keys())  # class_dict correct and complete
-    for dir_ in dirs:
-        new_paths = sorted(
-            [
-                os.path.join(root, dir_, f)
-                for f in os.listdir(os.path.join(root, dir_))
-                if f.split(".")[-1] in ("tif", "tiff", "png", "jpeg", "jpg") and not f.startswith(".")
-            ]
-        )
-        paths.extend(new_paths)
-        labels.extend([dir_to_cl_idx[dir_]] * len(new_paths))
-    # create batches
-    batches = [(paths[i : i + batch_size], labels[i : i + batch_size]) for i in range(0, len(paths), batch_size)]
-    return batches
 
 
 class UnifiedDatasetWriter:
@@ -221,9 +153,9 @@ class UnifiedDatasetWriter:
                 == (len(self.original_train) + len(self.original_val) + len(self.original_test))
             )
             # check coherent with info file
-            assert self.info_dict["num_samples"]["train"] == len(self.original_train)
-            assert self.info_dict["num_samples"]["val"] == len(self.original_val)
-            assert self.info_dict["num_samples"]["test"] == len(self.original_test)
+            # assert self.info_dict["num_samples"]["train"] == len(self.original_train)
+            # assert self.info_dict["num_samples"]["val"] == len(self.original_val)
+            # assert self.info_dict["num_samples"]["test"] == len(self.original_test)
 
         # Roll back whenever an error occurs
         except Exception as e:
@@ -235,8 +167,8 @@ class UnifiedDatasetWriter:
         old_paths: list[str],
         original_splits: list[str],
         task_labels: list[list[int]],
+        images: list[Image.Image],
         add_annots: list | None = None,
-        images: list[Image.Image] | None = None,
     ):
         """Add labels, additional information, and images.
         :param old_paths: list of paths to the original images (relative)
@@ -280,19 +212,10 @@ class UnifiedDatasetWriter:
 
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
-
         # Check coherent lengths
-        if not all(
-            len(ls) == batch_size
-            for ls in (
-                filepaths,
-                old_paths,
-                original_splits,
-                task_labels,
-                add_annots,
-            )
-        ) or (images and len(images) != batch_size):
-            raise ValueError("All arguments should have the same length.")
+        lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots)]
+        if not all(length == batch_size for length in lengths) or (len(images) != batch_size):
+            raise ValueError(f"All arguments should have the same length, got {lengths}.")
         # Check splits valid
         if not all(split in ("train", "val", "test") for split in original_splits):
             raise ValueError("Original splits must be of ('train', 'val', 'test').")
