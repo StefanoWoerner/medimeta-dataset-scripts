@@ -29,7 +29,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "AIROGS.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
@@ -47,7 +47,11 @@ def get_unified_data(
         # extract all subfolders
         for subfolder in [f for f in os.listdir(root_path) if f[-4:] == ".zip"]:
             with ZipFile(os.path.join(root_path, subfolder), "r") as zf:
-                zf.extractall(os.path.join(in_path, images_rel_path))
+                for zip_info in zf.infolist():
+                    if zip_info.is_dir():
+                        continue
+                    zip_info.filename = os.path.basename(zip_info.filename)  # flattened structure
+                    zf.extract(zip_info, os.path.join(in_path, images_rel_path))
         # change path to extracted folder
         root_path = in_path
 
@@ -67,7 +71,6 @@ def get_unified_data(
         annotations["class"] = annotations["class"].map({"RG": 1, "NRG": 0})
         path2lab = dict(zip(annotations["image_path"].values, annotations["class"].values))
         lab2fulllab = info_dict["tasks"][0]["labels"]
-        images_paths = images_paths[:500]
 
         def get_image_lab_addannot_triple(path: str):
             image = Image.open(os.path.join(root_path, path))
