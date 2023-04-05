@@ -65,7 +65,8 @@ def get_unified_data(
         def get_img_annotation_pair(path: str):
             img = Image.open(path)
             # center-crop
-            img, w, h = center_crop(img)
+            w, h = img.size
+            img = center_crop(img)
             # resize
             img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             # add annotation: original size and ratio

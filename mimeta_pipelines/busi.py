@@ -59,8 +59,9 @@ def get_unified_data(
         # convert mask to binary
         mask = mask.convert("1")
         # center-crop
-        img, w, h = center_crop(img)
-        mask, _, _ = center_crop(mask)
+        w, h = img.size
+        img = center_crop(img)
+        mask = center_crop(mask)
         # resize
         if img.size[0] < out_img_size[0]:
             print("Upscaled")

@@ -56,7 +56,8 @@ def get_unified_data(
             isrgb = True
             img = img.convert("L")
         # center-crop
-        img, w, h = center_crop(img)
+        w, h = img.size
+        img = center_crop(img)
         # resize
         img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         # add annotation
