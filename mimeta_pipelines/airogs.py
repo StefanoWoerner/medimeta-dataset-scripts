@@ -14,11 +14,12 @@ import numpy as np
 import os
 import pandas as pd
 import yaml
-from PIL import Image, ImageOps
+from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
+from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
 from .writer import UnifiedDatasetWriter
 
@@ -78,7 +79,7 @@ def get_unified_data(
             referable_glaucoma = lab2fulllab[label]
             add_annot = [referable_glaucoma, image.size]
             # transform image: pad to square, resize
-            image = ImageOps.pad(image, (max(image.size),) * 2, method=Image.BICUBIC)  # pad to square
+            image = zero_pad_to_square(image)  # pad to square
             image.thumbnail(out_img_size, resample=Image.BICUBIC)  # resize
             return image, [label], add_annot
 

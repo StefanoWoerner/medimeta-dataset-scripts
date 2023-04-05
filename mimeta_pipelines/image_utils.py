@@ -2,7 +2,15 @@
 """
 import numpy as np
 from enum import Enum
-from PIL import Image
+from PIL import Image, ImageOps
+
+
+def zero_pad_to_square(img: Image.Image) -> Image.Image:
+    """Zero pad an image on the smallest dimension (centered) to make it square.
+    :param img: PIL image.
+    :returns: padded image.
+    """
+    return ImageOps.pad(img, (max(img.size),) * 2, method=Image.BICUBIC)
 
 
 def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
