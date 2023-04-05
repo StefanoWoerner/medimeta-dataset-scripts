@@ -31,7 +31,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
     batch_size=64,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
 
@@ -50,6 +50,7 @@ def get_unified_data(
     # Extract subfolders
     if zipped:
         in_path = f"{out_path}_temp"
+        os.makedirs(in_path)
         copyfile(os.path.join(root_path, readme_name), os.path.join(in_path, readme_name))
         # extract all subfolders
         for split_folder in split_folders:
