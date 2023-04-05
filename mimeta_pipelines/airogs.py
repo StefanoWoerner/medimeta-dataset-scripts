@@ -26,7 +26,7 @@ from .writer import UnifiedDatasetWriter
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "AIROGS"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "AIROGS"),
+    out_path=os.path.join(UNIFIED_DATA_PATH, "airogs"),
     info_path=os.path.join(INFO_PATH, "AIROGS.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
