@@ -40,7 +40,7 @@ def get_unified_data(
 
     # Dataset specific namings
     readme_name = "Readme_Chaksu IMAGE Database.pdf"
-    split_folders = ["Train", "Test"]
+    split_folders = ["Train"]  # TODO: test too
     devices = ["Forus", "Remidio", "Bosch"]
     expert_idxs = list(range(1, 6))
     merge_algos = ("Majority", "Mean", "Median", "STAPLE")
@@ -178,10 +178,15 @@ def _get_image_path(root_path, dir_path, image_name):
     using root_path and dir_path, and looks for a file with that name in the obtained directory.
     Fails the assert if there are more than one file (or none) with that name.
     """
+    # special case where segmentation is named differently
+    if "4.0_OD_CO" in dir_path and "Expert 4" in dir_path and image_name in ("22", "82", "83"):
+        image_name = image_name + "glsusp"
     image_paths = [
         path for path in os.listdir(os.path.join(root_path, dir_path)) if _get_image_name(path) == image_name
     ]
-    assert len(image_paths) == 1, "Image path not (uniquely) identifiable from image name"
+    assert (
+        len(image_paths) == 1
+    ), f"Image path not (uniquely) identifiable from image name {image_name} (in {os.path.join(root_path, dir_path)}) -> {image_paths}"
     return os.path.join(dir_path, image_paths[0])
 
 
@@ -197,7 +202,7 @@ def _get_images_df(root_path, split_folders, devices):
             paths = [
                 os.path.join(dir_path, path)
                 for path in os.listdir(os.path.join(root_path, dir_path))
-                if path[-4:] in (".JPG", ".png")
+                if path[-4:] in (".JPG", ".jpg", ".png")
             ]
             image_names += [_get_image_name(path) for path in paths]
             image_paths += paths
@@ -231,7 +236,7 @@ def _get_masks_df(root_path, image_paths, expert_idxs, merge_algos):
             mask_dir_path = os.path.join(base_path, f"Expert {expert_idx}", device)
         else:
             # adapt to typo in the original data
-            if device == "Remidio":
+            if device == "Remidio" and split == "Test":
                 device = "Remedio"
             mask_dir_path = os.path.join(base_path, device, merge_algo)
         mask_path = _get_image_path(root_path, mask_dir_path, image_name)
