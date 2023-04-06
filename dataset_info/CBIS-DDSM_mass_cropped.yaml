@@ -29,11 +29,11 @@ tasks:
   - task_name: "mass margins"
     task_target: MULTILABEL_CLASSIFICATION
     labels:
-      1: "CIRCUMSCRIBED"
-      2: "ILL_DEFINED"
-      3: "MICROLOBULATED"
-      4: "OBSCURED"
-      5: "SPICULATED"
+      0: "CIRCUMSCRIBED"
+      1: "ILL_DEFINED"
+      2: "MICROLOBULATED"
+      3: "OBSCURED"
+      4: "SPICULATED"
 
 input_size: [1,224,224]
 num_samples:
