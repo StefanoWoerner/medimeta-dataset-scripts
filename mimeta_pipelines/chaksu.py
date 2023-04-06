@@ -26,10 +26,10 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "CHAKSU"),
+    in_path=os.path.join(ORIGINAL_DATA_PATH, "Chaksu"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "chaksu"),
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
-    batch_size=64,
+    batch_size=128,
     out_img_size=(224, 224),
     zipped=True,
 ):
@@ -40,7 +40,7 @@ def get_unified_data(
 
     # Dataset specific namings
     readme_name = "Readme_Chaksu IMAGE Database.pdf"
-    split_folders = ["Test"]  # TODO: add train
+    split_folders = ["Train", "Test"]
     devices = ["Forus", "Remidio", "Bosch"]
     expert_idxs = list(range(1, 6))
     merge_algos = ("Majority", "Mean", "Median", "STAPLE")
@@ -55,7 +55,7 @@ def get_unified_data(
         # extract all subfolders
         for split_folder in split_folders:
             with ZipFile(os.path.join(root_path, split_folder + ".zip"), "r") as zf:
-                zf.extractall(os.path.join(in_path, split_folder))
+                zf.extractall(in_path)
         # change path to extracted folder
         root_path = in_path
 
