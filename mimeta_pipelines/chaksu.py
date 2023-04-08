@@ -29,7 +29,7 @@ def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "Chaksu"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "chaksu"),
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
-    batch_size=128,
+    batch_size=1,
     out_img_size=(224, 224),
     zipped=True,
 ):
@@ -40,7 +40,7 @@ def get_unified_data(
 
     # Dataset specific namings
     readme_name = "Readme_Chaksu IMAGE Database.pdf"
-    split_folders = ["Train"]  # TODO: test too
+    split_folders = ["Train", "Test"]
     devices = ["Forus", "Remidio", "Bosch"]
     expert_idxs = list(range(1, 6))
     merge_algos = ("Majority", "Mean", "Median", "STAPLE")
@@ -69,6 +69,8 @@ def get_unified_data(
     labels_df = _get_labels_df(root_path, split_folders, devices, expert_idxs, stats)
     info_df = images_df.join(masks_df, on="image_path", how="left")
     info_df = info_df.join(labels_df, on="image_name", how="left")
+    info_df.drop_duplicates(inplace=True)
+    info_df.reset_index(drop=True, inplace=True)
     info_df["out_index"] = info_df.index  # needed for saved masks paths
     info_df.set_index("image_path", inplace=True)
 
