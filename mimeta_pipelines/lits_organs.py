@@ -45,16 +45,16 @@ from .writer import UnifiedDatasetWriter
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "LITS"),
-    out_paths=[
+    out_paths=(
         os.path.join(UNIFIED_DATA_PATH, "lits_organs_axial"),
         os.path.join(UNIFIED_DATA_PATH, "lits_organs_coronal"),
         os.path.join(UNIFIED_DATA_PATH, "lits_organs_sagittal"),
-    ],
-    info_paths=[
+    ),
+    info_paths=(
         os.path.join(INFO_PATH, "LiTS_organ_slices_axial.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_coronal.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_sagittal.yaml"),
-    ],
+    ),
     batch_size=2,
     out_img_size=(224, 224),
 ):
