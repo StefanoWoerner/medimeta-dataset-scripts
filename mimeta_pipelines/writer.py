@@ -92,9 +92,13 @@ class UnifiedDatasetWriter:
         self.hdf5_dataset_name = "images"
         self.dataset_file = h5py.File(self.hdf5_path, "w")
         dataset_length = sum(list(self.info_dict["num_samples"].values()))
+        if self.out_img_shape[0] > 1:
+            dataset_shape = (dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
+        else:
+            dataset_shape = (dataset_length, *self.out_img_shape[1:])
         self.dataset_file.create_dataset(
             self.hdf5_dataset_name,
-            shape=(dataset_length, *self.out_img_shape[1:], self.out_img_shape[0]),  # (n_dpoints, H, W, C) size
+            shape=dataset_shape,
             dtype=dtype,
         )
         # Initialize image counter
@@ -203,15 +207,8 @@ class UnifiedDatasetWriter:
             assert len(set(filepaths)) == len(filepaths)
             pool.starmap(save_fun, zip(images, filepaths))
 
-        # in hdf5
-        def img_to_np(img):
-            arr_img = np.array(img)
-            if len(img.getbands()) == 1:
-                arr_img = arr_img[:, :, np.newaxis]
-            return arr_img
-
         ds = self.dataset_file[self.hdf5_dataset_name]
-        ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
+        ds[self.current_idx - batch_size : self.current_idx] = [np.array(img) for img in images]
         # Check coherent lengths
         lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots, images)]
         if not all(length == batch_size for length in lengths) or (len(images) != batch_size):
