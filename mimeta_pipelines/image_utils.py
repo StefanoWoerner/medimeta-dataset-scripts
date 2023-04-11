@@ -116,7 +116,7 @@ def draw_colored_bounding_box(
     """Draw a bounding box on an image.
     :param img: 3D numpy array (color channel last).
     :param bbox: bounding box of the image in the format ((x_min, x_max), (y_min, y_max)); max values are inclusive.
-    :param color: 1D numpy array (length 3) color of the bounding box.
+    :param color: 1D numpy array (length 3) or int specifying color of the bounding box.
     :returns: image with bounding box.
     """
     img = img.copy()
