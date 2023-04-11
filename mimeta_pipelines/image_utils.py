@@ -51,13 +51,13 @@ def ct_windowing(img: np.ndarray, window_width: float = 400, window_level: float
     :param img: 2D numpy array.
     :param window_width: window width.
     :param window_level: window level.
-    :returns: windowed image.
+    :returns: windowed image (float array in [0, 1])
     """
     lower = window_level - window_width / 2
     upper = window_level + window_width / 2
     img[img < lower] = lower
     img[img > upper] = upper
-    img = (255.0 * (img - lower) / (upper - lower)).astype(np.uint8)
+    img = (img - lower) / (upper - lower)
     return img
 
 
@@ -81,7 +81,7 @@ def ratio_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], ra
         out_bbox[0][1] = out_bbox[0][0] + round(bbox_diff[1] / ratio)
     # initialize crop
     crop_shape = np.array([out_bbox[0][1] - out_bbox[0][0] + 1, out_bbox[1][1] - out_bbox[1][0] + 1])
-    crop = np.zeros(crop_shape, dtype=np.uint8)
+    crop = np.zeros(crop_shape, dtype=img.dtype)
     # calculate img slice positions
     start = np.clip(np.array([out_bbox[0][0], out_bbox[1][0]]), a_min=0, a_max=img_shape - 1)  # where to start in img
     end = np.clip(np.array([out_bbox[0][1], out_bbox[1][1]]), a_min=0, a_max=img_shape - 1)  # where to end in img

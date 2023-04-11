@@ -111,6 +111,7 @@ def get_unified_data(
                 elif axis == Slice.SAGITTAL:
                     bboxes_img = img[img.shape[0] // 2, :, :]
                 bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{axis.name.lower()}"), 1), order=3)
+                bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
                 bboxes_img = np.array(Image.fromarray(bboxes_img).convert("RGB"))
                 bboxes_img_path = os.path.join(
                     img_bboxes_path, os.path.split(volume_path)[1].replace("volume", "bboxes").replace("nii", "tiff")
