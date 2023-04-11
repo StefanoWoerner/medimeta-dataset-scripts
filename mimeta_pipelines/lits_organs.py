@@ -10,7 +10,7 @@ DATA MODIFICATIONS:
     (and to add coeherence with the annotations).
 - The images and masks are sliced from the original 3D volumes in axial, coronal and sagittal directions,
     taking the center of the bounding box in the slice axis.
-- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale with an abdominal window.
+- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale with an abdominal window with W=400, L=50.
 - The images and masks are cropped to a square in the physical space, keeping the center of the bounding box and expanding the smaller side.
 - The images and masks are resized to 224x224 (images with bicubic interpolation, masks taking the nearest value).
 
