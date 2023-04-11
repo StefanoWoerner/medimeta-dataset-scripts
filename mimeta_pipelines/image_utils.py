@@ -19,27 +19,27 @@ def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
     return img, w, h
 
 
-Slice = Enum("Slice", ["SAGITTAL", "CORONAL", "AXIAL"])
+AnatomicalPlane = Enum("AnatomicalPlane", ["SAGITTAL", "CORONAL", "AXIAL"])
 
 
 def slice_3d_image(
-    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int], tuple[int, int]], axis: Slice
+    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int], tuple[int, int]], plane: AnatomicalPlane
 ) -> tuple[np.ndarray, tuple[tuple[int, int], tuple[int, int]]]:
     """Slice a 3D nii image and corresponing bounding box into a 2D image with the corresponding bounding box,
-    for the given axis (sagittal, coronal, axial).
+    for the given plane (sagittal, coronal, axial).
     :param img: 3d image in numpy array.
     :param bbox: bounding box of the 3D image in the format ((x_min, x_max), (y_min, y_max), (z_min, z_max)).
-    :param axis: axis to slice the image.
+    :param plane: plane to slice the image.
     :returns: tuple of 3 tuples (sagittal, coronal, axial), each containing a 2D image and its corresponding bounding box.
     """
     assert all([img.shape[i] >= bbox[i][1] and bbox[i][1] >= bbox[i][0] for i in range(3)])
-    if axis == Slice.SAGITTAL:
+    if plane == AnatomicalPlane.SAGITTAL:
         img = img[(bbox[0][0] + bbox[0][1]) // 2, :, :]
         bbox = (bbox[1], bbox[2])
-    elif axis == Slice.CORONAL:
+    elif plane == AnatomicalPlane.CORONAL:
         img = img[:, (bbox[1][0] + bbox[1][1]) // 2, :]
         bbox = (bbox[0], bbox[2])
-    elif axis == Slice.AXIAL:
+    elif plane == AnatomicalPlane.AXIAL:
         img = img[:, :, (bbox[2][0] + bbox[2][1]) // 2]
         bbox = (bbox[0], bbox[1])
     return img, bbox

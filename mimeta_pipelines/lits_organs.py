@@ -9,7 +9,7 @@ DATA MODIFICATIONS:
 - The second and third axes of the image "test-volume-59.nii" are permuted, to bring it to the same format as the other images
     (and to add coeherence with the annotations).
 - The images and masks are sliced from the original 3D volumes in axial, coronal and sagittal directions,
-    taking the center of the bounding box in the slice axis.
+    taking the center of the bounding box in the slice plane.
 - The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale with an abdominal window with W=400, L=50.
 - The images and masks are cropped to a square in the physical space, keeping the center of the bounding box and expanding the smaller side.
 - The images and masks are resized to 224x224 (images with bicubic interpolation, masks taking the nearest value).
@@ -36,7 +36,7 @@ from .image_utils import (
     slice_3d_image,
     ct_windowing,
     ratio_cut,
-    Slice,
+    AnatomicalPlane,
     draw_colored_bounding_box,
 )
 from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
@@ -86,11 +86,11 @@ def get_unified_data(
         "original_bbox",
     ]
 
-    # To be called once for each axis
-    def _get_unified_data(out_path, info_path, axis):
+    # To be called once for each plane
+    def _get_unified_data(out_path, info_path, plane):
         with UnifiedDatasetWriter(out_path, info_path, add_annot_cols) as writer:
             # Get labeling transformations and legend for colored bounding boxes
-            axis_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
+            plane_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
             # Create output folders
             os.makedirs(os.path.join(out_path, masks_path), exist_ok=True)
             os.makedirs(os.path.join(out_path, img_bboxes_path), exist_ok=True)
@@ -99,18 +99,18 @@ def get_unified_data(
             # Processing function
             def get_volume_writer_input(volume_path):
                 # used for volume-related information (same for every organ)
-                row = axis_df[axis_df.volume_path == volume_path].iloc[0]
+                row = plane_df[plane_df.volume_path == volume_path].iloc[0]
                 img = _load_nii_image(os.path.join(root_path, volume_path)).get_fdata()
                 mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
 
                 # prepare image that will show all bounding boxes
-                if axis == Slice.AXIAL:
+                if plane == AnatomicalPlane.AXIAL:
                     bboxes_img = img[:, :, img.shape[2] // 2]
-                elif axis == Slice.CORONAL:
+                elif plane == AnatomicalPlane.CORONAL:
                     bboxes_img = img[:, img.shape[1] // 2, :]
-                elif axis == Slice.SAGITTAL:
+                elif plane == AnatomicalPlane.SAGITTAL:
                     bboxes_img = img[img.shape[0] // 2, :, :]
-                bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{axis.name.lower()}"), 1), order=3)
+                bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{plane.name.lower()}"), 1), order=3)
                 bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
                 bboxes_img = np.array(Image.fromarray(bboxes_img).convert("RGB"))
                 bboxes_img_path = os.path.join(
@@ -122,9 +122,9 @@ def get_unified_data(
                 add_annots = []
 
                 # process organs
-                for row in axis_df[axis_df["volume_path"] == volume_path].itertuples():
+                for row in plane_df[plane_df["volume_path"] == volume_path].itertuples():
                     organ_img, organ_mask_img, bboxes_img = _get_organ_img_mask(
-                        img, mask, bboxes_img, row, axis, out_img_size
+                        img, mask, bboxes_img, row, plane, out_img_size
                     )
                     if mask is not None:
                         organ_mask_img_path = os.path.join(masks_path, f"{(row.Index):06d}.tiff")
@@ -153,9 +153,9 @@ def get_unified_data(
                 return old_paths, original_splits, task_labels, images, add_annots
 
             # Batch processing of images
-            all_volume_paths = axis_df["volume_path"].unique()
+            all_volume_paths = plane_df["volume_path"].unique()
             batches = np.array_split(all_volume_paths, ceil(len(all_volume_paths) / batch_size))
-            for volume_paths in tqdm(batches, desc=f"Processing LITS dataset, {axis.name.lower()} axis"):
+            for volume_paths in tqdm(batches, desc=f"Processing LITS dataset, {plane.name.lower()} plane"):
                 with ThreadPool(batch_size) as pool:
                     writer_inputs = pool.map(get_volume_writer_input, volume_paths)
                 # join all sublists into one list
@@ -164,9 +164,9 @@ def get_unified_data(
                 ]
                 writer.write(*writer_input)
 
-    _get_unified_data(out_paths[0], info_paths[0], Slice.AXIAL)
-    _get_unified_data(out_paths[1], info_paths[1], Slice.CORONAL)
-    _get_unified_data(out_paths[2], info_paths[2], Slice.SAGITTAL)
+    _get_unified_data(out_paths[0], info_paths[0], AnatomicalPlane.AXIAL)
+    _get_unified_data(out_paths[1], info_paths[1], AnatomicalPlane.CORONAL)
+    _get_unified_data(out_paths[2], info_paths[2], AnatomicalPlane.SAGITTAL)
 
 
 def _load_nii_image(abs_path):
@@ -289,18 +289,18 @@ def _transform_labels(df, info_path):
     return df, fig
 
 
-def _get_organ_img_mask(img, mask, bboxes_img, row, axis, out_img_size):
-    ratio = getattr(row, f"ratio_{axis.name.lower()}")
+def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
+    ratio = getattr(row, f"ratio_{plane.name.lower()}")
     bbox = row.bbox
     # Organ image
-    organ_img, bbox_2d = slice_3d_image(img, bbox, axis)
+    organ_img, bbox_2d = slice_3d_image(img, bbox, plane)
     organ_img = ct_windowing(organ_img)
     organ_img = ratio_cut(organ_img, bbox_2d, ratio)
     organ_img = Image.fromarray(organ_img)
     organ_img = organ_img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
     # Organ mask
     if mask is not None:
-        mask_img, _ = slice_3d_image(mask, bbox, axis)
+        mask_img, _ = slice_3d_image(mask, bbox, plane)
         mask_img = mask_img.astype(bool)
         mask_img = Image.fromarray(mask_img)
         mask_img = mask_img.resize(out_img_size, resample=Image.Resampling.NEAREST)
