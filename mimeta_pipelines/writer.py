@@ -213,7 +213,7 @@ class UnifiedDatasetWriter:
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[self.current_idx - batch_size : self.current_idx] = [img_to_np(img) for img in images]
         # Check coherent lengths
-        lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots)]
+        lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots, images)]
         if not all(length == batch_size for length in lengths) or (len(images) != batch_size):
             raise ValueError(f"All arguments should have the same length, got {lengths}.")
         # Check splits valid
