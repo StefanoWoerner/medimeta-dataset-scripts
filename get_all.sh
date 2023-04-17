@@ -6,7 +6,7 @@
 #SBATCH --time=0-05:00
 #SBATCH --partition=cpu-short
 #SBATCH --gres=gpu:0
-#SBATCH --mem=100G
+#SBATCH --mem=200G
 #SBATCH --output=mimetadata_%j.out
 #SBATCH --error=mimetadata_%j.err
 #SBATCH --mail-type=ALL
@@ -18,7 +18,7 @@ conda activate meta_learning
 
 scontrol show job $SLURM_JOB_ID
 
-declare -ar non_script_py_files=("utils.py")
+declare -ar non_script_py_files=("writer.py", "image_utils.py", "paths.py")
 for f in mimeta_pipelines/*.py
 do
     if ! [[ " ${non_script_py_files[*]} " =~ " $f " ]]
