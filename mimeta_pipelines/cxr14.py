@@ -115,7 +115,7 @@ def get_unified_data(
         )
         gender_to_idx = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
         metadata["patient_gender_f_m"] = metadata["patient_gender"]
-        metadata["patient_gender"] = metadata["patient_gender"].apply(lambda g: gender_to_idx[g])
+        metadata["patient_gender"] = metadata["patient_gender"].map(gender_to_idx)
         # bounding boxes
         bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
         bboxes["bounding_box"] = (

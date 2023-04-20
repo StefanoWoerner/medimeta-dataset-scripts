@@ -10,14 +10,11 @@ DATA MODIFICATIONS:
 - The images are resized to out_img_size by 0-padding them to squares and resizing using the PIL library.
 """
 
-import numpy as np
 import os
 import pandas as pd
 import yaml
 from PIL import Image
-from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
 from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
@@ -28,7 +25,6 @@ def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "AIROGS"),
     out_path=os.path.join(UNIFIED_DATA_PATH, "airogs"),
     info_path=os.path.join(INFO_PATH, "AIROGS.yaml"),
-    batch_size=256,
     out_img_size=(224, 224),
     zipped=True,
 ):
@@ -38,7 +34,6 @@ def get_unified_data(
         info_dict = yaml.safe_load(f)
 
     images_rel_path = "images"
-
     root_path = in_path
     # extract subfolders
     if zipped:
@@ -56,43 +51,35 @@ def get_unified_data(
         # change path to extracted folder
         root_path = in_path
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["referable_glaucoma", "original_size"]) as writer:
-        images_paths = sorted(
-            [
-                os.path.join(images_rel_path, i_p)
-                for i_p in os.listdir(os.path.join(root_path, images_rel_path))
-                if i_p[-4:] == ".jpg"
-            ]
-        )
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
+        images_paths = [
+            os.path.join(images_rel_path, i_p)
+            for i_p in os.listdir(os.path.join(root_path, images_rel_path))
+            if i_p[-4:] == ".jpg"
+        ]
         annotations = pd.read_csv(os.path.join(root_path, "train_labels.csv")).sort_values(by="challenge_id")
-        annotations["image_path"] = annotations["challenge_id"].apply(
+        annotations["original_filepath"] = annotations["challenge_id"].apply(
             lambda p: os.path.join(images_rel_path, p + ".jpg")
         )
-        # assert images_paths == annotations["images_paths"].values.tolist(), "Images paths do not match."
-        annotations["class"] = annotations["class"].map({"RG": 1, "NRG": 0})
-        path2lab = dict(zip(annotations["image_path"].values, annotations["class"].values))
-        lab2fulllab = info_dict["tasks"][0]["labels"]
+        assert set(annotations["original_filepath"]) == set(images_paths)
+        annotations["original_split"] = "train"
+        annotations[info_dict["tasks"][0]["task_name"]] = annotations["class"].map({"RG": 1, "NRG": 0})
+        # keep only needed columns
+        annotations = annotations[["original_filepath", "original_split", info_dict["tasks"][0]["task_name"]]]
 
-        def get_image_lab_addannot_triple(path: str):
+        def get_image_addannot_pair(df_row):
+            """
+            :param df_row: row of the annotations dataframe.
+            :returns: image (PIL.Image), additional annotations (dict)"""
+            path = df_row["original_filepath"]
             image = Image.open(os.path.join(root_path, path))
-            label = path2lab[path]
-            referable_glaucoma = lab2fulllab[label]
-            add_annot = [referable_glaucoma, image.size]
+            add_annot = {"original_image_size": image.size}
             # transform image: pad to square, resize
             image = zero_pad_to_square(image)  # pad to square
             image.thumbnail(out_img_size, resample=Image.BICUBIC)  # resize
-            return image, [label], add_annot
+            return image, add_annot
 
-        for paths in tqdm(np.array_split(images_paths, len(images_paths) // batch_size), desc="Processing AIROGS"):
-            with ThreadPool() as pool:
-                imgs_labs_annots = pool.map(get_image_lab_addannot_triple, paths)
-            writer.write(
-                old_paths=paths,
-                original_splits=["train"] * len(paths),
-                task_labels=[img_lab_annot[1] for img_lab_annot in imgs_labs_annots],
-                images=[img_lab_annot[0] for img_lab_annot in imgs_labs_annots],
-                add_annots=[img_lab_annot[2] for img_lab_annot in imgs_labs_annots],
-            )
+        writer.write_from_dataframe(df=annotations, processing_func=get_image_addannot_pair)
 
     # remove extracted folder to free up space
     if zipped:

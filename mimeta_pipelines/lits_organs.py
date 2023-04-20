@@ -27,7 +27,6 @@ import os
 import pandas as pd
 import re
 import yaml
-from math import ceil
 from multiprocessing.pool import ThreadPool
 from PIL import Image
 from scipy.ndimage import zoom
@@ -55,7 +54,6 @@ def get_unified_data(
         os.path.join(INFO_PATH, "LiTS_organ_slices_coronal.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_sagittal.yaml"),
     ),
-    batch_size=2,
     out_img_size=(224, 224),
 ):
     for out_path in out_paths:
@@ -153,16 +151,10 @@ def get_unified_data(
                 return old_paths, original_splits, task_labels, images, add_annots
 
             # Batch processing of images
-            all_volume_paths = plane_df["volume_path"].unique()
-            batches = np.array_split(all_volume_paths, ceil(len(all_volume_paths) / batch_size))
-            for volume_paths in tqdm(batches, desc=f"Processing LITS dataset, {plane.name.lower()} plane"):
-                with ThreadPool(batch_size) as pool:
-                    writer_inputs = pool.map(get_volume_writer_input, volume_paths)
-                # join all sublists into one list
-                writer_input = [
-                    [el for input in writer_inputs for el in input[i]] for i in range(len(writer_inputs[0]))
-                ]
-                writer.write(*writer_input)
+            volume_paths = plane_df["volume_path"].unique()
+            for volume_path in tqdm(volume_paths, desc=f"Processing LITS dataset, {plane.name.lower()} plane"):
+                writer_input = get_volume_writer_input(volume_path)
+                writer.write_many(*writer_input)
 
     _get_unified_data(out_paths[0], info_paths[0], AnatomicalPlane.AXIAL)
     _get_unified_data(out_paths[1], info_paths[1], AnatomicalPlane.CORONAL)
