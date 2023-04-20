@@ -31,8 +31,6 @@ OUTPUT DATA:
 
 import os
 import re
-from math import ceil
-from multiprocessing.pool import ThreadPool
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -40,9 +38,9 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 import yaml
+from multiprocessing import Lock
 from PIL import Image
 from scipy.ndimage import zoom
-from tqdm import tqdm
 
 from .image_utils import (
     slice_3d_image,
@@ -62,7 +60,6 @@ def get_unified_data(
         os.path.join(INFO_PATH, "LiTS_organ_slices_coronal.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_sagittal.yaml"),
     ),
-    batch_size=2,
     out_img_size=(224, 224),
 ):
     out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
@@ -81,94 +78,47 @@ def get_unified_data(
     df = _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_folder, annots_test_folder)
     df = _get_organs_dataframe(df, root_path)
 
-    # Additional annotation columns
-    add_annot_cols = [
-        "organ_name",
-        "original_image_size",
-        "original_voxel_dims",
-        "mask_filepath",
-        "original_mask_filepath",
-        "bboxes_image_filepath",
-        "original_bbox",
-    ]
-
     # To be called once for each plane
     def _get_unified_data(out_path, info_path, plane):
-        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols) as writer:
+        with UnifiedDatasetWriter(out_path, info_path) as writer:
             # Get labeling transformations and legend for colored bounding boxes
             plane_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
             # Create output folders
             os.makedirs(os.path.join(out_path, masks_path), exist_ok=True)
             os.makedirs(os.path.join(out_path, img_bboxes_path), exist_ok=True)
             bboxes_label_fig.savefig(os.path.join(out_path, img_bboxes_path, "legend.png"))
+            # Prepare images that will show all bounding boxes
+            plane_df.to_csv("test_plane.csv")
+            plane_df = _prepare_bboxes_images(plane_df, plane, root_path, out_path, img_bboxes_path)
+            # multiprocessing requires the bounding boxes images to be locked
+            bboxes_locks = {bboxes_img_path: Lock() for bboxes_img_path in plane_df["bboxes_image_path"].unique()}
 
             # Processing function
-            def get_volume_writer_input(volume_path):
-                # used for volume-related information (same for every organ)
-                row = plane_df[plane_df.volume_path == volume_path].iloc[0]
-                img = _load_nii_image(os.path.join(root_path, volume_path)).get_fdata()
-                mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
-
-                # prepare image that will show all bounding boxes
-                if plane == AnatomicalPlane.AXIAL:
-                    bboxes_img = img[:, :, img.shape[2] // 2]
-                elif plane == AnatomicalPlane.CORONAL:
-                    bboxes_img = img[:, img.shape[1] // 2, :]
-                elif plane == AnatomicalPlane.SAGITTAL:
-                    bboxes_img = img[img.shape[0] // 2, :, :]
-                bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{plane.name.lower()}"), 1), order=3)
-                bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
-                bboxes_img = np.array(Image.fromarray(bboxes_img).convert("RGB"))
-                bboxes_img_path = os.path.join(
-                    img_bboxes_path, os.path.split(volume_path)[1].replace("volume", "bboxes").replace("nii", "tiff")
+            def get_image_addannot_pair(df_row):
+                img = _load_nii_image(os.path.join(root_path, df_row["original_filepath"])).get_fdata()
+                mask = (
+                    _load_nii_image(os.path.join(root_path, df_row["original_mask_filepath"])).get_fdata()
+                    if df_row["original_mask_filepath"]
+                    else None
                 )
-
-                images = []
-                task_labels = []
-                add_annots = []
-
-                # process organs
-                for row in plane_df[plane_df["volume_path"] == volume_path].itertuples():
-                    organ_img, organ_mask_img, bboxes_img = _get_organ_img_mask(
-                        img, mask, bboxes_img, row, plane, out_img_size
-                    )
-                    if mask is not None:
-                        organ_mask_img_path = os.path.join(masks_path, f"{(row.Index):06d}.tiff")
-                        organ_mask_img.save(os.path.join(out_path, organ_mask_img_path))
-                    else:
-                        organ_mask_img_path = None
-                    images.append(organ_img)
-                    task_labels.append([row.new_idx])
-                    add_annots.append(
-                        [
-                            row.new_label,  # organ_name
-                            img.shape,  # original_image_size
-                            row.voxel_dims,  # original_voxel_dims
-                            organ_mask_img_path,  # mask_filepath
-                            row.mask_path,  # original_mask_filepath
-                            bboxes_img_path,  # bboxes_image_filepath
-                            row.bbox,  # original_bbox
-                        ]
-                    )
-
-                bboxes_img = Image.fromarray(bboxes_img, mode="RGB")
+                bboxes_img_path = df_row["bboxes_image_path"]
+                lock = bboxes_locks[bboxes_img_path]
+                lock.acquire()
+                bboxes_img = np.array(Image.open(os.path.join(out_path, bboxes_img_path)))
+                organ_img, organ_mask_img, bboxes_img = _get_organ_img_mask_bboxes(
+                    img, mask, bboxes_img, df_row, plane, out_img_size
+                )
                 bboxes_img.save(os.path.join(out_path, bboxes_img_path))
+                lock.release()
+                if mask is not None:
+                    organ_mask_img_path = os.path.join(masks_path, writer.image_name_from_index(df_row["index"]))
+                    organ_mask_img.save(os.path.join(out_path, organ_mask_img_path))
+                else:
+                    organ_mask_img_path = None
+                add_annot = {"original_image_size": img.size, "mask_filepath": organ_mask_img_path}
+                return organ_img, add_annot
 
-                old_paths = [volume_path] * len(images)
-                original_splits = [row.split] * len(images)
-                return old_paths, original_splits, task_labels, images, add_annots
-
-            # Batch processing of images
-            all_volume_paths = plane_df["volume_path"].unique()
-            batches = np.array_split(all_volume_paths, ceil(len(all_volume_paths) / batch_size))
-            for volume_paths in tqdm(batches, desc=f"Processing LITS dataset, {plane.name.lower()} plane"):
-                with ThreadPool(batch_size) as pool:
-                    writer_inputs = pool.map(get_volume_writer_input, volume_paths)
-                # join all sublists into one list
-                writer_input = [
-                    [el for input in writer_inputs for el in input[i]] for i in range(len(writer_inputs[0]))
-                ]
-                writer.write(*writer_input)
+            writer.write_from_dataframe(df=plane_df, processing_func=get_image_addannot_pair)
 
     _get_unified_data(out_paths[0], info_paths[0], AnatomicalPlane.AXIAL)
     _get_unified_data(out_paths[1], info_paths[1], AnatomicalPlane.CORONAL)
@@ -233,14 +183,14 @@ def _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_fo
         _process_file(annot, "test")
     df = pd.DataFrame(
         {
-            "volume_path": volume_paths,
-            "mask_path": mask_paths,
-            "split": splits,
+            "original_filepath": volume_paths,
+            "original_mask_filepath": mask_paths,
+            "original_split": splits,
             "volume_idx": idxs,
-            "voxel_dims": voxel_dims,
-            "ratio_axial": ratios[0],
-            "ratio_coronal": ratios[1],
-            "ratio_sagittal": ratios[2],
+            "original_voxel_dims": voxel_dims,
+            "original_voxel_ratio_axial": ratios[0],
+            "original_voxel_ratio_coronal": ratios[1],
+            "original_voxel_ratio_sagittal": ratios[2],
         },
         index=organs_paths,
     )
@@ -256,10 +206,14 @@ def _get_organs_dataframe(volumes_df, root_path):
                 # join bbox coordinates
                 bbox = ((int(t[2]), int(t[3])), (int(t[4]), int(t[5])), (int(t[6]), int(t[7])))
                 data.append((organs_path, t[0], t[1], bbox))
-    df = pd.DataFrame(data, columns=["organs_path", "old_label", "old_idx", "bbox"])
+    df = pd.DataFrame(data, columns=["organs_path", "old_label", "old_idx", "original_bbox"])
     organs_df = df.join(volumes_df, on="organs_path", how="left")
-    organs_df["split_idx"] = organs_df["split"].map({"train": 0, "test": 1})
-    organs_df = organs_df.sort_values(by=["split_idx", "volume_idx"]).reset_index(drop=True).drop(columns=["split_idx"])
+    organs_df["split_idx"] = organs_df["original_split"].map({"train": 0, "test": 1})
+    organs_df = (
+        organs_df.sort_values(by=["split_idx", "volume_idx"])
+        .reset_index(drop=True)
+        .drop(columns=["split_idx", "volume_idx"])
+    )
     return organs_df
 
 
@@ -279,7 +233,8 @@ def _transform_labels(df, info_path):
         "femur-l": "left femoral head",
         "femur-r": "right femoral head",
     }
-    newlab2idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+    task = info_dict["tasks"][0]
+    newlab2idx = {v: k for k, v in task["labels"].items()}
     oldlab2idx = {k: newlab2idx[v] for k, v in oldlab2newlab.items()}
     oldlab2color = {
         oldlab: (np.array(matplotlib.cm.get_cmap("Set3")(i)[:3]) * 255).astype("uint8")
@@ -289,15 +244,15 @@ def _transform_labels(df, info_path):
     for i, (oldlab, color) in enumerate(oldlab2color.items()):
         ax.axhspan(i, i + 1, facecolor=color / 255)
         ax.text(0.5, i + 0.5, oldlab2newlab[oldlab], ha="center", va="center", color="black")
-    df["new_label"] = df["old_label"].map(oldlab2newlab)
-    df["new_idx"] = df["old_label"].map(oldlab2idx)
-    df["organ_color"] = df["old_label"].map(oldlab2color)
+    df[task["task_name"]] = df["old_label"].map(oldlab2idx)
+    df["organ_bbox_color"] = df["old_label"].map(oldlab2color)
+    df.drop(columns=["old_label", "old_idx"], inplace=True)
     return df, fig
 
 
-def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
-    ratio = getattr(row, f"ratio_{plane.name.lower()}")
-    bbox = row.bbox
+def _get_organ_img_mask_bboxes(img, mask, bboxes_img, row, plane, out_img_size):
+    ratio = row[f"original_voxel_ratio_{plane.name.lower()}"]
+    bbox = row["original_bbox"]
     # Organ image
     organ_img, bbox_2d = slice_3d_image(img, bbox, plane)
     organ_img = ct_windowing(organ_img)
@@ -314,9 +269,31 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
         mask_img = None
     # Bounding boxes image: draw organ bounding box
     bbox_bboxes_img = ([round(v * ratio) for v in bbox_2d[0]], bbox_2d[1])
-    organ_color = row.organ_color
-    bboxes_img = draw_colored_bounding_box(bboxes_img, bbox_bboxes_img, organ_color)
+    organ_color = row["organ_bbox_color"]
+    bboxes_img = Image.fromarray(draw_colored_bounding_box(bboxes_img, bbox_bboxes_img, organ_color))
     return organ_img, mask_img, bboxes_img
+
+
+def _prepare_bboxes_images(plane_df, plane, root_path, out_path, img_bboxes_path):
+    plane_df["bboxes_image_path"] = plane_df["original_filepath"].apply(
+        lambda x: os.path.join(img_bboxes_path, os.path.split(x)[1].replace(".nii", ".tiff"))
+    )
+    ratio_col = f"original_voxel_ratio_{plane.name.lower()}"
+    for volume_path, bboxes_path, ratio in plane_df.groupby(
+        ["original_filepath", "bboxes_image_path", ratio_col]
+    ).groups:
+        img = _load_nii_image(os.path.join(root_path, volume_path)).get_fdata()
+        if plane == AnatomicalPlane.AXIAL:
+            bboxes_img = img[:, :, img.shape[2] // 2]
+        elif plane == AnatomicalPlane.CORONAL:
+            bboxes_img = img[:, img.shape[1] // 2, :]
+        elif plane == AnatomicalPlane.SAGITTAL:
+            bboxes_img = img[img.shape[0] // 2, :, :]
+        bboxes_img = zoom(ct_windowing(bboxes_img), (ratio, 1), order=3)
+        bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
+        bboxes_img = Image.fromarray(bboxes_img).convert("RGB")
+        bboxes_img.save(os.path.join(out_path, bboxes_path))
+    return plane_df
 
 
 def main():
