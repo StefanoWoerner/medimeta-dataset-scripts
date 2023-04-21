@@ -8,7 +8,7 @@ Chákṣu IMAGE consists of 1345 retinal fundus images stored in JPEG/PNG format
 The entire database of 1345 fundus images is divided into training and test subsets comprising 1009 images and 336 images, respectively. The train and test subsets are approximately in the ratio of 3:1. The database provides information about OD and OC height/width/area, and neuroretinal rim area leading to the computation of clinically relevant glaucoma parameters such as vertical cup-to-disc ratio (VCDR), horizontal cup-to-disc ratio (HCDR), and area cup-to-disc ratio (ACDR) from the experts’ annotations. "
 
 tasks:
-  - task_name: "Glaucoma suspect?"
+  - task_name: "Glaucoma suspect"
     task_target: BINARY_CLASSIFICATION
     labels:
       0: "Normal"
