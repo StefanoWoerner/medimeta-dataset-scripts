@@ -2,13 +2,21 @@
 """
 import numpy as np
 from enum import Enum
-from PIL import Image
+from PIL import Image, ImageOps
 
 
-def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
+def zero_pad_to_square(img: Image.Image) -> Image.Image:
+    """Zero pad an image on the smallest dimension (centered) to make it square.
+    :param img: PIL image.
+    :returns: padded image.
+    """
+    return ImageOps.pad(img, (max(img.size),) * 2, method=Image.BICUBIC)
+
+
+def center_crop(img: Image.Image) -> Image.Image:
     """Center crop an image to make it square.
     :param img: PIL image.
-    :returns: cropped image, original width, original height.
+    :returns: cropped image.
     """
     w, h = img.size
     if w < h:
@@ -16,7 +24,7 @@ def center_crop(img: Image.Image) -> tuple[Image.Image, int, int]:
     elif w > h:
         img = img.crop(((w - h) // 2, 0, (w - h) // 2 + h, h))
     assert img.size[0] == img.size[1] == min(img.size)
-    return img, w, h
+    return img
 
 
 AnatomicalPlane = Enum("AnatomicalPlane", ["SAGITTAL", "CORONAL", "AXIAL"])

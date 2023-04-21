@@ -3,8 +3,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --nodes=1
-#SBATCH --time=0-05:00
-#SBATCH --partition=cpu-short
+#SBATCH --time=0-20:00
+#SBATCH --partition=cpu-long
 #SBATCH --gres=gpu:0
 #SBATCH --mem=200G
 #SBATCH --output=mimetadata_%j.out
