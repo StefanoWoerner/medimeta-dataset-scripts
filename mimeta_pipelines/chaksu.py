@@ -167,12 +167,12 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
-def _get_image_name(path):
+def _get_image_name(path: str) -> str:
     """Name of the file without path to parent directory and extension.
     Needed because between image path, mask path, and annotation image name,
     the image file extensions in the original data are often different.
     """
-    return os.path.splitext(os.path.split(path)[1].lower())[0]
+    return os.path.splitext(os.path.basename(path).lower())[0]
 
 
 def _get_image_path(root_path, dir_path, image_name):
