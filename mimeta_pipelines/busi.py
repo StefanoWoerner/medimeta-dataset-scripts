@@ -97,7 +97,7 @@ def get_unified_data(
             root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
         )
         current_idx = 0
-        for paths, labs in tqdm(batches, desc="Processing peripheral_blood_cells dataset"):
+        for paths, labs in tqdm(batches, desc="Processing BUSI dataset"):
             # filter out mask images
             labs = [lab for path, lab in zip(paths, labs) if "mask" not in path]
             paths = [path for path in paths if "mask" not in path]
