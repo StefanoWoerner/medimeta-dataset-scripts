@@ -1,2 +1,2 @@
-original_data_dir: ./data/original_data
-unified_data_dir: ./data/unified_data
+original_data_base_path: ./data/original_data
+unified_data_base_path: ./data/unified_data
