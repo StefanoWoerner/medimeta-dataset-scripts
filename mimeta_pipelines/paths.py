@@ -1,19 +1,26 @@
 """Utilities for paths handling.
 """
 import os
+
+import yaml
 from dotenv import load_dotenv
 
+import config
 
 # Base paths
-INFO_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset_info")
-env_file_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-if os.path.exists(env_file_path):
-    load_dotenv(dotenv_path=env_file_path)
-    ORIGINAL_DATA_PATH = os.getenv("ORIGINAL_DATA_PATH")
-    UNIFIED_DATA_PATH = os.getenv("UNIFIED_DATA_PATH")
-else:
-    ORIGINAL_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "original_data")
-    UNIFIED_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "unified_data")
+INFO_PATH = config.config["dataset_info_dir"]
+ORIGINAL_DATA_PATH = config.config["original_data_base_path"]
+UNIFIED_DATA_PATH = config.config["unified_data_base_path"]
+
+
+def setup(in_path, info_path):
+    assert os.path.exists(in_path), f"Input path {in_path} does not exist."
+    assert os.path.exists(info_path), f"Info path {info_path} does not exist."
+    with open(info_path, "r") as f:
+        info_dict = yaml.safe_load(f)
+    out_path = os.path.join(UNIFIED_DATA_PATH, info_dict["id"])
+    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+    return info_dict, out_path
 
 
 def folder_paths(

@@ -20,21 +20,17 @@ from PIL import Image
 from shutil import copytree, rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths
+from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "NCT-CRC"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "nct_crc"),
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=256,
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     splits = {
         "train": "NCT-CRC-HE-100K",

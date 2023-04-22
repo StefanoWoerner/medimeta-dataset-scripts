@@ -19,13 +19,8 @@ import yaml
 from PIL import Image
 from tqdm import tqdm
 
-from .utils import (
-    INFO_PATH,
-    ORIGINAL_DATA_PATH,
-    UNIFIED_DATA_PATH,
-    UnifiedDatasetWriter,
-)
-
+from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+from .writer import UnifiedDatasetWriter
 
 def sort_cbis(root_path):
     # All uncropped
@@ -63,10 +58,6 @@ def sort_cbis(root_path):
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "CBIS-DDSM"),
-    out_paths=(
-        os.path.join(UNIFIED_DATA_PATH, "cbis_mass_crop"),
-        os.path.join(UNIFIED_DATA_PATH, "cbis_calc_crop"),
-    ),
     info_paths=(
         os.path.join(INFO_PATH, "CBIS-DDSM_mass_cropped.yaml"),
         os.path.join(INFO_PATH, "CBIS-DDSM_calc_cropped.yaml"),
@@ -113,7 +104,6 @@ def get_unified_data(
 
     _get_unified_data(
         root_path,
-        out_paths[0],
         info_paths[0],
         batch_size,
         out_img_size,
@@ -123,7 +113,6 @@ def get_unified_data(
     )
     _get_unified_data(
         root_path,
-        out_paths[1],
         info_paths[1],
         batch_size,
         out_img_size,
@@ -135,7 +124,6 @@ def get_unified_data(
 
 def _get_unified_data(
     root_path,
-    out_path,
     info_path,
     batch_size,
     out_img_size,
@@ -143,8 +131,7 @@ def _get_unified_data(
     label_file_test,
     annotation_columns,
 ):
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(root_path, info_path)
 
     df_train = pd.read_csv(label_file_train)
     df_test = pd.read_csv(label_file_test)

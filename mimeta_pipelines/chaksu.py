@@ -21,19 +21,18 @@ from shutil import copyfile, rmtree
 from tqdm import tqdm
 from zipfile import ZipFile
 from .image_utils import zero_pad_to_square
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "Chaksu"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "chaksu"),
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
     batch_size=1,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+    info_dict, out_path = setup(in_path, info_path)
 
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)

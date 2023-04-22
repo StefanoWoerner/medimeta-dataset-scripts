@@ -20,33 +20,28 @@ from shutil import rmtree, copyfile
 from tqdm import tqdm
 from zipfile import ZipFile
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
     in_path=os.path.join(ORIGINAL_DATA_PATH, "DeepDRiD"),
-    out_paths=[
-        os.path.join(UNIFIED_DATA_PATH, "deepdrid_regular"),
-        os.path.join(UNIFIED_DATA_PATH, "deepdrid_uwf"),
-    ],
-    info_paths=[
+    info_paths=(
         os.path.join(INFO_PATH, "DeepDRiD_regular-fundus.yaml"),
         os.path.join(INFO_PATH, "DeepDRiD_ultra-widefield.yaml"),
-    ],
+    ),
     batch_size=128,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    # Dataset preparation
-    for out_path in out_paths:
-        assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+
+    out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
     root_path = in_path
     # extract folder
     if zipped:
         # extract to out_path (temporary: it is going to be in out_path/DeepDRid_ultra_widefield_temp)
-        in_path = f"{out_path}_temp"
+        in_path = f"{out_paths[0]}_temp"
         with ZipFile(os.path.join(root_path, "DeepDRiD-master.zip"), "r") as zf:
             zf.extractall(in_path)
     root_path = os.path.join(in_path, "DeepDRiD-master")
