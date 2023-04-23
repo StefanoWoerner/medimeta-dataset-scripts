@@ -1,41 +1,30 @@
+id: isic
 name: HAM10000
-description: stuff goes here
+summary: "The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions"
+description: "The HAM10000 (“Human Against Machine with 10000 training images”) dataset contains dermatoscopic images from different populations acquired and stored by different modalities.
+The final dataset consists of 10015 dermatoscopic images which are released as a training set for academic machine learning purposes and are publicly available through the ISIC archive. This benchmark dataset can be used for machine learning and for comparisons with human experts. Cases include a representative collection of all important diagnostic categories in the realm of pigmented lesions. More than 50% of lesions have been confirmed by pathology, while the ground truth for the rest of the cases was either follow-up, expert consensus, or confirmation by in-vivo confocal microscopy."
 
 tasks:
-  - task_name: "pathology"
-    task_target: BINARY_CLASSIFICATION
+  - task_name: "disease category"
+    task_target: MULTICLASS_CLASSIFICATION
     labels:
-      0: "benign"
-      1: "malignant"
-  - task_name: "mass shape"
-    task_target: MULTILABEL_CLASSIFICATION
-    labels:
-      0: "ARCHITECTURAL_DISTORTION"
-      1: "ASYMMETRIC_BREAST_TISSUE"
-      2: "FOCAL_ASYMMETRIC_DENSITY"
-      3: "IRREGULAR"
-      4: "LOBULATED"
-      5: "LYMPH_NODE"
-      6: "OVAL"
-      7: "ROUND"
-  - task_name: "mass margins"
-    task_target: MULTILABEL_CLASSIFICATION
-    labels:
-      1: "CIRCUMSCRIBED"
-      2: "ILL_DEFINED"
-      3: "MICROLOBULATED"
-      4: "OBSCURED"
-      5: "SPICULATED"
+      0: Melanoma
+      1: Melanocytic nevus
+      2: Basal cell carcinoma
+      3: Actinic keratosis / Bowen’s disease (intraepithelial carcinoma)
+      4: Benign keratosis (solar lentigo / seborrheic keratosis / lichen planus-like keratosis)
+      5: Dermatofibroma
+      6: Vascular lesion
 
-input_size: [1,224,224]
+input_size: [3,224,224]
 num_samples:
-  train: 1318
-  val: 0
-  test: 378
+  train: 10015
+  val: 193
+  test: 1512
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "CC BY 4.0 ?"
-original_paper: https://doi.org/10.1038/sdata.2017.177
+original_license: "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"
+original_paper: https://www.nature.com/articles/sdata2018161
 original_download_url: https://challenge.isic-archive.com/landing/2018/
