@@ -10,7 +10,7 @@ DATA MODIFICATIONS:
 """
 import glob
 import os
-from shutil import copytree
+from shutil import copytree, rmtree
 
 import numpy as np
 import pandas as pd
@@ -21,6 +21,7 @@ from tqdm import tqdm
 
 from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
 from .writer import UnifiedDatasetWriter
+
 
 def sort_cbis(root_path):
     # All uncropped
@@ -65,10 +66,12 @@ def get_unified_data(
     batch_size=256,
     out_img_size=(224, 224),
     is_sorted=False,
+    remove_temp=True,
 ):
     new_in_path = os.path.join(UNIFIED_DATA_PATH, "cbis_temp")
     if not is_sorted:
-        copytree(in_path, new_in_path)
+        manifest_dirname = "manifest-ZkhPvrLo5216730872708713142"
+        copytree(os.path.join(in_path, manifest_dirname), new_in_path)
         root_path = new_in_path
         sort_cbis(root_path)
     else:
@@ -120,6 +123,10 @@ def get_unified_data(
         label_file_test=os.path.join(root_path, "calc_case_description_test_set.csv"),
         annotation_columns=calc_annotation_columns,
     )
+
+    # delete temporary folder
+    if not is_sorted and remove_temp:
+        rmtree(new_in_path)
 
 
 def _get_unified_data(
