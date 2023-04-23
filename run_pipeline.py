@@ -9,7 +9,7 @@ def main():
         return
     pipeline = importlib.import_module(f"mimeta_pipelines.{pipeline_name}")
 
-    pipeline.get_unified_data(**cfg.pipelines[pipeline_name])
+    pipeline.get_unified_data(**cfg.pipeline_args[pipeline_name])
 
 
 if __name__ == "__main__":

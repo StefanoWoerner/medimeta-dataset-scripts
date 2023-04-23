@@ -1,2 +1,11 @@
 original_data_base_path: ./data/original_data
 unified_data_base_path: ./data/unified_data
+
+original_data_dirnames:
+  cxr14: ChestX-ray14
+
+pipeline_args:
+  aml_cyto:
+    in_path: "${original_data_base_path}/AML_Cyto"
+  busi:
+    in_path: "~/datasets/BUSI"
