@@ -34,9 +34,6 @@ def get_unified_data(
 ):
     info_dict, out_path = setup(in_path, info_path)
 
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
-
     root_path = in_path
     images_path = os.path.join(root_path, "images")
     # extract folder

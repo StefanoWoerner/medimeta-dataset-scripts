@@ -34,9 +34,6 @@ def get_unified_data(
 ):
     info_dict, out_path = setup(in_path, info_path)
 
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
-
     # Dataset specific namings
     readme_name = "Readme_Chaksu IMAGE Database.pdf"
     split_folders = ["Train", "Test"]
