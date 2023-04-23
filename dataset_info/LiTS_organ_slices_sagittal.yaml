@@ -5,7 +5,7 @@ description: ""
 
 tasks:
   - task_name: "organ label"
-    task_target: MULTILABEL_CLASSIFICATION
+    task_target: MULTICLASS_CLASSIFICATION
     labels:
       0: heart
       1: left lung
