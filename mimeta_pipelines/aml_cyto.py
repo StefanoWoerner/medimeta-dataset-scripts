@@ -3,7 +3,7 @@
 EXPECTED INPUT FOLDER CONTENTS:
 if zipped=True (default):
 - a zip file named AML-Cytomorphology_LMU.zip containing the
-  aforementioned AML-Cytomorphology_LMU folder
+  AML-Cytomorphology_LMU folder described below
 if zipped=False:
 - a folder named AML-Cytomorphology_LMU containing:
     - the AML-Cytomorphology folder
