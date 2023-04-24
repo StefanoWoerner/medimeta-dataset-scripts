@@ -58,7 +58,7 @@ def sort_cbis(root_path):
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "CBIS-DDSM"),
+    in_path,
     info_paths=(
         os.path.join(INFO_PATH, "CBIS-DDSM_mass_cropped.yaml"),
         os.path.join(INFO_PATH, "CBIS-DDSM_calc_cropped.yaml"),
@@ -209,5 +209,11 @@ def _get_unified_data(
             )
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "cbis"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

@@ -26,7 +26,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "CXR14"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "CXR14.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
@@ -175,5 +175,11 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "cxr14"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

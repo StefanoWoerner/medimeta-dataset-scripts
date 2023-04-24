@@ -26,7 +26,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "Chaksu"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
     batch_size=1,
     out_img_size=(224, 224),
@@ -300,5 +300,11 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
     return labels_df
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "chaksu"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

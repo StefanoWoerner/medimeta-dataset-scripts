@@ -25,7 +25,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "DeepDRiD"),
+    in_path,
     info_paths=(
         os.path.join(INFO_PATH, "DeepDRiD_regular-fundus.yaml"),
         os.path.join(INFO_PATH, "DeepDRiD_ultra-widefield.yaml"),
@@ -205,5 +205,11 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "deepdrid"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

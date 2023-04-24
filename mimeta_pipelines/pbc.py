@@ -25,7 +25,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "peripheral_blood_cells"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "peripheral_blood_cells.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
@@ -83,5 +83,11 @@ def get_unified_data(
         os.rename(os.path.join(root_path, "immature granulocyte"), os.path.join(root_path, "ig"))
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "pbc"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

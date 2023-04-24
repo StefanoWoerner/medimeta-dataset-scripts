@@ -25,7 +25,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "Kermany_Pneumonia"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "Kermany_Pneumonia.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
@@ -88,5 +88,11 @@ def get_unified_data(
         rmtree(temp_path)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "kermany_pneumonia"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

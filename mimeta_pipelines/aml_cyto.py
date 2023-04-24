@@ -24,7 +24,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "AML-Cytomorphology_LMU"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
@@ -89,5 +89,11 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "aml_cyto"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

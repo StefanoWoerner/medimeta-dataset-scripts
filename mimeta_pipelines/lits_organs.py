@@ -44,7 +44,7 @@ from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "LITS"),
+    in_path,
     info_paths=(
         os.path.join(INFO_PATH, "LiTS_organ_slices_axial.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_coronal.yaml"),
@@ -308,5 +308,11 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
     return organ_img, mask_img, bboxes_img
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "lits_organs"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()
