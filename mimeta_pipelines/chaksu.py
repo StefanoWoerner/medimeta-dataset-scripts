@@ -9,8 +9,8 @@ if zipped=True (default):
 if zipped=False:
 - the Readme_Chaksu IMAGE Database.pdf file downloaded from
   (https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135)
-- the Train folder (Test.zip extracted, same source)
-- the Test folder (Train.zip extracted, same source)
+- the Train folder (Train.zip extracted, same source)
+- the Test folder (Test.zip extracted, same source)
 
 DATA MODIFICATIONS:
 - The images are zero-padded to square shape and resized, using the
