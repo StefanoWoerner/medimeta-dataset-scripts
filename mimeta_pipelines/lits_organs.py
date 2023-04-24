@@ -2,7 +2,8 @@
 datasets in the unified format.
 
 EXPECTED INPUT FOLDER CONTENTS:
-- "annotations for lits" downloaded from
+- a folder "annotations for lits" containing annotations_of_testing_set.zip
+  and annotations_of_training_set.zip downloaded from
   https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset
 - "LITS Challenge" downloaded from
   https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
