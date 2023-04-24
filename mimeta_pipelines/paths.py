@@ -8,8 +8,7 @@ import config
 
 # Base paths
 INFO_PATH = config.config["dataset_info_dir"]
-ORIGINAL_DATA_PATH = config.config["original_data_base_path"]
-UNIFIED_DATA_PATH = config.config["unified_data_base_path"]
+UNIFIED_DATA_BASE_PATH = config.config["unified_data_base_path"]
 
 
 def setup(in_path, info_path):
@@ -17,7 +16,7 @@ def setup(in_path, info_path):
     assert os.path.exists(info_path), f"Info path {info_path} does not exist."
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
-    out_path = os.path.join(UNIFIED_DATA_PATH, info_dict["id"])
+    out_path = os.path.join(UNIFIED_DATA_BASE_PATH, info_dict["id"])
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
     return info_dict, out_path
 

@@ -18,7 +18,7 @@ import pydicom
 from PIL import Image
 from tqdm import tqdm
 
-from .paths import INFO_PATH, UNIFIED_DATA_PATH, setup
+from .paths import INFO_PATH, UNIFIED_DATA_BASE_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
@@ -67,7 +67,7 @@ def get_unified_data(
     is_sorted=False,
     remove_temp=True,
 ):
-    new_in_path = os.path.join(UNIFIED_DATA_PATH, "cbis_temp")
+    new_in_path = os.path.join(UNIFIED_DATA_BASE_PATH, "cbis_temp")
     if not is_sorted:
         manifest_dirname = "manifest-ZkhPvrLo5216730872708713142"
         copytree(os.path.join(in_path, manifest_dirname), new_in_path)
