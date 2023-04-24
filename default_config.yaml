@@ -11,7 +11,7 @@ original_data_dirnames:
   cxr14: CXR14
   deepdrid: DeepDRiD
   derm7pt: derm7pt
-  ham10000: HAM10000
+  ham10000: HAM10000/ISIC2018
   kermany_oct: Kermany_OCT
   kermany_pneumonia: Kermany_Pneumonia
   lits_organs: LITS
