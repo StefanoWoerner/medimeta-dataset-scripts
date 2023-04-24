@@ -1,30 +1,29 @@
 """Saves the CBIS-DDSM dataset in the unified format.
 
-INPUT DATA:
-Expects directory as downloaded from TCIA using the downloader at
-ORIGINAL_DATA_PATH/CBIS-DDSM if sorted=False or the properly sorted and renamed folder
-in ORIGINAL_DATA_PATH/CBIOS-DDSM if sorted=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if sorted=False (default):
+- the manifest-ZkhPvrLo5216730872708713142 folder downloaded from the
+  TCIA using the downloader
+if sorted=True:
+- the properly sorted and renamed contents of the
+  manifest-ZkhPvrLo5216730872708713142 folder
 
 DATA MODIFICATIONS:
-- The region crops are resized to 224x224 using the PIL.Image.resize method with BICUBIC interpolation.
+- The region crops are resized to 224x224 using PIL.Image.resize with
+  BICUBIC interpolation.
 """
 import glob
 import os
-from shutil import copytree
+from shutil import copytree, rmtree
 
 import numpy as np
 import pandas as pd
 import pydicom
-import yaml
 from PIL import Image
 from tqdm import tqdm
 
-from .utils import (
-    INFO_PATH,
-    ORIGINAL_DATA_PATH,
-    UNIFIED_DATA_PATH,
-    UnifiedDatasetWriter,
-)
+from .paths import INFO_PATH, UNIFIED_DATA_BASE_PATH, setup
+from .writer import UnifiedDatasetWriter
 
 
 def sort_cbis(root_path):
@@ -62,11 +61,7 @@ def sort_cbis(root_path):
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "CBIS-DDSM"),
-    out_paths=(
-        os.path.join(UNIFIED_DATA_PATH, "cbis_mass_crop"),
-        os.path.join(UNIFIED_DATA_PATH, "cbis_calc_crop"),
-    ),
+    in_path,
     info_paths=(
         os.path.join(INFO_PATH, "CBIS-DDSM_mass_cropped.yaml"),
         os.path.join(INFO_PATH, "CBIS-DDSM_calc_cropped.yaml"),
@@ -74,10 +69,12 @@ def get_unified_data(
     batch_size=256,
     out_img_size=(224, 224),
     is_sorted=False,
+    remove_temp=True,
 ):
-    new_in_path = os.path.join(UNIFIED_DATA_PATH, "cbis_temp")
+    new_in_path = os.path.join(UNIFIED_DATA_BASE_PATH, "cbis_temp")
     if not is_sorted:
-        copytree(in_path, new_in_path)
+        manifest_dirname = "manifest-ZkhPvrLo5216730872708713142"
+        copytree(os.path.join(in_path, manifest_dirname), new_in_path)
         root_path = new_in_path
         sort_cbis(root_path)
     else:
@@ -113,7 +110,6 @@ def get_unified_data(
 
     _get_unified_data(
         root_path,
-        out_paths[0],
         info_paths[0],
         batch_size,
         out_img_size,
@@ -123,7 +119,6 @@ def get_unified_data(
     )
     _get_unified_data(
         root_path,
-        out_paths[1],
         info_paths[1],
         batch_size,
         out_img_size,
@@ -132,10 +127,13 @@ def get_unified_data(
         annotation_columns=calc_annotation_columns,
     )
 
+    # delete temporary folder
+    if not is_sorted and remove_temp:
+        rmtree(new_in_path)
+
 
 def _get_unified_data(
     root_path,
-    out_path,
     info_path,
     batch_size,
     out_img_size,
@@ -143,8 +141,7 @@ def _get_unified_data(
     label_file_test,
     annotation_columns,
 ):
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(root_path, info_path)
 
     df_train = pd.read_csv(label_file_train)
     df_test = pd.read_csv(label_file_test)
@@ -215,5 +212,11 @@ def _get_unified_data(
             )
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "cbis"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

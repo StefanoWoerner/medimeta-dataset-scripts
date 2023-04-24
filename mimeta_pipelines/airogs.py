@@ -1,41 +1,41 @@
 """Saves the Rotterdam EyePACS AIROGS dataset (train set) in the unified format.
 
-INPUT DATA:
-Expects train_labels.csv file and a folder named images/ (all zip subfolders merged)
-as downloaded from https://zenodo.org/record/5793241
-in ORIGINAL_DATA_PATH/AIROGS if zipped=False,
-or all the files downloaded from https://zenodo.org/record/5793241 in ORIGINAL_DATA_PATH/AIROGS if zipped=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the train_labels.csv file downloaded from https://zenodo.org/record/5793241
+- all zip files downloaded from https://zenodo.org/record/5793241
+if zipped=False:
+- train_labels.csv downloaded from https://zenodo.org/record/5793241
+- a folder named images/ (all zip subfolders merged)
 
 DATA MODIFICATIONS:
-- The images are resized to out_img_size by 0-padding them to squares and resizing using the PIL library.
+- The images are resized to out_img_size by 0-padding them to squares
+  with PIL.ImageOps.pad and resizing them with PIL.Image.thumbnail.
 """
 
-import numpy as np
 import os
-import pandas as pd
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import zero_pad_to_square
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "AIROGS"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "airogs"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "AIROGS.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     images_rel_path = "images"
 
@@ -99,5 +99,12 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "airogs"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

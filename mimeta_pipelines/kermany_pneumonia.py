@@ -1,41 +1,42 @@
 """Saves the Kermany pneumonia dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
-at ORIGINAL_DATA_PATH/Kermany_Pneumonia/ChestXRay2017.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/Kermany_Pneumonia if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the ChestXRay2017.zip file downloaded from
+    https://data.mendeley.com/datasets/rscbjbr9sj/2
+if zipped=False:
+- the extracted ChestXRay2017 folder
 
 DATA MODIFICATIONS:
-- The 283 images in RGB format are converted to grayscale using the PIL.Image.convert method.
-- The images are center-cropped with the smallest dimension to obtain a square image.
-- The images are resized to 224x224 (some upsized, since smaller than 224x224)
-  using the PIL.Image.resize method with BICUBIC interpolation.
+- The 283 images in RGB format are converted to grayscale using the
+  PIL.Image.convert method.
+- The images are center-cropped with the smallest dimension to obtain a
+  square image.
+- The images are resized to 224x224 (some upsized, since smaller than
+  224x224) using the PIL.Image.resize method with BICUBIC interpolation.
 """
 
 import os
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "Kermany_Pneumonia"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "kermany_pneumonia"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "Kermany_Pneumonia.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     root_path = in_path
     # extract folder
@@ -92,5 +93,11 @@ def get_unified_data(
         rmtree(temp_path)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "kermany_pneumonia"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

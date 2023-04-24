@@ -1,9 +1,10 @@
 """Saves the DeepDRid regular fundus and ultra-widefield datasets in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://isbi.deepdr.org/
-at ORIGINAL_DATA_PATH/DeepDRiD/DeepDRiD-master.zip if zipped=True,
-or extracted folder at ORIGINAL_DATA_PATH/DeepDRiD/DeepDRiD-master if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the DeepDRiD-master.zip compressed folder downloaded from https://isbi.deepdr.org/
+if zipped=False:
+- the DeepDRiD-master folder downloaded from https://isbi.deepdr.org/
 
 DATA MODIFICATIONS:
 - The images are center-cropped with the smallest dimension to obtain a square image.
@@ -11,42 +12,38 @@ DATA MODIFICATIONS:
 """
 
 import os
-import pandas as pd
 import pathlib
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree, copyfile
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import pandas as pd
+import yaml
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "DeepDRiD"),
-    out_paths=[
-        os.path.join(UNIFIED_DATA_PATH, "deepdrid_regular"),
-        os.path.join(UNIFIED_DATA_PATH, "deepdrid_uwf"),
-    ],
-    info_paths=[
+    in_path,
+    info_paths=(
         os.path.join(INFO_PATH, "DeepDRiD_regular-fundus.yaml"),
         os.path.join(INFO_PATH, "DeepDRiD_ultra-widefield.yaml"),
-    ],
+    ),
     batch_size=128,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    # Dataset preparation
-    for out_path in out_paths:
-        assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+    out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
     root_path = in_path
     # extract folder
     if zipped:
         # extract to out_path (temporary: it is going to be in out_path/DeepDRid_ultra_widefield_temp)
-        in_path = f"{out_path}_temp"
+        in_path = f"{out_paths[0]}_temp"
         with ZipFile(os.path.join(root_path, "DeepDRiD-master.zip"), "r") as zf:
             zf.extractall(in_path)
     root_path = os.path.join(in_path, "DeepDRiD-master")
@@ -210,5 +207,12 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "deepdrid"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

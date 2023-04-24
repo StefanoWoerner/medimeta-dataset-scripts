@@ -1,42 +1,47 @@
 """Saves the Chákṣu dataset in the unified format.
 
-INPUT DATA:
-Expects all the files downloaded from https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135
-in ORIGINAL_DATA_PATH/CHAKSU;
-if zipped=True, the files are as downloaded, if zipped=False, the Train.zip and Test.zip folders are extracted.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the Readme_Chaksu IMAGE Database.pdf file downloaded from
+  https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135
+- the Train.zip file (same source)
+- the Test.zip file (same source)
+if zipped=False:
+- the Readme_Chaksu IMAGE Database.pdf file downloaded from
+  (https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135)
+- the Train folder (Train.zip extracted, same source)
+- the Test folder (Test.zip extracted, same source)
 
 DATA MODIFICATIONS:
- - The images are zero-padded to square shape and resized using PIL's thumbnail method with bicubic interpolation.
+- The images are zero-padded to square shape and resized, using the
+  PIL.Image.thumbnail method with BICUBIC interpolation.
 """
 
-import numpy as np
 import os
-import pandas as pd
 import re
-import yaml
 from functools import partial
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import zero_pad_to_square
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "Chaksu"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "chaksu"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "Chaksu.yaml"),
     batch_size=1,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     # Dataset specific namings
     readme_name = "Readme_Chaksu IMAGE Database.pdf"
@@ -304,5 +309,12 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
     return labels_df
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "chaksu"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

@@ -1,37 +1,49 @@
-"""Saves the Liver Tumor Segnmentation Benchmark (LiTS) Axial/Coronal/Sagittal Organ Slices datasets in the unified format.
+"""Saves the Liver Tumor Segnmentation Benchmark (LiTS) Axial/Coronal/Sagittal Organ Slices
+datasets in the unified format.
 
-INPUT DATA:
-Expects the folders "annotations for lits", "LITS Challenge" and "LITS-Challenge-Test-Data"
-as downloaded from the sources reported in the dataset_info/LiTS_organ_slices_*.yaml files,
-at ORIGINAL_DATA_PATH/LITS.
+EXPECTED INPUT FOLDER CONTENTS:
+- a folder "annotations for lits" containing annotations_of_testing_set.zip
+  and annotations_of_training_set.zip downloaded from
+  https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset
+- "LITS Challenge" downloaded from
+  https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
+- "LITS-Challenge-Test-Data" downloaded from
+  https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
 
 DATA MODIFICATIONS:
-- The second and third axes of the image "test-volume-59.nii" are permuted, to bring it to the same format as the other images
-    (and to add coeherence with the annotations).
-- The images and masks are sliced from the original 3D volumes in axial, coronal and sagittal directions,
-    taking the center of the bounding box in the slice plane.
-- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale with an abdominal window with W=400, L=50.
-- The images and masks are cropped to a square in the physical space, keeping the center of the bounding box and expanding the smaller side.
-- The images and masks are resized to 224x224 (images with bicubic interpolation, masks taking the nearest value).
+- The second and third axes of the image "test-volume-59.nii" are permuted,
+  to bring it to the same format as the other images
+  (and to add coeherence with the annotations).
+- The images and masks are sliced from the original 3D volumes
+  in the axial, coronal, and sagittal directions,
+  taking the center of the bounding box in the slice plane.
+- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale
+  with an abdominal window with W=400, L=50.
+- The images and masks are cropped to a square in the physical space,
+  keeping the center of the bounding box and expanding the smaller side.
+- The images and masks are resized to 224x224 using the PIL.Image.thumbnail method
+  (images with BICUBIC interpolation, masks with NEAREST interpolation).
 
 OUTPUT DATA:
 - For each organ in each image, a separate image and mask is saved with the organ as label;
-    this is done for each of the 3 directions (axial, coronal, sagittal), for a separate dataset.
+  this is done for each of the 3 directions (axial, coronal, sagittal), for a separate dataset.
 """
+
+import os
+import re
+from math import ceil
+from multiprocessing.pool import ThreadPool
 
 import matplotlib
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-import os
 import pandas as pd
-import re
 import yaml
-from math import ceil
-from multiprocessing.pool import ThreadPool
 from PIL import Image
 from scipy.ndimage import zoom
 from tqdm import tqdm
+
 from .image_utils import (
     slice_3d_image,
     ct_windowing,
@@ -39,17 +51,12 @@ from .image_utils import (
     AnatomicalPlane,
     draw_colored_bounding_box,
 )
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "LITS"),
-    out_paths=(
-        os.path.join(UNIFIED_DATA_PATH, "lits_organs_axial"),
-        os.path.join(UNIFIED_DATA_PATH, "lits_organs_coronal"),
-        os.path.join(UNIFIED_DATA_PATH, "lits_organs_sagittal"),
-    ),
+    in_path,
     info_paths=(
         os.path.join(INFO_PATH, "LiTS_organ_slices_axial.yaml"),
         os.path.join(INFO_PATH, "LiTS_organ_slices_coronal.yaml"),
@@ -58,8 +65,7 @@ def get_unified_data(
     batch_size=2,
     out_img_size=(224, 224),
 ):
-    for out_path in out_paths:
-        assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
+    out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
     # Base paths
     annots_folder = "annotations for lits"
@@ -313,5 +319,12 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
     return organ_img, mask_img, bboxes_img
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "lits_organs"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

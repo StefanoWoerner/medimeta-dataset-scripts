@@ -1,10 +1,18 @@
 """Saves the ChestXRay14 dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
-at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
-or extracted folder with the compressed subfolders extracted in place
-in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the CXR8.zip compressed folder downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
+if zipped=False:
+- the images/ folder with the contents of images/images_xxx.tar.gz extracted (xxx: 001-012)
+  downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
+- the Data_Entry_2017.csv file (same source)
+- the FAQ_CHESTXRAY.pdf file (same source)
+- the LOG_CHESTXRAY.pdf file (same source)
+- the README_CHESTXRAY.pdf file (same source)
+- the train_val_list.txt file (same source)
+- the test_list.txt file (same source)
+- the BBox_List_2017.csv file (same source)
 
 DATA MODIFICATIONS:
 - The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
@@ -12,31 +20,28 @@ DATA MODIFICATIONS:
 """
 
 import os
-import pandas as pd
 import tarfile
-import yaml
-from PIL import Image
-from more_itertools import chunked
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH
+
+import pandas as pd
+from PIL import Image
+from more_itertools import chunked
+from tqdm import tqdm
+
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "CXR14"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "cxr14"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "CXR14.yaml"),
     batch_size=256,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     root_path = in_path
     images_path = os.path.join(root_path, "images")
@@ -179,5 +184,12 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "cxr14"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

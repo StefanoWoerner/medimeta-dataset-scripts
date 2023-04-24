@@ -1,13 +1,14 @@
 """Save datasets in a unified format.
 """
 import os
+from multiprocessing.pool import ThreadPool
+from shutil import copyfile, rmtree
+
 import h5py
 import numpy as np
 import pandas as pd
 import yaml
 from PIL import Image
-from multiprocessing.pool import ThreadPool
-from shutil import copyfile, rmtree
 
 
 class UnifiedDatasetWriter:

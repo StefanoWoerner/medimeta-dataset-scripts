@@ -1,0 +1,52 @@
+dataset_info_dir: ./dataset_info
+original_data_base_path: ./data/original_data
+unified_data_base_path: ./data/unified_data
+
+original_data_dirnames:
+  airogs: AIROGS
+  aml_cyto: AML-Cytomorphology_LMU
+  busi: BUSI
+  cbis: CBIS-DDSM
+  chaksu: Chaksu
+  cxr14: CXR14
+  deepdrid: DeepDRiD
+  derm7pt: derm7pt
+  ham10000: HAM10000
+  kermany_oct: Kermany_OCT
+  kermany_pneumonia: Kermany_Pneumonia
+  lits_organs: LITS
+  nct_crc: NCT-CRC
+  pbc: peripheral_blood_cells
+  rfmid: RFMiD
+
+pipeline_args:
+  airogs:
+    in_path: "${original_data_base_path}/${original_data_dirnames[airogs]}"
+  aml_cyto:
+    in_path: "${original_data_base_path}/${original_data_dirnames[aml_cyto]}"
+  busi:
+    in_path: "${original_data_base_path}/${original_data_dirnames[busi]}"
+  cbis:
+    in_path: "${original_data_base_path}/${original_data_dirnames[cbis]}"
+  chaksu:
+    in_path: "${original_data_base_path}/${original_data_dirnames[chaksu]}"
+  cxr14:
+    in_path: "${original_data_base_path}/${original_data_dirnames[cxr14]}"
+  deepdrid:
+    in_path: "${original_data_base_path}/${original_data_dirnames[deepdrid]}"
+  derm7pt:
+    in_path: "${original_data_base_path}/${original_data_dirnames[derm7pt]}"
+  ham10000:
+    in_path: "${original_data_base_path}/${original_data_dirnames[ham10000]}"
+  kermany_oct:
+    in_path: "${original_data_base_path}/${original_data_dirnames[kermany_oct]}"
+  kermany_pneumonia:
+    in_path: "${original_data_base_path}/${original_data_dirnames[kermany_pneumonia]}"
+  lits_organs:
+    in_path: "${original_data_base_path}/${original_data_dirnames[lits_organs]}"
+  nct_crc:
+    in_path: "${original_data_base_path}/${original_data_dirnames[nct_crc]}"
+  pbc:
+    in_path: "${original_data_base_path}/${original_data_dirnames[pbc]}"
+  rfmid:
+    in_path: "${original_data_base_path}/${original_data_dirnames[rfmid]}"

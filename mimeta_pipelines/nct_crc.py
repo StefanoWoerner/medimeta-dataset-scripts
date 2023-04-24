@@ -1,40 +1,39 @@
 """Saves the NCT-CRC dataset in the unified format.
 
-INPUT DATA:
-Expects zip files as downloaded from https://zenodo.org/record/1214456
-at ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip if zipped=True,
-or extracted folders in ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K and ORIGINAL_DATA_PATH/NCT-CRC/CRC-VAL-HE-7K
-if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip files downloaded from
+    https://zenodo.org/record/1214456
+if zipped=False:
+- the extracted NCT-CRC-HE-100K and CRC-VAL-HE-7K folders
 
 DATA MODIFICATIONS:
-- The images are opened and resaved using PIL to avoid errors in multiprocessing.
+- The images are opened and saved using PIL to remove erroneous tiff
+  headers.
 """
 
 import glob
-import numpy as np
 import os
 import re
-import yaml
 from multiprocessing.pool import ThreadPool
-from PIL import Image
 from shutil import copytree, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths
+
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "NCT-CRC"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "nct_crc"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
     batch_size=256,
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     splits = {
         "train": "NCT-CRC-HE-100K",
@@ -76,5 +75,11 @@ def get_unified_data(
     rmtree(new_in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "nct_crc"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

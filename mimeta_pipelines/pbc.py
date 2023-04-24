@@ -1,41 +1,40 @@
 """Saves the peripheral blood cells dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from
-https://data.mendeley.com/datasets/snkd93bnjr/1
-at ORIGINAL_DATA_PATH/peripheral_blood_cells/PBC_dataset_normal_DIB.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/peripheral_blood_cells/PBC_dataset_normal_DIB if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the PBC_dataset_normal_DIB.zip file downloaded from
+    https://data.mendeley.com/datasets/snkd93bnjr/1
+if zipped=False:
+- the extracted PBC_dataset_normal_DIB folder
 
 DATA MODIFICATIONS:
-- The images are center-cropped with the smallest dimension to obtain a square image
-    (only some are slightly non-square).
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images are center-cropped with the smallest dimension to obtain a
+  square image (only some are slightly non-square).
+- The images are resized to 224x224 using the PIL.Image.thumbnail method
+  with BICUBIC interpolation.
 """
 
 import os
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "peripheral_blood_cells"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "pbc"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "peripheral_blood_cells.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     root_path = in_path
     # extract folder
@@ -87,5 +86,11 @@ def get_unified_data(
         os.rename(os.path.join(root_path, "immature granulocyte"), os.path.join(root_path, "ig"))
 
 
+def main():
+    from config import config as cfg
+    pipeline_name = "pbc"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()

@@ -1,40 +1,44 @@
 """Saves the Munich AML Cytomorphology dataset in the unified format.
 
-INPUT DATA:
-Expects annotations.dat file and AML-Cytomorphology folder as downloaded from
-https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
-in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False,
-or that folder compressed at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- a zip file named AML-Cytomorphology_LMU.zip containing the
+  AML-Cytomorphology_LMU folder described below
+if zipped=False:
+- a folder named AML-Cytomorphology_LMU containing:
+    - the AML-Cytomorphology folder
+    - the annotations.dat file
+  downloaded from
+  https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
 
 DATA MODIFICATIONS:
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
-- The images are converted to RGB using the PIL.Image.convert method to remove the alpha channel.
+- The images are resized to 224x224 using the PIL.Image.thumbnail method
+  with BICUBIC interpolation.
+- The images are converted to RGB using the PIL.Image.convert method to
+  remove the alpha channel.
 """
 
 import os
-import pandas as pd
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths
+
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
-    in_path=os.path.join(ORIGINAL_DATA_PATH, "AML-Cytomorphology_LMU"),
-    out_path=os.path.join(UNIFIED_DATA_PATH, "aml_cyto"),
+    in_path,
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
     zipped=True,
 ):
-    assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
-
-    with open(info_path, "r") as f:
-        info_dict = yaml.safe_load(f)
+    info_dict, out_path = setup(in_path, info_path)
 
     root_path = in_path
     # extract folder
@@ -93,5 +97,12 @@ def get_unified_data(
         rmtree(in_path, ignore_errors=True)
 
 
+def main():
+    from config import config as cfg
+
+    pipeline_name = "aml_cyto"
+    get_unified_data(**cfg.pipeline_args[pipeline_name])
+
+
 if __name__ == "__main__":
-    get_unified_data()
+    main()
