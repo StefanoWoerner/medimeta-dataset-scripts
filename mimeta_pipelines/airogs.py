@@ -2,7 +2,7 @@
 
 EXPECTED INPUT FOLDER CONTENTS:
 if zipped=True (default):
-- train_labels.csv downloaded from https://zenodo.org/record/5793241
+- the train_labels.csv file downloaded from https://zenodo.org/record/5793241
 - all zip files downloaded from https://zenodo.org/record/5793241
 if zipped=False:
 - train_labels.csv downloaded from https://zenodo.org/record/5793241
@@ -101,6 +101,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "airogs"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

@@ -1,22 +1,31 @@
-"""Saves the Liver Tumor Segnmentation Benchmark (LiTS) Axial/Coronal/Sagittal Organ Slices datasets in the unified format.
+"""Saves the Liver Tumor Segnmentation Benchmark (LiTS) Axial/Coronal/Sagittal Organ Slices
+datasets in the unified format.
 
-INPUT DATA:
-Expects the folders "annotations for lits", "LITS Challenge" and "LITS-Challenge-Test-Data"
-as downloaded from the sources reported in the dataset_info/LiTS_organ_slices_*.yaml files,
-at ORIGINAL_DATA_PATH/LITS.
+EXPECTED INPUT FOLDER CONTENTS:
+- "annotations for lits" downloaded from
+  https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset
+- "LITS Challenge" downloaded from
+  https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
+- "LITS-Challenge-Test-Data" downloaded from
+  https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
 
 DATA MODIFICATIONS:
-- The second and third axes of the image "test-volume-59.nii" are permuted, to bring it to the same format as the other images
-    (and to add coeherence with the annotations).
-- The images and masks are sliced from the original 3D volumes in axial, coronal and sagittal directions,
-    taking the center of the bounding box in the slice plane.
-- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale with an abdominal window with W=400, L=50.
-- The images and masks are cropped to a square in the physical space, keeping the center of the bounding box and expanding the smaller side.
-- The images and masks are resized to 224x224 (images with bicubic interpolation, masks taking the nearest value).
+- The second and third axes of the image "test-volume-59.nii" are permuted,
+  to bring it to the same format as the other images
+  (and to add coeherence with the annotations).
+- The images and masks are sliced from the original 3D volumes
+  in the axial, coronal, and sagittal directions,
+  taking the center of the bounding box in the slice plane.
+- The Hounsfield-Unit (HU) of the 3D images are transformed into gray-scale
+  with an abdominal window with W=400, L=50.
+- The images and masks are cropped to a square in the physical space,
+  keeping the center of the bounding box and expanding the smaller side.
+- The images and masks are resized to 224x224 using the PIL.Image.thumbnail method
+  (images with BICUBIC interpolation, masks with NEAREST interpolation).
 
 OUTPUT DATA:
 - For each organ in each image, a separate image and mask is saved with the organ as label;
-    this is done for each of the 3 directions (axial, coronal, sagittal), for a separate dataset.
+  this is done for each of the 3 directions (axial, coronal, sagittal), for a separate dataset.
 """
 
 import os
@@ -55,7 +64,6 @@ def get_unified_data(
     batch_size=2,
     out_img_size=(224, 224),
 ):
-
     out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
     # Base paths
@@ -312,6 +320,7 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
 
 def main():
     from config import config as cfg
+
     pipeline_name = "lits_organs"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

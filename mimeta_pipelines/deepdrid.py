@@ -1,9 +1,10 @@
 """Saves the DeepDRid regular fundus and ultra-widefield datasets in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://isbi.deepdr.org/
-at ORIGINAL_DATA_PATH/DeepDRiD/DeepDRiD-master.zip if zipped=True,
-or extracted folder at ORIGINAL_DATA_PATH/DeepDRiD/DeepDRiD-master if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the DeepDRiD-master.zip compressed folder downloaded from https://isbi.deepdr.org/
+if zipped=False:
+- the DeepDRiD-master folder downloaded from https://isbi.deepdr.org/
 
 DATA MODIFICATIONS:
 - The images are center-cropped with the smallest dimension to obtain a square image.
@@ -36,7 +37,6 @@ def get_unified_data(
     out_img_size=(224, 224),
     zipped=True,
 ):
-
     out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
     root_path = in_path
@@ -209,6 +209,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "deepdrid"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

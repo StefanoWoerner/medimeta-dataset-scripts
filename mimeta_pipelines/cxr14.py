@@ -1,10 +1,18 @@
 """Saves the ChestXRay14 dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
-at ORIGINAL_DATA_PATH/CXR14/CXR8.zip if zipped=True,
-or extracted folder with the compressed subfolders extracted in place
-in ORIGINAL_DATA_PATH/CXR14 if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the CXR8.zip compressed folder downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
+if zipped=False:
+- the images/ folder with the contents of images/images_xxx.tar.gz extracted (xxx: 001-012)
+  downloaded from https://nihcc.app.box.com/v/ChestXray-NIHCC
+- the Data_Entry_2017.csv file (same source)
+- the FAQ_CHESTXRAY.pdf file (same source)
+- the LOG_CHESTXRAY.pdf file (same source)
+- the README_CHESTXRAY.pdf file (same source)
+- the train_val_list.txt file (same source)
+- the test_list.txt file (same source)
+- the BBox_List_2017.csv file (same source)
 
 DATA MODIFICATIONS:
 - The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
@@ -178,6 +186,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "cxr14"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

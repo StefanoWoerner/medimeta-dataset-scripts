@@ -1,15 +1,15 @@
 """Saves the Munich AML Cytomorphology dataset in the unified format.
 
 EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- a zip file named AML-Cytomorphology_LMU.zip containing the
+  aforementioned AML-Cytomorphology_LMU folder
 if zipped=False:
 - a folder named AML-Cytomorphology_LMU containing:
     - the AML-Cytomorphology folder
     - the annotations.dat file
-  as downloaded from
+  downloaded from
   https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
-if zipped=True (default):
-- a zip file named AML-Cytomorphology_LMU.zip containing the
-  aforementioned AML-Cytomorphology_LMU folder
 
 DATA MODIFICATIONS:
 - The images are resized to 224x224 using the PIL.Image.thumbnail method
@@ -99,6 +99,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "aml_cyto"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

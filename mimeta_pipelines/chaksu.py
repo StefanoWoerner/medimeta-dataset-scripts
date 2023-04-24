@@ -1,12 +1,20 @@
 """Saves the Chákṣu dataset in the unified format.
 
-INPUT DATA:
-Expects all the files downloaded from https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135
-in ORIGINAL_DATA_PATH/CHAKSU;
-if zipped=True, the files are as downloaded, if zipped=False, the Train.zip and Test.zip folders are extracted.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the Readme_Chaksu IMAGE Database.pdf file downloaded from
+  https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135
+- the Train.zip file (same source)
+- the Test.zip file (same source)
+if zipped=False:
+- the Readme_Chaksu IMAGE Database.pdf file downloaded from
+  (https://figshare.com/articles/dataset/Ch_k_u_A_glaucoma_specific_fundus_image_database/20123135)
+- the Train folder (Test.zip extracted, same source)
+- the Test folder (Train.zip extracted, same source)
 
 DATA MODIFICATIONS:
- - The images are zero-padded to square shape and resized using PIL's thumbnail method with bicubic interpolation.
+- The images are zero-padded to square shape and resized, using the
+  PIL.Image.thumbnail method with BICUBIC interpolation.
 """
 
 import os
@@ -303,6 +311,7 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
 
 def main():
     from config import config as cfg
+
     pipeline_name = "chaksu"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 
