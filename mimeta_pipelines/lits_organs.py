@@ -19,19 +19,21 @@ OUTPUT DATA:
     this is done for each of the 3 directions (axial, coronal, sagittal), for a separate dataset.
 """
 
+import os
+import re
+from math import ceil
+from multiprocessing.pool import ThreadPool
+
 import matplotlib
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-import os
 import pandas as pd
-import re
 import yaml
-from math import ceil
-from multiprocessing.pool import ThreadPool
 from PIL import Image
 from scipy.ndimage import zoom
 from tqdm import tqdm
+
 from .image_utils import (
     slice_3d_image,
     ct_windowing,
@@ -39,7 +41,7 @@ from .image_utils import (
     AnatomicalPlane,
     draw_colored_bounding_box,
 )
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

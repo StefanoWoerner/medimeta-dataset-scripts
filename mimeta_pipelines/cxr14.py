@@ -12,16 +12,17 @@ DATA MODIFICATIONS:
 """
 
 import os
-import pandas as pd
 import tarfile
-import yaml
-from PIL import Image
-from more_itertools import chunked
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+
+import pandas as pd
+from PIL import Image
+from more_itertools import chunked
+from tqdm import tqdm
+
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

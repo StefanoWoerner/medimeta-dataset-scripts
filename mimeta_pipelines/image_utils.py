@@ -1,7 +1,8 @@
 """Utilities to transform images.
 """
-import numpy as np
 from enum import Enum
+
+import numpy as np
 from PIL import Image, ImageOps
 
 

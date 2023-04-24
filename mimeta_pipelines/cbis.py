@@ -15,11 +15,10 @@ from shutil import copytree, rmtree
 import numpy as np
 import pandas as pd
 import pydicom
-import yaml
 from PIL import Image
 from tqdm import tqdm
 
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+from .paths import INFO_PATH, UNIFIED_DATA_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

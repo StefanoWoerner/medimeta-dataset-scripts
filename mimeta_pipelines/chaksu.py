@@ -9,19 +9,20 @@ DATA MODIFICATIONS:
  - The images are zero-padded to square shape and resized using PIL's thumbnail method with bicubic interpolation.
 """
 
-import numpy as np
 import os
-import pandas as pd
 import re
-import yaml
 from functools import partial
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import zero_pad_to_square
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

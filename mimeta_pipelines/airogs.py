@@ -10,16 +10,18 @@ DATA MODIFICATIONS:
 - The images are resized to out_img_size by 0-padding them to squares and resizing using the PIL library.
 """
 
-import numpy as np
 import os
-import pandas as pd
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import zero_pad_to_square
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, setup
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

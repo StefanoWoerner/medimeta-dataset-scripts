@@ -13,14 +13,15 @@ DATA MODIFICATIONS:
 """
 
 import os
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
+
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths, setup
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 

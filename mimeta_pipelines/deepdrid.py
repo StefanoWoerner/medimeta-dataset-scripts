@@ -11,16 +11,18 @@ DATA MODIFICATIONS:
 """
 
 import os
-import pandas as pd
 import pathlib
-import yaml
-from PIL import Image
 from multiprocessing.pool import ThreadPool
 from shutil import rmtree, copyfile
-from tqdm import tqdm
 from zipfile import ZipFile
+
+import pandas as pd
+import yaml
+from PIL import Image
+from tqdm import tqdm
+
 from .image_utils import center_crop
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, setup
+from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
 

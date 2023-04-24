@@ -1,5 +1,7 @@
-import config
 import importlib
+
+import config
+
 
 def main():
     cfg = config.config

@@ -11,16 +11,17 @@ DATA MODIFICATIONS:
 """
 
 import glob
-import numpy as np
 import os
 import re
-import yaml
 from multiprocessing.pool import ThreadPool
-from PIL import Image
 from shutil import copytree, rmtree
-from tqdm import tqdm
 from zipfile import ZipFile
-from .paths import INFO_PATH, ORIGINAL_DATA_PATH, UNIFIED_DATA_PATH, folder_paths, setup
+
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+
+from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
 
