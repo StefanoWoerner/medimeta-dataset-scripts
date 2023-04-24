@@ -1,12 +1,16 @@
 """Saves the CBIS-DDSM dataset in the unified format.
 
-INPUT DATA:
-Expects directory as downloaded from TCIA using the downloader at
-ORIGINAL_DATA_PATH/CBIS-DDSM if sorted=False or the properly sorted and renamed folder
-in ORIGINAL_DATA_PATH/CBIOS-DDSM if sorted=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if sorted=False (default):
+- the manifest-ZkhPvrLo5216730872708713142 folder downloaded from the
+  TCIA using the downloader
+if sorted=True:
+- the properly sorted and renamed contents of the
+  manifest-ZkhPvrLo5216730872708713142 folder
 
 DATA MODIFICATIONS:
-- The region crops are resized to 224x224 using the PIL.Image.resize method with BICUBIC interpolation.
+- The region crops are resized to 224x224 using PIL.Image.resize with
+  BICUBIC interpolation.
 """
 import glob
 import os

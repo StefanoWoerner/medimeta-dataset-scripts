@@ -1,13 +1,15 @@
 """Saves the NCT-CRC dataset in the unified format.
 
-INPUT DATA:
-Expects zip files as downloaded from https://zenodo.org/record/1214456
-at ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip if zipped=True,
-or extracted folders in ORIGINAL_DATA_PATH/NCT-CRC/NCT-CRC-HE-100K and ORIGINAL_DATA_PATH/NCT-CRC/CRC-VAL-HE-7K
-if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the NCT-CRC-HE-100K.zip and CRC-VAL-HE-7K.zip files downloaded from
+    https://zenodo.org/record/1214456
+if zipped=False:
+- the extracted NCT-CRC-HE-100K and CRC-VAL-HE-7K folders
 
 DATA MODIFICATIONS:
-- The images are opened and resaved using PIL to avoid errors in multiprocessing.
+- The images are opened and saved using PIL to remove erroneous tiff
+  headers.
 """
 
 import glob

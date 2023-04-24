@@ -1,13 +1,17 @@
 """Saves the Kermany optical coherence tomography (OCT) dataset in the unified format.
 
-INPUT DATA:
-Expects tar.gz file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
-at ORIGINAL_DATA_PATH/Kermany_OCT/OCT2017.tar.gz if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/OCT2017 if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the OCT2017.tar.gz file downloaded from
+  https://data.mendeley.com/datasets/rscbjbr9sj/2
+if zipped=False:
+- the extracted OCT2017 folder
 
 DATA MODIFICATIONS:
-- The images are center-cropped with the smallest dimension to obtain a square image.
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images are center-cropped with the smallest dimension to obtain a
+  square image.
+- The images are resized to 224x224 using the PIL.Image.thumbnail method
+  with BICUBIC interpolation.
 """
 
 import os

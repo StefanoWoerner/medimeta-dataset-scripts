@@ -1,14 +1,21 @@
 """Saves the Munich AML Cytomorphology dataset in the unified format.
 
-INPUT DATA:
-Expects annotations.dat file and AML-Cytomorphology folder as downloaded from
-https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
-in ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU if zipped=False,
-or that folder compressed at ORIGINAL_DATA_PATH/AML-Cytomorphology_LMU/AML-Cytomorphology_LMU.zip if zipped=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=False:
+- a folder named AML-Cytomorphology_LMU containing:
+    - the AML-Cytomorphology folder
+    - the annotations.dat file
+  as downloaded from
+  https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=61080958#610809587633e163895b484eafe5794e2017c585
+if zipped=True (default):
+- a zip file named AML-Cytomorphology_LMU.zip containing the
+  aforementioned AML-Cytomorphology_LMU folder
 
 DATA MODIFICATIONS:
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
-- The images are converted to RGB using the PIL.Image.convert method to remove the alpha channel.
+- The images are resized to 224x224 using the PIL.Image.thumbnail method
+  with BICUBIC interpolation.
+- The images are converted to RGB using the PIL.Image.convert method to
+  remove the alpha channel.
 """
 
 import os

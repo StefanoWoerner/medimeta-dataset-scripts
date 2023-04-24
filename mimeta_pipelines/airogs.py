@@ -1,13 +1,16 @@
 """Saves the Rotterdam EyePACS AIROGS dataset (train set) in the unified format.
 
-INPUT DATA:
-Expects train_labels.csv file and a folder named images/ (all zip subfolders merged)
-as downloaded from https://zenodo.org/record/5793241
-in ORIGINAL_DATA_PATH/AIROGS if zipped=False,
-or all the files downloaded from https://zenodo.org/record/5793241 in ORIGINAL_DATA_PATH/AIROGS if zipped=True.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- train_labels.csv downloaded from https://zenodo.org/record/5793241
+- all zip files downloaded from https://zenodo.org/record/5793241
+if zipped=False:
+- train_labels.csv downloaded from https://zenodo.org/record/5793241
+- a folder named images/ (all zip subfolders merged)
 
 DATA MODIFICATIONS:
-- The images are resized to out_img_size by 0-padding them to squares and resizing using the PIL library.
+- The images are resized to out_img_size by 0-padding them to squares
+  with PIL.ImageOps.pad and resizing them with PIL.Image.thumbnail.
 """
 
 import os

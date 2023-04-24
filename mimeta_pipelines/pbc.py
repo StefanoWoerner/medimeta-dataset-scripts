@@ -1,15 +1,17 @@
 """Saves the peripheral blood cells dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from
-https://data.mendeley.com/datasets/snkd93bnjr/1
-at ORIGINAL_DATA_PATH/peripheral_blood_cells/PBC_dataset_normal_DIB.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/peripheral_blood_cells/PBC_dataset_normal_DIB if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the PBC_dataset_normal_DIB.zip file downloaded from
+    https://data.mendeley.com/datasets/snkd93bnjr/1
+if zipped=False:
+- the extracted PBC_dataset_normal_DIB folder
 
 DATA MODIFICATIONS:
-- The images are center-cropped with the smallest dimension to obtain a square image
-    (only some are slightly non-square).
-- The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images are center-cropped with the smallest dimension to obtain a
+  square image (only some are slightly non-square).
+- The images are resized to 224x224 using the PIL.Image.thumbnail method
+  with BICUBIC interpolation.
 """
 
 import os

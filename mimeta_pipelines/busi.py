@@ -1,15 +1,21 @@
 """Saves the dataset of Breast Ultrasound Images in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
-at ORIGINAL_DATA_PATH/BUSI/Dataset_BUSI.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/BUSI/Dataset_BUSI_with_GT if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the Dataset_BUSI.zip file downloaded from
+  https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
+if zipped=False:
+- the extracted Dataset_BUSI_with_GT folder downloaded from
+    https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
 
 DATA MODIFICATIONS:
-- The images are converted to grayscale, the masks to binary, using the PIL.Image.convert method.
-- The images and masks are center-cropped with the smallest dimension to obtain a square image
-- The images are resized to 224x224 (1 upscaled) using the PIL.Image.thumbnail method with BICUBIC interpolation,
-    the masks with NEAREST interpolation.
+- The images are converted to grayscale, the masks to binary, using the
+  PIL.Image.convert method.
+- The images and masks are center-cropped with the smallest dimension to
+  obtain a square image
+- The images are resized to 224x224 (1 upscaled) using the
+  PIL.Image.thumbnail method with BICUBIC interpolation, the masks with
+  NEAREST interpolation.
 """
 
 import os

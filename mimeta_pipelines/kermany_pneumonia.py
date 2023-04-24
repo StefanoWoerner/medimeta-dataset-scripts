@@ -1,15 +1,19 @@
 """Saves the Kermany pneumonia dataset in the unified format.
 
-INPUT DATA:
-Expects zip file as downloaded from https://data.mendeley.com/datasets/rscbjbr9sj/2
-at ORIGINAL_DATA_PATH/Kermany_Pneumonia/ChestXRay2017.zip if zipped=True,
-or extracted folder in ORIGINAL_DATA_PATH/Kermany_Pneumonia if zipped=False.
+EXPECTED INPUT FOLDER CONTENTS:
+if zipped=True (default):
+- the ChestXRay2017.zip file downloaded from
+    https://data.mendeley.com/datasets/rscbjbr9sj/2
+if zipped=False:
+- the extracted ChestXRay2017 folder
 
 DATA MODIFICATIONS:
-- The 283 images in RGB format are converted to grayscale using the PIL.Image.convert method.
-- The images are center-cropped with the smallest dimension to obtain a square image.
-- The images are resized to 224x224 (some upsized, since smaller than 224x224)
-  using the PIL.Image.resize method with BICUBIC interpolation.
+- The 283 images in RGB format are converted to grayscale using the
+  PIL.Image.convert method.
+- The images are center-cropped with the smallest dimension to obtain a
+  square image.
+- The images are resized to 224x224 (some upsized, since smaller than
+  224x224) using the PIL.Image.resize method with BICUBIC interpolation.
 """
 
 import os
