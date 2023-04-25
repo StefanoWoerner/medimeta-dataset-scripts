@@ -34,7 +34,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "RFMiD.yaml"),
     batch_size=128,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     info_dict, out_path = setup(in_path, info_path)
 
