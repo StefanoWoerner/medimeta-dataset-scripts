@@ -1,0 +1,72 @@
+id: rfmid
+name: RFMiD
+summary: Retinal Fundus Multi-disease Image Dataset
+description: #TODO
+
+tasks:
+  - task_name: "disease labels"
+    task_target: MULTILABEL_CLASSIFICATION
+    labels:
+      0: DR
+      1: ARMD
+      2: MH
+      3: DN
+      4: MYA
+      5: BRVO
+      6: TSLN
+      7: ERM
+      8: LS
+      9: MS
+      10: CSR
+      11: ODC
+      12: CRVO
+      13: TV
+      14: AH
+      15: ODP
+      16: ODE
+      17: ST
+      18: AION
+      19: PT
+      20: RT
+      21: RS
+      22: CRS
+      23: EDN
+      24: RPEC
+      25: MHL
+      26: RP
+      27: CWS
+      28: CB
+      29: ODPM
+      30: PRH
+      31: MNF
+      32: HR
+      33: CRAO
+      34: TD
+      35: CME
+      36: PTCR
+      37: CF
+      38: VH
+      39: MCA
+      40: VS
+      41: BRAO
+      42: PLQ
+      43: HPED
+      44: CL
+  - task_name: "disease risk"
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: No risk
+      1: Risk
+
+input_size: [3,224,224]
+num_samples:
+  train: 1920
+  val: 640
+  test: 640
+
+license: #TODO
+download_url: #TODO
+
+original_license: #TODO
+original_paper: #TODO
+original_download_url: #TODO
