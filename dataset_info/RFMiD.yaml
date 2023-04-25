@@ -1,9 +1,17 @@
 id: rfmid
 name: RFMiD
 summary: Retinal Fundus Multi-disease Image Dataset
-description: #TODO
+description: "The Retinal Fundus Multi-disease Image Dataset (RFMiD)
+consists of 3200 fundus images captured using three different fundus
+cameras with 45 conditions annotated through adjudicated consensus of
+two senior retinal experts."
 
 tasks:
+  - task_name: "disease presence"
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: normal
+      1: abnormal
   - task_name: "disease labels"
     task_target: MULTILABEL_CLASSIFICATION
     labels:
@@ -52,11 +60,6 @@ tasks:
       42: PLQ
       43: HPED
       44: CL
-  - task_name: "disease risk"
-    task_target: BINARY_CLASSIFICATION
-    labels:
-      0: No risk
-      1: Risk
 
 input_size: [3,224,224]
 num_samples:
@@ -64,9 +67,9 @@ num_samples:
   val: 640
   test: 640
 
-license: #TODO
-download_url: #TODO
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: #TODO
-original_paper: #TODO
-original_download_url: #TODO
+original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+original_paper: https://www.mdpi.com/2306-5729/6/2/14
+original_download_url: https://ieee-dataport.org/open-access/retinal-fundus-multi-disease-image-dataset-rfmid
