@@ -125,7 +125,6 @@ class UnifiedDatasetWriter:
                     split_paths = [
                         path for path, orig_split in zip(self.new_paths, self.original_splits) if orig_split == split
                     ]
-                    # TODO: do we always want split.txt files (in case empty), or only those present in the dataset?
                     f.write("\n".join(split_paths))
 
             # Task labels (1 file per task)
@@ -149,6 +148,12 @@ class UnifiedDatasetWriter:
                 task_col_names.append(task_col_name)
                 annotations_df[task_col_name] = self.task_labels[task_name]
                 assert task_name not in annotations_df.columns
+                if [task for task in self.info_dict["tasks"] if task["task_name"] == task_name][0][
+                    "task_target"
+                ] == "MULTILABEL_CLASSIFICATION":
+                    annotations_df[task_name] = annotations_df[task_col_name].apply(
+                        lambda labels: [task_dict[i] for i, label in enumerate(labels) if label == 1].join("|")
+                    )
                 annotations_df[task_name] = annotations_df[task_col_name].map(task_dict)
             # reorder columns
             remaining_cols = set(annotations_df.columns)

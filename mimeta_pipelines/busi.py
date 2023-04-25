@@ -34,7 +34,7 @@ def get_unified_data(
     in_path,
     info_path=os.path.join(INFO_PATH, "BUSI.yaml"),
     out_img_size=(224, 224),
-    zipped=True,
+    zipped=False,
 ):
     info_dict, out_path = setup(in_path, info_path)
 
@@ -48,29 +48,27 @@ def get_unified_data(
     # data path
     root_path = os.path.join(in_path, "Dataset_BUSI_with_GT")
 
-    with UnifiedDatasetWriter(
-        out_path,
-        info_path,
-        add_annot_cols=["mask_path", "original_mask_path", "original_size", "case_label", "malignancy_label"],
-    ) as writer:
+    class_task = info_dict["tasks"][0]
+    class2idx = {class_: idx for idx, class_ in class_task["labels"].items()}
+    paths, labels = folder_paths(root=root_path, dir_to_cl_idx=class2idx, check_alphabetical=False)
+    annot_df = pd.DataFrame(data={"original_filepath": paths, class_task["task_name"]: labels})
+    annot_df["original_split"] = "train"
+    # remove masks
+    annot_df = annot_df[~(annot_df["original_filepath"].str.contains("mask"))]
+    annot_df.reset_index(inplace=True, drop=True)
+    # 3-class task to binary task
+    bin_task = info_dict["tasks"][1]
+    class2bin = {"normal": "benign", "benign": "benign", "malignant": "malignant"}
+    bin2binidx = {bin_: idx for idx, bin_ in bin_task["labels"].items()}
+    classidx2binidx = {classidx: bin2binidx[class2bin[class_]] for classidx, class_ in class_task["labels"].items()}
+    annot_df[bin_task["task_name"]] = annot_df[class_task["task_name"]].map(classidx2binidx)
+
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         rel_masks_path = "masks"
         os.makedirs(os.path.join(out_path, rel_masks_path))
 
-        class_task = info_dict["tasks"][0]
-        class2idx = {class_: idx for idx, class_ in class_task.items()}
-        paths, labels = folder_paths(root=root_path, dir_to_cl_idx=class2idx)
-        annot_df = pd.DataFrame(data={"original_filepath": paths, class_task["task_name"]: labels})
-        # remove masks
-        annot_df = annot_df[~(annot_df["original_filepath"].str.contains("mask"))]
-        # 3-class task to binary task
-        bin_task = info_dict["tasks"][1]
-        class2bin = {"normal": "benign", "benign": "benign", "malignant": "malignant"}
-        bin2binidx = {bin_: idx for idx, bin_ in bin_task["labels"].items()}
-        classidx2binidx = {classidx: bin2binidx[class2bin[class_]] for classidx, class_ in class_task["labels"].items()}
-        annot_df[bin_task["task_name"]] = annot_df[class_task["task_name"]].map(classidx2binidx)
-
         def get_img_addannot_pair(df_row):
-            path = os.path.join(root_path, df_row.original_filepath)
+            path = os.path.join(root_path, df_row["original_filepath"])
             name, extension = os.path.splitext(path)
             mask_path = f"{name}_mask{extension}"
             img = Image.open(path)
@@ -89,7 +87,7 @@ def get_unified_data(
             img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
             mask = mask.resize(out_img_size, resample=Image.Resampling.NEAREST)  # binary mask (could change to max)
             # add annotations
-            out_mask_path_rel = os.path.join(rel_masks_path, writer.image_name_from_index(df_row.index))
+            out_mask_path_rel = os.path.join(rel_masks_path, writer.image_name_from_index(df_row["index"]))
             add_annot = {
                 "mask_path": out_mask_path_rel,
                 "original_mask_path": os.path.relpath(mask_path, root_path),

@@ -14,8 +14,8 @@ DATA MODIFICATIONS:
 
 import glob
 import os
+import pandas as pd
 import re
-from multiprocessing.pool import ThreadPool
 from shutil import copytree, rmtree
 from zipfile import ZipFile
 
@@ -30,7 +30,6 @@ from .writer import UnifiedDatasetWriter
 def get_unified_data(
     in_path,
     info_path=os.path.join(INFO_PATH, "NCT-CRC.yaml"),
-    batch_size=256,
     zipped=True,
 ):
     info_dict, out_path = setup(in_path, info_path)
@@ -51,25 +50,28 @@ def get_unified_data(
     for filepath in tqdm(list(glob.iglob(new_in_path + "/**/*.tif", recursive=True)), "NCT-CRC: loading-saving images"):
         Image.fromarray(np.asarray(Image.open(filepath))).save(filepath)
 
-    def get_img(path: str):
-        img = Image.open(path)
-        return img
-
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
+        # Info dataframe
+        paths = []
+        splits = []
+        labels = []
+        task = info_dict["tasks"][0]
         for split, split_dir in splits.items():
             split_path = os.path.join(new_in_path, split_dir)
-            class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()}
-            batches = folder_paths(root=split_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
-            for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
-                with ThreadPool() as pool:
-                    imgs = pool.map(get_img, paths)
-                writer.write(
-                    old_paths=[os.path.relpath(p, new_in_path) for p in paths],
-                    original_splits=[split] * len(paths),
-                    task_labels=[[lab] for lab in labs],
-                    add_annots=[[info_dict["tasks"][0]["labels"][lab]] for lab in labs],
-                    images=imgs,
-                )
+            class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in task["labels"].items()}
+            split_paths, split_labels = folder_paths(root=split_path, dir_to_cl_idx=class_to_idx)
+            paths.extend([split_dir + path for path in split_paths])
+            splits.extend([split] * len(split_paths))
+            labels.extend(split_labels)
+        df = pd.DataFrame(data={"original_filepath": paths, "original_split": splits, task["task_name"]: labels})
+
+        # Processing function
+        def get_image_add_annot_pair(df_row):
+            img = Image.open(os.path.join(new_in_path, df_row["original_filepath"]))
+            add_annot = {"original_image_size": img.size}
+            return img, add_annot
+
+        writer.write_from_dataframe(df=df, processing_func=get_image_add_annot_pair)
 
     # remove temporary folder
     rmtree(new_in_path, ignore_errors=True)
@@ -77,6 +79,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "nct_crc"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 
