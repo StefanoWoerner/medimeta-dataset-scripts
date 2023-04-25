@@ -66,7 +66,7 @@ def get_unified_data(
     }
     info_df["original_filepath"] = info_df["split"].map(split2folder) + os.path.sep + info_df["ID"].astype(str) + ".png"
     # Tasks
-    disease_task, risk_task = info_dict["tasks"]
+    risk_task, disease_task = info_dict["tasks"]
     info_df.rename(columns={"Disease_Risk": "risk"}, inplace=True)
     info_df["risk_label"] = info_df["risk"].map(risk_task["labels"])
 
@@ -81,7 +81,7 @@ def get_unified_data(
         for disease in disease_task["labels"].values():
             if row[disease] == 1:
                 diseases.append(disease)
-        return "|".join(diseases)
+        return " - ".join(diseases)
 
     info_df["disease"] = info_df.apply(label_func, axis=1)
     info_df["disease_labels"] = info_df.apply(diseases_func, axis=1)
@@ -102,13 +102,13 @@ def get_unified_data(
         # resize
         img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # labels
-        lab = [df_row["disease"], df_row["risk"]]
+        lab = [df_row["risk"], df_row["disease"]]
         # add annotation
-        add_annot = [img_size, df_row["disease_labels"], df_row["risk_label"]]
+        add_annot = [img_size, df_row["risk_label"], df_row["disease_labels"]]
         return original_filepath, split, lab, img, add_annot
 
     with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=["original_size", "disease_labels", "risk_label"]
+        out_path, info_path, add_annot_cols=["original_size", "disease_presence", "disease_labels"]
     ) as writer:
         all_paths = info_df.index
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing RFMiD"):
