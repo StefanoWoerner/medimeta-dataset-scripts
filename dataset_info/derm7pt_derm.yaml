@@ -1,6 +1,6 @@
-id: derm7pt
-name: 7-point criteria evaluation database
-summary: "Seven-Point Checklist for Skin Lesion Classification"
+id: derm7pt_derm
+name: 7-point criteria evaluation database - dermoscopy images
+summary: "Seven-Point Checklist for Skin Lesion Classification - Dermoscopy Images"
 description: #TODO
 
 tasks:
