@@ -94,7 +94,7 @@ def get_unified_data(
         # binary task
         class_to_idx_bin = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
         # mapper between the two tasks
-        class_to_bin = {"normal": "benign", "benign": "benign", "malignant": "malignant"}
+        class_to_bin = {"normal": "no malignant finding", "benign": "no malignant finding", "malignant": "malignant finding"}
 
         batches = folder_paths(
             root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False

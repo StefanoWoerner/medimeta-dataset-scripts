@@ -1,20 +1,20 @@
-id: busi
-name: BUSI
-summary: Dataset of Breast Ultrasound Images
-description: "The data collected at baseline include breast ultrasound images among women in ages between 25 and 75 years old. This data was collected in 2018. The number of patients is 600 female patients. The dataset consists of 780 images with an average image size of 500*500 pixels. The images are in PNG format. The ground truth images are presented with original images. The images are categorized into three classes, which are normal, benign, and malignant."
+id: bus
+name: Breast Ultrasound
+summary: "Dataset of breast ultrasound images of women between 25 and 75
+years old. The data contains normal, benign, and malignant."
 
 tasks:
-  - task_name: "case"
+  - task_name: case category
     task_target: MULTICLASS_CLASSIFICATION
     labels:
       0: normal
       1: benign
       2: malignant
-  - task_name: "malignancy"
+  - task_name: malignancy
     task_target: BINARY_CLASSIFICATION
     labels:
-      0: benign
-      1: malignant
+      0: no malignant finding
+      1: malignant finding
 
 input_size: [1,224,224]
 num_samples:
@@ -25,6 +25,20 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-original_paper: https://www.sciencedirect.com/science/article/pii/S2352340919312181
-original_download_url: https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
+original_data:
+  - name: "BUSI_dataset"
+    title: "Dataset of breast ultrasound images for development of automatic recognition systems"
+    url: https://scholar.cu.edu.eg/?q=afahmy/pages/dataset
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "Walid Al-Dhabyani, Mohammed Gomaa, Hussien Khaled, Aly Fahmy"
+    paper_title: "Dataset of breast ultrasound images for development of automatic recognition systems"
+    paper_url: https://www.sciencedirect.com/science/article/pii/S2352340919312181
+    citations:
+      - "Walid Al-Dhabyani, Mohammed Gomaa, Hussien Khaled, Aly Fahmy,
+         Dataset of breast ultrasound images,
+         Data in Brief,
+         Volume 28,
+         2020,
+         104863,
+         ISSN 2352-3409,
+         https://doi.org/10.1016/j.dib.2019.104863"
