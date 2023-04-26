@@ -37,7 +37,7 @@ def get_unified_data(
     ),
     batch_size=64,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     info_dicts, out_paths = zip(*[setup(in_path, info_path) for info_path in info_paths])
     root_path = in_path
