@@ -94,7 +94,7 @@ def get_unified_data(
 
     # To be called once for each plane
     def _get_unified_data(out_path, info_path, plane):
-        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols) as writer:
+        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols, dtype=np.float32) as writer:
             # Get labeling transformations and legend for colored bounding boxes
             plane_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
             # Create output folders
@@ -300,6 +300,7 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
     bbox = row.bbox
     # Organ image
     organ_img, bbox_2d = slice_3d_image(img, bbox, plane)
+    organ_img = organ_img.astype(np.float32)
     organ_img = ct_windowing(organ_img)
     organ_img = ratio_cut(organ_img, bbox_2d, ratio)
     organ_img = Image.fromarray(organ_img)
