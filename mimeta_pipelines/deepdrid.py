@@ -36,7 +36,7 @@ def get_unified_data(
     ),
     batch_size=128,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
