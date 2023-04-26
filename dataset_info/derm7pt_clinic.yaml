@@ -1,0 +1,128 @@
+id: derm7pt_clinic
+name: 7-point criteria evaluation database - clinical images
+summary: "Seven-Point Checklist for Skin Lesion Classification - Clinical Images"
+description: #TODO
+
+tasks:
+  - task_name: Diagnosis
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: basal cell carcinoma
+      1: blue nevus
+      2: clark nevus
+      3: combined nevus
+      4: congenital nevus
+      5: dermal nevus
+      6: dermatofibroma
+      7: lentigo
+      8: melanoma
+      9: melanosis
+      10: miscellaneous
+      11: recurrent nevus
+      12: reed or spitz nevus
+      13: seborrheic keratosis
+      14: vascular lesion
+
+  - task_name: Diagnosis grouped
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: basal cell carcinoma
+      1: nevus
+      2: melanoma
+      3: miscellaneous
+      4: seborrheic keratosis
+
+#  - task_name: seven-point score
+#    task_target: REGRESSION
+#    labels:
+#      type: integer
+#      interval: [0, 10]
+
+  - task_name: Pigment Network
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: typical
+      2: atypical
+
+  - task_name: Blue Whitish Veil
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: absent
+      1: present
+
+  - task_name: Vascular Structures
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: arborizing
+      2: comma
+      3: hairpin
+      4: within regression
+      5: wreath
+      6: dotted
+      7: linear irregular
+
+  - task_name: Vascular Structures grouped
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: regular
+      2: irregular
+
+  - task_name: Pigmentation
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: diffuse regular
+      2: localized regular
+      3: diffuse irregular
+      4: localized irregular
+
+  - task_name: Pigmentation grouped
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: regular
+      2: irregular
+
+  - task_name: Streaks
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: regular
+      2: irregular
+
+  - task_name: Dots and Globules
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: regular
+      2: irregular
+
+  - task_name: Regression Structures
+    task_target: MULTICLASS_CLASSIFICATION
+    labels:
+      0: absent
+      1: blue areas
+      2: white areas
+      3: combinations
+
+  - task_name: Regression Structures grouped
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: absent
+      1: present
+
+input_size: [3,224,224]
+num_samples:
+  train: 413
+  val: 203
+  test: 395
+
+license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+original_license: #TODO
+original_paper: https://ieeexplore.ieee.org/document/8333693
+original_download_url: https://derm.cs.sfu.ca/Download.html
