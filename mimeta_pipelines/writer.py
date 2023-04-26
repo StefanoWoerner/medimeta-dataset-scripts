@@ -220,7 +220,7 @@ class UnifiedDatasetWriter:
         # Check labels valid
         for i, task in enumerate(self.info_dict["tasks"]):
             if not all(labels[i] in task["labels"] for labels in task_labels):
-                raise ValueError(f"Task {i} labels must be in {task['labels'].keys()}.")
+                raise ValueError(f"Task {task['task_name']} labels must be in {task['labels'].keys()}.")
 
         # Register new information
         self.original_train += [fp for fp, split in zip(filepaths, original_splits) if split == "train"]
