@@ -22,6 +22,7 @@ import pydicom
 from PIL import Image
 from tqdm import tqdm
 
+from .image_utils import ratio_cut
 from .paths import INFO_PATH, UNIFIED_DATA_BASE_PATH, setup
 from .writer import UnifiedDatasetWriter
 
@@ -149,57 +150,54 @@ def _get_unified_data(
     df_test.insert(0, "original_split", "test")
     df = pd.concat([df_train, df_test], axis=0)
 
-    task_names = [
-        task["task_name"]
-        for task in info_dict["tasks"]
-        if task["task_name"] != "pathology"
-    ]
-    task_labels = [
-        df["pathology"].apply(lambda x: 1 if x == "MALIGNANT" else 0).tolist()
-    ]
+    task_names = [task["task_name"] for task in info_dict["tasks"] if task["task_name"] != "pathology"]
+    task_labels = [df["pathology"].apply(lambda x: 1 if x == "MALIGNANT" else 0).tolist()]
     for i, task_name in enumerate(task_names):
         concepts = info_dict["tasks"][i + 1]["labels"].values()
-        task_labels.append(
-            df[task_name]
-            .apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts])
-            .tolist()
-        )
+        task_labels.append(df[task_name].apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts]).tolist())
 
     cropped_img_paths = df["cropped image file path"]
-    cropped_img_paths = [
-        os.path.join(root_path, "CBIS-DDSM", p.replace("\n", ""))
-        for p in cropped_img_paths
-    ]
+    cropped_img_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in cropped_img_paths]
 
     mask_paths = df["ROI mask file path"]
-    mask_paths = [
-        os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in mask_paths
-    ]
+    mask_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in mask_paths]
 
     uncropped_img_paths = df["image file path"]
-    uncropped_img_paths = [
-        os.path.join(root_path, "CBIS-DDSM", p.replace("\n", ""))
-        for p in uncropped_img_paths
-    ]
+    uncropped_img_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in uncropped_img_paths]
 
     splits = df["original_split"].tolist()
 
     annotations = df[list(annotation_columns.keys())]
 
     def get_image_data(i):
-        s = sorted(
-            (os.path.getsize(p), p)
-            for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]]
-        )
-        dcm = pydicom.read_file(s[0][1])
-        im = Image.fromarray(dcm.pixel_array.astype(np.float32) / 255)
+        s = sorted((os.path.getsize(p), p) for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]])
+        # find complete image, mask
+        imgs = [pydicom.read_file(p).pixel_array for p in s[1:][1]]
+        if len(np.unique(imgs[0])) == 2:
+            mask = imgs[0]
+            im = imgs[1]
+        else:
+            mask = imgs[1]
+            im = imgs[0]
+        # normalize image
+        im = im.astype(np.float32) / np.iinfo(im.dtype).max
+        # bounding box from mask
+        non_0_rows = np.argwhere(np.any(mask, axis=1))
+        left_bb = np.min(non_0_rows)
+        right_bb = np.max(non_0_rows)
+        non_0_cols = np.argwhere(np.any(mask, axis=0))
+        top_bb = np.min(non_0_cols)
+        bottom_bb = np.max(non_0_cols)
+        # crop image
+        im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
+        im = Image.fromarray(im)
         im = im.convert("L")
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = [tl[i] for tl in task_labels]
         return s[0][1], splits[i], im, labels, annotations.iloc[i]
 
     with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=list(annotation_columns.values())
+        out_path, info_path, add_annot_cols=list(annotation_columns.values()), dtype=np.float32
     ) as writer:
         for i in tqdm(range(len(df))):
             p, s, im, l, a = get_image_data(i)
@@ -214,6 +212,7 @@ def _get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "cbis"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 
