@@ -9,6 +9,7 @@ if zipped=False:
 DATA MODIFICATIONS:
 - The images are center-cropped with the smallest dimension to obtain a square image.
 - The images are resized to 224x224 using the PIL.Image.thumbnail method with BICUBIC interpolation.
+- The images with annotated DR_level == 5 are discarded.
 """
 
 import os
@@ -35,7 +36,7 @@ def get_unified_data(
     ),
     batch_size=128,
     out_img_size=(224, 224),
-    zipped=True,
+    zipped=False,
 ):
     out_paths = [setup(in_path, info_path)[1] for info_path in info_paths]
 
@@ -152,6 +153,9 @@ def get_unified_data(
                     annots_df.index = [
                         os.path.join(split_path, "Images", i.split("_")[0], i + ".jpg") for i in annots_df.index
                     ]
+
+                # no missing DR level
+                annots_df = annots_df[annots_df.dr_level != 5]
 
                 # mapper task column -> idx_to_label dict
                 task_labels = {tasks_mapper[task["task_name"]]: task["labels"] for task in info_dict["tasks"]}
