@@ -219,7 +219,7 @@ class UnifiedDatasetWriter:
             raise ValueError("Original splits must be of ('train', 'val', 'test').")
         # Check labels valid
         for i, task in enumerate(self.info_dict["tasks"]):
-            if not all(label in task["labels"].keys() for label in list(zip(*task_labels))[i]):
+            if not all(labels[i] in task["labels"] for labels in task_labels):
                 raise ValueError(f"Task {i} labels must be in {task['labels'].keys()}.")
 
         # Register new information
