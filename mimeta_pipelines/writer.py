@@ -109,10 +109,11 @@ class UnifiedDatasetWriter:
             dataset_shape = (dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
         else:
             dataset_shape = (dataset_length, *self.out_img_shape[1:])
+        self.dtype = dtype
         self.dataset_file.create_dataset(
             self.hdf5_dataset_name,
             shape=dataset_shape,
-            dtype=dtype,
+            dtype=self.dtype,
         )
         # Initialize image counter
         self.current_idx = 0
