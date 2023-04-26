@@ -172,15 +172,13 @@ def _get_unified_data(
     def get_image_data(i):
         s = sorted((os.path.getsize(p), p) for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]])
         # find complete image, mask
-        imgs = [pydicom.read_file(p).pixel_array for p in s[1:][1]]
+        imgs = [pydicom.read_file(p[1]).pixel_array for p in s[1:]]
         if len(np.unique(imgs[0])) == 2:
             mask = imgs[0]
             im = imgs[1]
         else:
             mask = imgs[1]
             im = imgs[0]
-        # normalize image
-        im = im.astype(np.float32) / np.iinfo(im.dtype).max
         # bounding box from mask
         non_0_rows = np.argwhere(np.any(mask, axis=1))
         left_bb = np.min(non_0_rows)
@@ -190,9 +188,8 @@ def _get_unified_data(
         bottom_bb = np.max(non_0_cols)
         # crop image
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
-        im = Image.fromarray(im)
-        im = im.convert("L")
-        im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
+        im = Image.fromarray(im.astype(np.float32) / np.iinfo(im.dtype).max)
+        im.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = [tl[i] for tl in task_labels]
         return s[0][1], splits[i], im, labels, annotations.iloc[i]
 
