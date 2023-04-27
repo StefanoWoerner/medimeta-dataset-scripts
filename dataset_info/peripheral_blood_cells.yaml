@@ -1,9 +1,9 @@
 id: pbc
-name: peripheral blood cells
-summary: A dataset for microscopic peripheral blood cell images for development of automatic recognition systems
-description: "The dataset contains a total of 17,092 images of individual normal cells, which were acquired using the analyzer CellaVision DM96 in the Core Laboratory at the Hospital Clinic of Barcelona. The dataset is organized in the following eight groups: neutrophils, eosinophils, basophils, lymphocytes, monocytes, immature granulocytes (promyelocytes, myelocytes, and metamyelocytes), erythroblasts and platelets or thrombocytes. The size of the images is 360 x 363 pixels, in format JPG, and they were annotated by expert clinical pathologists. The images were captured from individuals without infection, hematologic or oncologic disease and free of any pharmacologic treatment at the moment of blood collection.
-
-This high-quality labelled dataset may be used to train and test machine learning and deep learning models to recognize different types of normal peripheral blood cells. To our knowledge, this is the first publicly available set with large numbers of normal peripheral blood cells, so that it is expected to be a canonical dataset for model benchmarking."
+name: Peripheral Blood Cells
+summary: "A dataset of microscopic peripheral blood cell images of
+individual normal cells. The images were captured from individuals
+without infection, hematologic or oncologic disease and free of any
+pharmacologic treatment at the moment of blood collection."
 
 tasks:
   - task_name: "cell class"
@@ -27,6 +27,25 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-original_paper: https://www.sciencedirect.com/science/article/pii/S2352340920303681
-original_download_url: https://data.mendeley.com/datasets/snkd93bnjr/1
+original_data:
+  - name: "PBC_dataset_normal_DIB"
+    title: "A dataset for microscopic peripheral blood cell images for development of automatic recognition systems"
+    url: https://data.mendeley.com/datasets/snkd93bnjr/1
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "Andrea Acevedo, Anna Merino, Santiago Alférez, Ángel Molina, Laura Boldú, José Rodellar"
+    paper_title: "A dataset for microscopic peripheral blood cell images for development of automatic recognition systems"
+    paper_url: https://www.sciencedirect.com/science/article/pii/S2352340920303681
+    citations:
+      data: "Acevedo, Andrea; Merino, Anna; Alférez, Santiago; Molina, Ángel; Boldú, Laura; Rodellar, José (2020),
+      A dataset for microscopic peripheral blood cell images for development of automatic recognition systems,
+      Mendeley Data,
+      V1,
+      doi: 10.17632/snkd93bnjr.1"
+      paper: "Andrea Acevedo, Anna Merino, Santiago Alférez, Ángel Molina, Laura Boldú, José Rodellar,
+      A dataset of microscopic peripheral blood cell images for development of automatic recognition systems,
+      Data in Brief,
+      Volume 30,
+      2020,
+      105474,
+      ISSN 2352-3409,
+      https://doi.org/10.1016/j.dib.2020.105474."

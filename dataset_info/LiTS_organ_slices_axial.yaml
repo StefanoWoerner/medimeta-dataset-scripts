@@ -1,7 +1,7 @@
-id: lits_organs_axial
-name: LiTS Axial Organ Slices
-summary: Axial Organ Slices from the Liver Tumor Segmentation Benchmark (LiTS) dataset
-description: ""
+id: organs_axial
+name: Axial Organ Slices
+summary: "Axial slices of 11 different organs extracted from the Liver
+Tumor Segmentation Benchmark (LiTS) dataset"
 
 tasks:
   - task_name: "organ label"
@@ -25,17 +25,37 @@ num_samples:
   val: 0
   test: 618
 
-license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license:
-  LiTS: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
-  Organ Annotations: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-original_paper:
-  LiTS: https://www.sciencedirect.com/science/article/pii/S1361841522003085
-  Organ Annotations: https://ieeexplore.ieee.org/document/8625393
-original_download_url:
-  LiTS: https://competitions.codalab.org/competitions/17094
-  # LiTS Train: https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
-  # LiTS Test: https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
-  Organ Annotations: https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset
+original_data:
+  - name: LiTS
+    title: "Liver Tumor Segmentation Benchmark (LiTS)"
+    url: https://competitions.codalab.org/competitions/17094
+    download_url1: https://drive.google.com/drive/folders/0B0vscETPGI1-Q1h1WFdEM2FHSUE?resourcekey=0-XIVV_7YUjB9TPTQ3NfM17A
+    download_url2: https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
+    license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
+    authors: "Patrick Bilic, Patrick Christ, Hongwei Bran Li, Eugene Vorontsov, Avi Ben-Cohen, Georgios Kaissis, Adi Szeskin, Colin Jacobs, Gabriel Efrain Humpire Mamani, Gabriel Chartrand, Fabian Lohöfer, Julian Walter Holch, Wieland Sommer, Felix Hofmann, Alexandre Hostettler, Naama Lev-Cohain, Michal Drozdzal, Michal Marianne Amitai, Refael Vivanti, Jacob Sosna, Ivan Ezhov, Anjany Sekuboyina, Fernando Navarro, Florian Kofler, Johannes C. Paetzold, Suprosanna Shit, Xiaobin Hu, Jana Lipková, Markus Rempfler, Marie Piraud, Jan Kirschke, Benedikt Wiestler, Zhiheng Zhang, Christian Hülsemeyer, Marcel Beetz, Florian Ettlinger, Michela Antonelli, Woong Bae, Míriam Bellver, Lei Bi, Hao Chen, Grzegorz Chlebus, Erik B. Dam, Qi Dou, Chi-Wing Fu, Bogdan Georgescu, Xavier Giró-i-Nieto, Felix Gruen, Xu Han, Pheng-Ann Heng, Jürgen Hesser, Jan Hendrik Moltz, Christian Igel, Fabian Isensee, Paul Jäger, Fucang Jia, Krishna Chaitanya Kaluva, Mahendra Khened, Ildoo Kim, Jae-Hun Kim, Sungwoong Kim, Simon Kohl, Tomasz Konopczynski, Avinash Kori, Ganapathy Krishnamurthi, Fan Li, Hongchao Li, Junbo Li, Xiaomeng Li, John Lowengrub, Jun Ma, Klaus Maier-Hein, Kevis-Kokitsi Maninis, Hans Meine, Dorit Merhof, Akshay Pai, Mathias Perslev, Jens Petersen, Jordi Pont-Tuset, Jin Qi, Xiaojuan Qi, Oliver Rippel, Karsten Roth, Ignacio Sarasua, Andrea Schenk, Zengming Shen, Jordi Torres, Christian Wachinger, Chunliang Wang, Leon Weninger, Jianrong Wu, Daguang Xu, Xiaoping Yang, Simon Chun-Ho Yu, Yading Yuan, Miao Yue, Liping Zhang, Jorge Cardoso, Spyridon Bakas, Rickmer Braren, Volker Heinemann, Christopher Pal, An Tang, Samuel Kadoury, Luc Soler, Bram van Ginneken, Hayit Greenspan, Leo Joskowicz, Bjoern Menze"
+    paper_title: "Liver Tumor Segmentation Benchmark (LiTS)"
+    paper_url: https://www.sciencedirect.com/science/article/pii/S1361841522003085
+    citations:
+      - "Patrick Bilic, Patrick Christ, Hongwei Bran Li, Eugene Vorontsov, Avi Ben-Cohen, Georgios Kaissis, Adi Szeskin, Colin Jacobs, Gabriel Efrain Humpire Mamani, Gabriel Chartrand, Fabian Lohöfer, Julian Walter Holch, Wieland Sommer, Felix Hofmann, Alexandre Hostettler, Naama Lev-Cohain, Michal Drozdzal, Michal Marianne Amitai, Refael Vivanti, Jacob Sosna, Ivan Ezhov, Anjany Sekuboyina, Fernando Navarro, Florian Kofler, Johannes C. Paetzold, Suprosanna Shit, Xiaobin Hu, Jana Lipková, Markus Rempfler, Marie Piraud, Jan Kirschke, Benedikt Wiestler, Zhiheng Zhang, Christian Hülsemeyer, Marcel Beetz, Florian Ettlinger, Michela Antonelli, Woong Bae, Míriam Bellver, Lei Bi, Hao Chen, Grzegorz Chlebus, Erik B. Dam, Qi Dou, Chi-Wing Fu, Bogdan Georgescu, Xavier Giró-i-Nieto, Felix Gruen, Xu Han, Pheng-Ann Heng, Jürgen Hesser, Jan Hendrik Moltz, Christian Igel, Fabian Isensee, Paul Jäger, Fucang Jia, Krishna Chaitanya Kaluva, Mahendra Khened, Ildoo Kim, Jae-Hun Kim, Sungwoong Kim, Simon Kohl, Tomasz Konopczynski, Avinash Kori, Ganapathy Krishnamurthi, Fan Li, Hongchao Li, Junbo Li, Xiaomeng Li, John Lowengrub, Jun Ma, Klaus Maier-Hein, Kevis-Kokitsi Maninis, Hans Meine, Dorit Merhof, Akshay Pai, Mathias Perslev, Jens Petersen, Jordi Pont-Tuset, Jin Qi, Xiaojuan Qi, Oliver Rippel, Karsten Roth, Ignacio Sarasua, Andrea Schenk, Zengming Shen, Jordi Torres, Christian Wachinger, Chunliang Wang, Leon Weninger, Jianrong Wu, Daguang Xu, Xiaoping Yang, Simon Chun-Ho Yu, Yading Yuan, Miao Yue, Liping Zhang, Jorge Cardoso, Spyridon Bakas, Rickmer Braren, Volker Heinemann, Christopher Pal, An Tang, Samuel Kadoury, Luc Soler, Bram van Ginneken, Hayit Greenspan, Leo Joskowicz, Bjoern Menze,
+         The Liver Tumor Segmentation Benchmark (LiTS),
+         Medical Image Analysis,
+         Volume 84,
+         2023,
+         102680,
+         ISSN 1361-8415,
+         https://doi.org/10.1016/j.media.2022.102680."
+  - name: "Organ Annotations"
+    title: "Annotations for Body Organ Localization based on MICCAI LiTS Dataset"
+    url: https://ieee-dataport.org/documents/annotations-body-organ-localization-based-miccai-lits-dataset
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "X. Xu, F. Zhou, B. Liu, D. Fu and X. Bai"
+    paper_title: "Efficient Multiple Organ Localization in CT Image Using 3D Region Proposal Network"
+    paper_url: https://ieeexplore.ieee.org/document/8625393
+    citations:
+      - "X. Xu, F. Zhou, B. Liu, D. Fu and X. Bai,
+      Efficient Multiple Organ Localization in CT Image Using 3D Region Proposal Network,
+      in IEEE Transactions on Medical Imaging, vol. 38, no. 8, pp. 1885-1898, Aug. 2019,
+      doi: 10.1109/TMI.2019.2894854."

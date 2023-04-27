@@ -1,10 +1,9 @@
-id: rfmid
-name: RFMiD
-summary: Retinal Fundus Multi-disease Image Dataset
-description: "The Retinal Fundus Multi-disease Image Dataset (RFMiD)
-consists of 3200 fundus images captured using three different fundus
-cameras with 45 conditions annotated through adjudicated consensus of
-two senior retinal experts."
+id: fundus
+name: Fundus Multi-disease
+summary: "Multi-disease Retinal Fundus Image Dataset consisting of
+3200 fundus images captured using three different fundus cameras with 45
+conditions annotated through adjudicated consensus of two senior retinal
+experts as well as an overall disease presence label."
 
 tasks:
   - task_name: "disease presence"
@@ -70,6 +69,24 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-original_paper: https://www.mdpi.com/2306-5729/6/2/14
-original_download_url: https://ieee-dataport.org/open-access/retinal-fundus-multi-disease-image-dataset-rfmid
+original_data:
+  - name: RFMiD
+    title: Retinal Fundus Multi-disease Image Dataset
+    url: https://riadd.grand-challenge.org/download-all-classes/
+    url2: https://ieee-dataport.org/open-access/retinal-fundus-multi-disease-image-dataset-rfmid
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "Samiksha Pachade, Prasanna Porwal, Dhanshree Thulkar, Manesh Kokare, Girish Deshmukh, Vivek Sahasrabuddhe, Luca Giancardo, Gwenolé Quellec, Fabrice Mériaudeau"
+    paper_title: "Retinal Fundus Multi-Disease Image Dataset (RFMiD): A Dataset for Multi-Disease Detection Research"
+    paper_url: https://www.mdpi.com/2306-5729/6/2/14
+    citations:
+      data: "Samiksha Pachade, Prasanna Porwal, Dhanshree Thulkar, Manesh Kokare, Girish Deshmukh, Vivek Sahasrabuddhe, Luca Giancardo, Gwenolé Quellec, Fabrice Mériaudeau,
+      November 25, 2020,
+      Retinal Fundus Multi-disease Image Dataset (RFMiD)
+      IEEE Dataport,
+      doi: https://dx.doi.org/10.21227/s3g7-st65"
+      paper: "Pachade S, Porwal P, Thulkar D, Kokare M, Deshmukh G, Sahasrabuddhe V, Giancardo L, Quellec G, Mériaudeau F.
+      Retinal Fundus Multi-Disease Image Dataset (RFMiD): A Dataset for Multi-Disease Detection Research.
+      Data.
+      2021;
+      6(2):14.
+      https://doi.org/10.3390/data6020014"

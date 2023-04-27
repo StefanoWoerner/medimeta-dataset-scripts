@@ -1,10 +1,7 @@
-id: nct_crc
-name: NCT-CRC-HE-100K
-summary: 100,000 histological images of human colorectal cancer and healthy tissue
-description: "This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue.
-All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method (http://ieeexplore.ieee.org/abstract/document/5193250/, DOI 10.1109/ISBI.2009.5193250).
-Tissue classes are: Adipose (ADI), background (BACK), debris (DEB), lymphocytes (LYM), mucus (MUC), smooth muscle (MUS), normal colon mucosa (NORM), cancer-associated stroma (STR), colorectal adenocarcinoma epithelium (TUM).
-These images were manually extracted from N=86 H&E stained human cancer tissue slides from formalin-fixed paraffin-embedded (FFPE) samples from the NCT Biobank (National Center for Tumor Diseases, Heidelberg, Germany) and the UMM pathology archive (University Medical Center Mannheim, Mannheim, Germany). Tissue samples contained CRC primary tumor slides and tumor tissue from CRC liver metastases; normal tissue classes were augmented with non-tumorous regions from gastrectomy specimen to increase variability."
+id: crc
+name: Colorectal Cancer (CRC)
+summary: "Image patches from hematoxylin & eosin (H&E) stained
+histological images of human colorectal cancer (CRC) and normal tissue."
 
 tasks:
   - task_name: "tissue class"
@@ -29,6 +26,15 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 4.0 International"
-original_paper: ""
-original_download_url: https://zenodo.org/record/1214456
+original_data:
+  - name: "NCT-CRC-HE-100K"
+    title: "100,000 histological images of human colorectal cancer and healthy tissue"
+    url: https://zenodo.org/record/1214456
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "Jakob Nikolas Kather, Niels Halama, Alexander Marx"
+    citations:
+      - "Kather, Jakob Nikolas, Halama, Niels, & Marx, Alexander.
+      (2018).
+      100,000 histological images of human colorectal cancer and healthy tissue (v0.1) [Data set].
+      Zenodo.
+      https://doi.org/10.5281/zenodo.1214456"
