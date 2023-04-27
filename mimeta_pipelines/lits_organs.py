@@ -94,7 +94,7 @@ def get_unified_data(
 
     # To be called once for each plane
     def _get_unified_data(out_path, info_path, plane):
-        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols, dtype=np.float32) as writer:
+        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols) as writer:
             # Get labeling transformations and legend for colored bounding boxes
             plane_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
             # Create output folders
