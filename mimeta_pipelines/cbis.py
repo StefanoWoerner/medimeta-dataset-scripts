@@ -188,14 +188,12 @@ def _get_unified_data(
         bottom_bb = np.max(non_0_cols)
         # crop image
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
-        im = Image.fromarray(im.astype(np.float32) / np.iinfo(im.dtype).max)
+        im = (Image.fromarray(im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8)
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = [tl[i] for tl in task_labels]
         return s[0][1], splits[i], im, labels, annotations.iloc[i]
 
-    with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=list(annotation_columns.values()), dtype=np.float32
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=list(annotation_columns.values())) as writer:
         for i in tqdm(range(len(df))):
             p, s, im, l, a = get_image_data(i)
             writer.write(
