@@ -25,7 +25,7 @@ num_samples:
   val: 0
   test: 618
 
-license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-SA 4.0)"
+license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
 original_data:
