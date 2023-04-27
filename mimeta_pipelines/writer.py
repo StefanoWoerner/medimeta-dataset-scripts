@@ -66,6 +66,18 @@ class UnifiedDatasetWriter:
         with open(info_out_path, "r") as f:
             self.info_dict = yaml.safe_load(f)
 
+        # Copy license file
+        license_string = self.info_dict["license"]
+        if "CC BY-NC-SA 4.0" in license_string:
+            license_name = "CC BY-NC-SA.txt"
+        elif "CC BY-SA 4.0" in license_string:
+            license_name = "CC BY-SA.txt"
+        else:
+            raise ValueError(f"Unrecognized license: {license_string}")
+        license_in_path = os.path.join(os.path.dirname(info_path), "licenses", license_name)
+        license_out_path = os.path.join(out_path, "LICENSE")
+        copyfile(license_in_path, license_out_path)
+
         # Initialize original splits
         self.original_splits_path = os.path.join(self.out_path, "original_splits")
         os.makedirs(self.original_splits_path)
