@@ -300,8 +300,8 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
     bbox = row.bbox
     # Organ image
     organ_img, bbox_2d = slice_3d_image(img, bbox, plane)
-    organ_img = organ_img.astype(np.float32)
     organ_img = ct_windowing(organ_img)
+    organ_img = (organ_img * 255).astype(np.uint8)
     organ_img = ratio_cut(organ_img, bbox_2d, ratio)
     organ_img = Image.fromarray(organ_img)
     organ_img = organ_img.resize(out_img_size, resample=Image.Resampling.BICUBIC)

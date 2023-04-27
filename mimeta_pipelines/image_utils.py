@@ -62,6 +62,7 @@ def ct_windowing(img: np.ndarray, window_width: float = 400, window_level: float
     :param window_level: window level.
     :returns: windowed image (float array in [0, 1])
     """
+    img = img.astype(np.float32)
     lower = window_level - window_width / 2
     upper = window_level + window_width / 2
     img[img < lower] = lower
