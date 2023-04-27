@@ -188,7 +188,7 @@ def _get_unified_data(
         bottom_bb = np.max(non_0_cols)
         # crop image
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
-        im = (Image.fromarray(im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8)
+        im = Image.fromarray(((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8))
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = [tl[i] for tl in task_labels]
         return s[0][1], splits[i], im, labels, annotations.iloc[i]
