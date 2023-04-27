@@ -1,5 +1,5 @@
-id: glaukoma
-name: Glaukoma-specific fundus images
+id: glaucoma
+name: Glaucoma-specific fundus images
 summary: "Glaucoma-specific Indian ethnicity retinal fundus images
 acquired using three devices. Five expert ophthalmologists provided
 annotations on whether the subject is glaucoma suspect or not."
