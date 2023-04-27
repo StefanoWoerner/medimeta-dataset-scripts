@@ -1,5 +1,5 @@
 id: derm7pt_clinic
-name: 7-point criteria evaluation database - clinical images
+name: 7-point criteria evaluation database - clinical images #TODO rename
 summary: "Seven-Point Checklist for Skin Lesion Classification - Clinical Images"
 description: #TODO
 
@@ -122,6 +122,8 @@ num_samples:
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+
+#TODO attribution
 
 original_license: #TODO
 original_paper: https://ieeexplore.ieee.org/document/8333693
