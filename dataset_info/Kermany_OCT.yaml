@@ -1,8 +1,7 @@
-id: kermany_oct
-name: Kermany_OCT
-summary: Labelled Optical Coherence Tomography (OCT) images for disease classification
-description: "Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification
-Dataset of validated OCT and Chest X-Ray images  described and analyzed in \"Deep learning-based classification and referral of treatable human diseases\". The OCT Images are split into a training set and a testing set of independent patients. OCT Images are labeled as (disease)-(randomized patient ID)-(image number by this patient) and split into 4 directories: CNV, DME, DRUSEN, and NORMAL."
+id: oct
+name: OCT
+summary: "Optical Coherence Tomography (OCT) images labeled for disease
+classification"
 
 tasks:
   - task_name: "disease"
@@ -22,6 +21,23 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
-original_paper: "https://www.sciencedirect.com/science/article/pii/S0092867418301545"
-original_download_url: https://data.mendeley.com/datasets/rscbjbr9sj/2
+original_data:
+  - name: Kermany OCT
+    title: "Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification"
+    url: https://data.mendeley.com/datasets/rscbjbr9sj/2
+    license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+    authors: "Daniel Kermany, Kang Zhang, Michael Goldbaum"
+    paper_title: "Identifying Medical Diagnoses and Treatable Diseases by Image-Based Deep Learning"
+    paper_url: https://www.sciencedirect.com/science/article/pii/S0092867418301545
+    citations:
+      data: "Kermany, Daniel; Zhang, Kang; Goldbaum, Michael (2018),
+      Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification,
+      Mendeley Data, V2, doi: 10.17632/rscbjbr9sj.2"
+      paper: "Daniel S. Kermany, Michael Goldbaum, Wenjia Cai, Carolina C.S. Valentim, Huiying Liang, Sally L. Baxter, Alex McKeown, Ge Yang, Xiaokang Wu, Fangbing Yan, Justin Dong, Made K. Prasadha, Jacqueline Pei, Magdalene Y.L. Ting, Jie Zhu, Christina Li, Sierra Hewett, Jason Dong, Ian Ziyar, Alexander Shi, Runze Zhang, Lianghong Zheng, Rui Hou, William Shi, Xin Fu, Yaou Duan, Viet A.N. Huu, Cindy Wen, Edward D. Zhang, Charlotte L. Zhang, Oulan Li, Xiaobo Wang, Michael A. Singer, Xiaodong Sun, Jie Xu, Ali Tafreshi, M. Anthony Lewis, Huimin Xia, Kang Zhang,
+      Identifying Medical Diagnoses and Treatable Diseases by Image-Based Deep Learning,
+      Cell,
+      Volume 172, Issue 5,
+      2018,
+      Pages 1122-1131.e9,
+      ISSN 0092-8674,
+      https://doi.org/10.1016/j.cell.2018.02.010."
