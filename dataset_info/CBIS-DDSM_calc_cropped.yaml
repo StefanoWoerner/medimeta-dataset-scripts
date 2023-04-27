@@ -1,13 +1,7 @@
-id : cbis_calc_crop
-name: CBIS-DDSM calc cropped
-summary: Curated Breast Imaging Subset of Digital Database for Screening Mammography (CBIS-DDSM) - cropped calcifications
-description: "This CBIS-DDSM (Curated Breast Imaging Subset of DDSM) is an updated and standardized version of the  Digital Database for Screening Mammography (DDSM) .  The DDSM is a database of 2,620 scanned film mammography studies. It contains normal, benign, and malignant cases with verified pathology information. The scale of the database along with ground truth validation makes the DDSM a useful tool in the development and testing of decision support systems. The CBIS-DDSM collection includes a subset of the DDSM data selected and curated by a trained mammographer.  The images have been decompressed and converted to DICOM format.  Updated ROI segmentation and bounding boxes, and pathologic diagnosis for training data are also included.  A manuscript describing how to use this dataset in detail is available at https://www.nature.com/articles/sdata2017177.
-
-Published research results from work in developing decision support systems in mammography are difficult to replicate due to the lack of a standard evaluation data set; most computer-aided diagnosis (CADx) and detection (CADe) algorithms for breast cancer in mammography are evaluated on private data sets or on unspecified subsets of public databases. Few well-curated public datasets have been provided for the mammography community. These include the DDSM, the Mammographic Imaging Analysis Society (MIAS) database, and the Image Retrieval in Medical Applications (IRMA) project. Although these public data sets are useful, they are limited in terms of data set size and accessibility.
-
-For example, most researchers using the DDSM do not leverage all its images for a variety of historical reasons. When the database was released in 1997, computational resources to process hundreds or thousands of images were not widely available. Additionally, the DDSM images are saved in non-standard compression files that require the use of decompression code that has not been updated or maintained for modern computers. Finally, the ROI annotations for the abnormalities in the DDSM were provided to indicate a general position of lesions, but not a precise segmentation for them. Therefore, many researchers must implement segmentation algorithms for accurate feature extraction. This causes an inability to directly compare the performance of methods or to replicate prior results. The CBIS-DDSM collection addresses that challenge by publicly releasing an curated and standardized version of the DDSM for evaluation of future CADx and CADe systems (sometimes referred to generally as CAD) research in mammography.
-
-Please note that the image data for this collection is structured such that each participant has multiple patient IDs.  For example, participant 00038 has 10 separate patient IDs which provide information about the scans within the IDs (e.g. Calc-Test_P_00038_LEFT_CC, Calc-Test_P_00038_RIGHT_CC_1).  This makes it appear as though there are 6,671 patients according to the DICOM metadata, but there are only 1,566 actual participants in the cohort."
+id: mammo_calc
+name: Mammography (Calcifications)
+summary: "Cropped regions of interest (calcifications) from a curated
+breast imaging dataset of screening mammographies"
 
 tasks:
   - task_name: "pathology"
@@ -50,10 +44,15 @@ num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
-original_paper: https://doi.org/10.1038/sdata.2017.177
-original_download_url: https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=22516629
-original_citation:
-  data: "Sawyer-Lee, R., Gimenez, F., Hoogi, A., & Rubin, D. (2016). Curated Breast Imaging Subset of Digital Database for Screening Mammography (CBIS-DDSM) (Version 1) [Data set]. The Cancer Imaging Archive. https://doi.org/10.7937/K9/TCIA.2016.7O02S9CY"
-  publication: "Lee, R. S., Gimenez, F., Hoogi, A., Miyake, K. K., Gorovoy, M., & Rubin, D. L. (2017). A curated mammography data set for use in computer-aided detection and diagnosis research. In Scientific Data (Vol. 4, Issue 1). Springer Science and Business Media LLC. https://doi.org/10.1038/sdata.2017.177"
-  TCIA: "Clark, K., Vendt, B., Smith, K., Freymann, J., Kirby, J., Koppel, P., Moore, S., Phillips, S., Maffitt, D., Pringle, M., Tarbox, L., & Prior, F. (2013). The Cancer Imaging Archive (TCIA): Maintaining and Operating a Public Information Repository. In Journal of Digital Imaging (Vol. 26, Issue 6, pp. 1045–1057). Springer Science and Business Media LLC. https://doi.org/10.1007/s10278-013-9622-7"
+original_data:
+  - name: CBIS-DDSM
+    title: "Curated Breast Imaging Subset of Digital Database for Screening Mammography (CBIS-DDSM)"
+    url: https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=22516629
+    license: "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+    authors: "Sawyer-Lee, R., Gimenez, F., Hoogi, A., & Rubin, D."
+    paper_title: "A curated mammography data set for use in computer-aided detection and diagnosis research"
+    paper_url: https://doi.org/10.1038/sdata.2017.177
+    citations:
+      data: "Sawyer-Lee, R., Gimenez, F., Hoogi, A., & Rubin, D. (2016). Curated Breast Imaging Subset of Digital Database for Screening Mammography (CBIS-DDSM) (Version 1) [Data set]. The Cancer Imaging Archive. https://doi.org/10.7937/K9/TCIA.2016.7O02S9CY"
+      publication: "Lee, R. S., Gimenez, F., Hoogi, A., Miyake, K. K., Gorovoy, M., & Rubin, D. L. (2017). A curated mammography data set for use in computer-aided detection and diagnosis research. In Scientific Data (Vol. 4, Issue 1). Springer Science and Business Media LLC. https://doi.org/10.1038/sdata.2017.177"
+      TCIA: "Clark, K., Vendt, B., Smith, K., Freymann, J., Kirby, J., Koppel, P., Moore, S., Phillips, S., Maffitt, D., Pringle, M., Tarbox, L., & Prior, F. (2013). The Cancer Imaging Archive (TCIA): Maintaining and Operating a Public Information Repository. In Journal of Digital Imaging (Vol. 26, Issue 6, pp. 1045–1057). Springer Science and Business Media LLC. https://doi.org/10.1007/s10278-013-9622-7"

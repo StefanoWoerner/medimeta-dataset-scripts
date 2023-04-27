@@ -1,12 +1,7 @@
-id: cxr14
-name: ChestX-ray14
-summary: "Hospital-scale Chest X-ray Database of Common Thorax Diseases"
-description: "ChestX-ray dataset comprises 112,120 frontal-view X-ray images of 30,805 unique
-patients with the text-mined fourteen disease image labels (where each image can have multi-
-labels), mined from the associated radiological reports using natural language processing.
-Fourteen common thoracic pathologies include Atelectasis, Consolidation, Infiltration,
-Pneumothorax, Edema, Emphysema, Fibrosis, Effusion, Pneumonia, Pleural_thickening,
-Cardiomegaly, Nodule, Mass and Hernia."
+id: cxr
+name: Chest X-ray Multi-Disease
+summary: "Chest X-ray dataset containing 112,120 frontal-view X-ray
+images with annotations for 14 common thorax diseases"
 
 tasks:
   - task_name: "disease labels"
@@ -34,14 +29,25 @@ tasks:
 
 input_size: [1,224,224]
 num_samples:
-  train: 86524
+  train: 86_524
   val: 0
-  test: 25596
+  test: 25_596
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-original_license: "The usage of the data set is unrestricted. But you should provide the link to our original download site,
-acknowledge the NIH Clinical Center and provide a citation to our CVPR 2017 paper."
-original_paper: https://openaccess.thecvf.com/content_cvpr_2017/papers/Wang_ChestX-ray8_Hospital-Scale_Chest_CVPR_2017_paper.pdf
-original_download_url: https://nihcc.app.box.com/v/ChestXray-NIHCC
+original_data:
+    - name: ChestX-ray14
+      title: "ChestX-ray8"
+      url: https://nihcc.app.box.com/v/ChestXray-NIHCC
+      license: "The usage of the data set is unrestricted. But
+      you should provide the link to our original download site,
+      acknowledge the NIH Clinical Center and provide a citation to our
+      CVPR 2017 paper."
+      authors: "Xiaosong Wang, Yifan Peng, Le Lu, Zhiyong Lu, Mohammadhadi Bagheri, Ronald M. Summers"
+      paper_title: "ChestX-ray8: Hospital-scale Chest X-ray Database and Benchmarks on Weakly-Supervised Classification and Localization of Common Thorax Diseases"
+      paper_url: https://openaccess.thecvf.com/content_cvpr_2017/papers/Wang_ChestX-ray8_Hospital-Scale_Chest_CVPR_2017_paper.pdf
+      citations:
+          - "X. Wang, Y. Peng, L. Lu, Z. Lu, M. Bagheri and R. M. Summers,
+          ChestX-Ray8: Hospital-Scale Chest X-Ray Database and Benchmarks on Weakly-Supervised Classification and Localization of Common Thorax Diseases
+          Conference on Computer Vision and Pattern Recognition (CVPR) 2017"
