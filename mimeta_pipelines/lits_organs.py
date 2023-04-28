@@ -11,6 +11,7 @@ EXPECTED INPUT FOLDER CONTENTS:
   https://drive.google.com/drive/folders/0B0vscETPGI1-NDZNd3puMlZiNWM?resourcekey=0-dZUUwJiQnUVYVpRQvs_2tQ
 
 DATA MODIFICATIONS:
+- 106 images where the voxel size information is missing (set to all 1s) are removed.
 - The second and third axes of the image "test-volume-59.nii" are permuted,
   to bring it to the same format as the other images
   (and to add coeherence with the annotations).
@@ -110,13 +111,22 @@ def get_unified_data(
                 mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
 
                 # prepare image that will show all bounding boxes
+                bboxes_central_slice_thickness = 0.2
+                axis_slice_bounds = lambda axis: (
+                    int(img.shape[axis] * (0.5 - bboxes_central_slice_thickness / 2)),
+                    int(img.shape[axis] * (0.5 + bboxes_central_slice_thickness / 2)),
+                )
                 if plane == AnatomicalPlane.AXIAL:
-                    bboxes_img = img[:, :, img.shape[2] // 2]
+                    slice_bounds = axis_slice_bounds(2)
+                    bboxes_img = img[:, :, slice_bounds[0] : slice_bounds[1]].mean(axis=2)
                 elif plane == AnatomicalPlane.CORONAL:
-                    bboxes_img = img[:, img.shape[1] // 2, :]
+                    slice_bounds = axis_slice_bounds(1)
+                    bboxes_img = img[:, slice_bounds[0] : slice_bounds[1], :].mean(axis=1)
                 elif plane == AnatomicalPlane.SAGITTAL:
-                    bboxes_img = img[img.shape[0] // 2, :, :]
+                    slice_bounds = axis_slice_bounds(0)
+                    bboxes_img = img[slice_bounds[0] : slice_bounds[1], :, :].mean(axis=0)
                 bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{plane.name.lower()}"), 1), order=3)
+                bboxes_img = np.clip(bboxes_img, 0.0, 1.0)
                 bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
                 bboxes_img = np.array(Image.fromarray(bboxes_img).convert("RGB"))
                 bboxes_img_path = os.path.join(
@@ -217,12 +227,14 @@ def _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_fo
                 )
                 mask_path = None
                 organs_rel_path = os.path.join(annots_test_folder, organs_path)
+            _voxel_dims, _ratios = _get_voxeldims_ratios(os.path.join(root_path, volume_path))
+            if np.allclose(_voxel_dims, 1.0):  # images where this information is missing have all 1s: throw them away
+                return
             volume_paths.append(volume_path)
             organs_paths.append(organs_rel_path)
             mask_paths.append(mask_path)
             splits.append(split)
             idxs.append(idx)
-            _voxel_dims, _ratios = _get_voxeldims_ratios(os.path.join(root_path, volume_path))
             voxel_dims.append(_voxel_dims)
             for i in range(3):
                 ratios[i].append(_ratios[i])
