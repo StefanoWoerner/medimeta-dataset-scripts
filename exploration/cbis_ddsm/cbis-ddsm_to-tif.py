@@ -1,21 +1,22 @@
-import pydicom
-import torch
-
-import pandas as pd
 import os
+
+import numpy as np
+import pandas as pd
+import pydicom
 from PIL import Image
 
 #%%
 
 root_path = "/home/stefano/Datasets/CBIS-DDSM/"
-label_file_train = os.path.join(root_path, "mass_case_description_train_set.csv")
-label_file_test = os.path.join(root_path, "mass_case_description_test_set.csv")
-#label_file_train = os.path.join(root_path, "calc_case_description_train_set.csv")
-#label_file_test = os.path.join(root_path, "calc_case_description_test_set.csv")
+# label_file_train = os.path.join(root_path, "mass_case_description_train_set.csv")
+# label_file_test = os.path.join(root_path, "mass_case_description_test_set.csv")
+label_file_train = os.path.join(root_path, "calc_case_description_train_set.csv")
+label_file_test = os.path.join(root_path, "calc_case_description_test_set.csv")
 df = pd.read_csv(label_file_train)
 #df_test = pd.read_csv(label_file_test)
 #df = pd.concat([df, df_test], axis=0)
 series = "mass_train"
+series = "calc_train"
 
 labels = df["pathology"]
 
@@ -45,6 +46,22 @@ for i, r in df.iterrows():
     savename = f"{df['patient_id'][i]}_{df['left or right breast'][i]}_{df['image view'][i]}_{df['abnormality id'][i]}_cropped.tiff"
     im.save(os.path.join(series, savename))
 
+#%%
+
+os.makedirs(series, exist_ok=True)
+for i, r in df.iterrows():
+    s = sorted((os.path.getsize(p), p) for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]])
+
+    arrays = [pydicom.read_file(p[1]).pixel_array for p in s[1:]]
+    if len(np.unique(arrays[0])) == 2:
+        mask_array = arrays[0]
+        im_array = arrays[1]
+    else:
+        mask_array = arrays[1]
+        im_array = arrays[0]
+    im = Image.fromarray(im_array)
+    savename = f"{df['patient_id'][i]}_{df['left or right breast'][i]}_{df['image view'][i]}_{df['abnormality id'][i]}_uncropped.tiff"
+    im.save(os.path.join(series, savename))
 
 #%%
 
