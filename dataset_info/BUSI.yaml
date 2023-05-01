@@ -17,7 +17,7 @@ tasks:
       1: malignant finding
 
 input_size: [1,224,224]
-num_samples:
+original_splits_num_samples:
   train: 780
   val: 0
   test: 0

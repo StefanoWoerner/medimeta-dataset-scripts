@@ -25,7 +25,7 @@ tasks:
       14: PMO Promyelocyte
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 18_365
   val: 0
   test: 0

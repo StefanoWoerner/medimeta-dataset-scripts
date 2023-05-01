@@ -18,7 +18,7 @@ tasks:
       8: "colorectal adenocarcinoma epithelium (TUM)"
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 100000
   val: 7180
   test: 0

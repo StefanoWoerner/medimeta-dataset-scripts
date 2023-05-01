@@ -61,7 +61,7 @@ tasks:
       44: CL
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 1920
   val: 640
   test: 640

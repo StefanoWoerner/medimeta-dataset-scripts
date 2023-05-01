@@ -19,7 +19,7 @@ tasks:
       7: platelet
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 17_092
   val: 0
   test: 0

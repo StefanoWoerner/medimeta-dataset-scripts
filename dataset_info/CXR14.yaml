@@ -28,7 +28,7 @@ tasks:
       1: F
 
 input_size: [1,224,224]
-num_samples:
+original_splits_num_samples:
   train: 86_524
   val: 0
   test: 25_596

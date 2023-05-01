@@ -14,7 +14,7 @@ tasks:
       4: "Grade 4: PDR"
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 150  # authors write 152, csv and folder contain 154..., 4 with DR_level == 5 removed
   val: 50
   test: 50  # 2 with DR_level == 5 removed

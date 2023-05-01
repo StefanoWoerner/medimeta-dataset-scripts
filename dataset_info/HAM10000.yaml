@@ -16,7 +16,7 @@ tasks:
       6: Vascular lesion
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 10015
   val: 193
   test: 1512

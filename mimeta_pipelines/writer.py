@@ -104,7 +104,7 @@ class UnifiedDatasetWriter:
         self.hdf5_path = os.path.join(self.out_path, "images.hdf5")
         self.hdf5_dataset_name = "images"
         self.dataset_file = h5py.File(self.hdf5_path, "w")
-        dataset_length = sum(list(self.info_dict["num_samples"].values()))
+        dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
         if self.out_img_shape[0] > 1:
             dataset_shape = (dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
         else:
@@ -171,9 +171,9 @@ class UnifiedDatasetWriter:
                 == (len(self.original_train) + len(self.original_val) + len(self.original_test))
             )
             # check coherent with info file
-            assert self.info_dict["num_samples"]["train"] == len(self.original_train)
-            assert self.info_dict["num_samples"]["val"] == len(self.original_val)
-            assert self.info_dict["num_samples"]["test"] == len(self.original_test)
+            assert self.info_dict["original_splits_num_samples"]["train"] == len(self.original_train)
+            assert self.info_dict["original_splits_num_samples"]["val"] == len(self.original_val)
+            assert self.info_dict["original_splits_num_samples"]["test"] == len(self.original_test)
 
         # Roll back whenever an error occurs
         except Exception as e:

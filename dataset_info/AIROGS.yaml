@@ -11,7 +11,7 @@ tasks:
       1: "Referable glaucoma"
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 101442
   val: 0
   test: 0

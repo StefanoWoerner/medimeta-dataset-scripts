@@ -30,7 +30,7 @@ tasks:
       4: "SPICULATED"
 
 input_size: [1,224,224]
-num_samples:
+original_splits_num_samples:
   train: 1318
   val: 0
   test: 378
