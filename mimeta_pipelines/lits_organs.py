@@ -111,7 +111,7 @@ def get_unified_data(
                 mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
 
                 # prepare image that will show all bounding boxes
-                bboxes_central_slice_thickness = 0.2
+                bboxes_central_slice_thickness = 0.1
                 axis_slice_bounds = lambda axis: (
                     int(img.shape[axis] * (0.5 - bboxes_central_slice_thickness / 2)),
                     int(img.shape[axis] * (0.5 + bboxes_central_slice_thickness / 2)),
