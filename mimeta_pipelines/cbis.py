@@ -9,8 +9,16 @@ if sorted=True:
   manifest-ZkhPvrLo5216730872708713142 folder
 
 DATA MODIFICATIONS:
+- The ROIs (bounding boxes) are extended to a minimum size of 224x224
+- The bounding boxes are then squared by extending the shorter side to
+  the length of the longer side
+- Region crops are extracted from the full images using the extended
+  bounding boxes
 - The region crops are resized to 224x224 using PIL.Image.resize with
   BICUBIC interpolation.
+- In contrast to the cropped images provided by CBIS-DDSM, the croppped
+  images are not brightness-adjusted. The crops contain the original
+  brightness levels from the full images.
 """
 import glob
 import os
@@ -186,6 +194,15 @@ def _get_unified_data(
         non_0_cols = np.argwhere(np.any(mask, axis=0))
         top_bb = np.min(non_0_cols)
         bottom_bb = np.max(non_0_cols)
+        # extend bbox to 224x224
+        size_horizontal = right_bb - left_bb
+        size_vertical = bottom_bb - top_bb
+        if size_horizontal < 224:
+            left_bb = left_bb - (224 - size_horizontal) // 2
+            right_bb = right_bb + (224 - size_horizontal) // 2
+        if size_vertical < 224:
+            top_bb = top_bb - (224 - size_vertical) // 2
+            bottom_bb = bottom_bb + (224 - size_vertical) // 2
         # crop image
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
         im = Image.fromarray(((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8))
