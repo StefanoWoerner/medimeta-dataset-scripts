@@ -1,5 +1,5 @@
 id: cxr
-name: Chest X-ray Multi-Disease
+name: Chest X-ray Multi-disease
 summary: "Chest X-ray dataset containing 112,120 frontal-view X-ray
 images with annotations for 14 common thorax diseases"
 
