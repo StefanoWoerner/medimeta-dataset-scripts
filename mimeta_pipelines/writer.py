@@ -11,6 +11,9 @@ import yaml
 from PIL import Image
 
 
+SPLITS = ("train", "val", "test")
+
+
 class UnifiedDatasetWriter:
     """Context manager to construct and save a dataset in the unified format.
 
@@ -79,11 +82,7 @@ class UnifiedDatasetWriter:
         copyfile(license_in_path, license_out_path)
 
         # Initialize original splits
-        self.original_splits_path = os.path.join(self.out_path, "original_splits")
-        os.makedirs(self.original_splits_path)
-        self.original_train = []
-        self.original_val = []
-        self.original_test = []
+        self.original_splits = []
         # Initialize annotations
         self.add_annot_cols = add_annot_cols
         self.task_names = [task["task_name"] for task in self.info_dict["tasks"]]
@@ -94,6 +93,7 @@ class UnifiedDatasetWriter:
             + self.task_column_names
             + (list(self.add_annot_cols) if self.add_annot_cols else [])
         )
+        self.new_paths = []
         # Initialize task labels
         self.task_labels = []  # shape (n_dpoints, n_tasks)
         # Create the base dir of the images
@@ -130,16 +130,17 @@ class UnifiedDatasetWriter:
         self.dataset_file.close()
         # Write out files
         try:
-            # original splits
-            if self.original_train:
-                with open(os.path.join(self.original_splits_path, "train.txt"), "w") as f:
-                    f.write("\n".join(self.original_train))
-            if self.original_val:
-                with open(os.path.join(self.original_splits_path, "val.txt"), "w") as f:
-                    f.write("\n".join(self.original_val))
-            if self.original_test:
-                with open(os.path.join(self.original_splits_path, "test.txt"), "w") as f:
-                    f.write("\n".join(self.original_test))
+            # Original splits
+            original_splits_path = os.path.join(self.out_path, "original_splits")
+            os.makedirs(original_splits_path)
+            for split in SPLITS:
+                with open(os.path.join(original_splits_path, f"{split}.txt"), "w") as f:
+                    split_paths = [
+                        path for path, orig_split in zip(self.new_paths, self.original_splits) if orig_split == split
+                    ]
+                    # check coherent with info file
+                    assert self.info_dict["original_splits_num_samples"][split] == len(split_paths)
+                    f.write("\n".join(split_paths))
             # task labels (1 file per task)
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
@@ -168,12 +169,8 @@ class UnifiedDatasetWriter:
             assert (
                 len(annot_df)
                 == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
-                == (len(self.original_train) + len(self.original_val) + len(self.original_test))
+                == len(self.new_paths)
             )
-            # check coherent with info file
-            assert self.info_dict["original_splits_num_samples"]["train"] == len(self.original_train)
-            assert self.info_dict["original_splits_num_samples"]["val"] == len(self.original_val)
-            assert self.info_dict["original_splits_num_samples"]["test"] == len(self.original_test)
 
         # Roll back whenever an error occurs
         except Exception as e:
@@ -228,8 +225,8 @@ class UnifiedDatasetWriter:
         if not all(length == batch_size for length in lengths):
             raise ValueError(f"All arguments should have the same length, got {lengths}.")
         # Check splits valid
-        if not all(split in ("train", "val", "test") for split in original_splits):
-            raise ValueError("Original splits must be of ('train', 'val', 'test').")
+        if not all(split in SPLITS for split in original_splits):
+            raise ValueError(f"Original splits must be of {SPLITS}.")
         # Check labels valid
         for i, task in enumerate(self.info_dict["tasks"]):
             if isinstance(task_labels[0][i], list):
@@ -240,9 +237,7 @@ class UnifiedDatasetWriter:
                 raise ValueError(f"Task {task['task_name']} labels must be in {task['labels'].keys()}.")
 
         # Register new information
-        self.original_train += [fp for fp, split in zip(filepaths, original_splits) if split == "train"]
-        self.original_val += [fp for fp, split in zip(filepaths, original_splits) if split == "val"]
-        self.original_test += [fp for fp, split in zip(filepaths, original_splits) if split == "test"]
+        self.original_splits += original_splits
         self.task_labels += task_labels
         self.annotations += [
             [fp, orig_path, orig_split] + list(task_lab) + list(add_annot)
@@ -250,3 +245,4 @@ class UnifiedDatasetWriter:
                 filepaths, old_paths, original_splits, task_labels, add_annots
             )
         ]
+        self.new_paths += filepaths
