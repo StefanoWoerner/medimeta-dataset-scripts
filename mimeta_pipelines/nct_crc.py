@@ -55,10 +55,12 @@ def get_unified_data(
         img = Image.open(path)
         return img
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["tissue_class_label"]) as writer:
+    task = info_dict["tasks"][0]
+
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         for split, split_dir in splits.items():
             split_path = os.path.join(new_in_path, split_dir)
-            class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in info_dict["tasks"][0]["labels"].items()}
+            class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in task["labels"].items()}
             batches = folder_paths(root=split_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
                 with ThreadPool() as pool:
@@ -66,8 +68,8 @@ def get_unified_data(
                 writer.write_many(
                     old_paths=[os.path.relpath(p, new_in_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[lab] for lab in labs],
-                    add_annots=[[info_dict["tasks"][0]["labels"][lab]] for lab in labs],
+                    task_labels=[{task["task_name"]: lab} for lab in labs],
+                    add_annots=[{} for _ in labs],
                     images=imgs,
                 )
 

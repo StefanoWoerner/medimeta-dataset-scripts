@@ -101,7 +101,7 @@ def get_unified_data(
         "test": "ISIC2018_Task3_Test_Input",
     }
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["disease category", "original_size"]) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
 
         def get_from_df(i):
             row = all_gt.iloc[i]
@@ -111,8 +111,9 @@ def get_unified_data(
             orig_size = img.size
             img = center_crop(img)
             img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
-            annot = [row["disease category"], orig_size]
-            return img_path, orig_split, img, annot, row["class_idx"]
+            annot = {"original_image_size": orig_size}
+            lab = {info_dict["tasks"][0]["task_name"]: row["class_idx"]}
+            return img_path, orig_split, img, annot, lab
 
         for j in tqdm(range(0, len(all_gt))):
             original_path, original_split, image, annotations, label = get_from_df(j)
@@ -120,7 +121,7 @@ def get_unified_data(
             writer.write_many(
                 old_paths=[os.path.relpath(original_path, root_path)],
                 original_splits=[original_split],
-                task_labels=[[label]],
+                task_labels=[label],
                 images=[image],
                 add_annots=[annotations],
             )

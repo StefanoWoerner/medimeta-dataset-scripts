@@ -97,18 +97,14 @@ def get_unified_data(
         )  # all additional information stored
         for stat in stats
     ]
-    add_annot_cols = ["original_size", "device", "patient_id", "glaucoma_suspect_majority"]
-    add_annot_cols += expert_annot_cols
-    # only saving one mask per image: the one combining the expert segmentations using the STAPLE algorithm
-    add_annot_cols += ["mask_staple_original_path", "mask_disc_staple_path", "mask_cup_staple_path"]
-    add_annot_cols += stat_annot_cols
 
     # Map annotations to labels
     annot2lab = {"NORMAL": "Normal", "GLAUCOMA SUSPECT": "Suspect", "GLAUCOMA  SUSUPECT": "Suspect"}  # typo in data
-    lab2idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+    task = info_dict["tasks"][0]
+    lab2idx = {v: k for k, v in task["labels"].items()}
     annot2idx = {k: lab2idx[v] for k, v in annot2lab.items()}
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=add_annot_cols) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         os.makedirs(os.path.join(out_path, cup_masks_path))
         os.makedirs(os.path.join(out_path, disc_masks_path))
         copyfile(os.path.join(root_path, readme_name), os.path.join(out_path, readme_name))
@@ -121,14 +117,10 @@ def get_unified_data(
             image_path = path
             mask_path = df_row["masks_algo_STAPLE_path"]  # only saving this one mask
             split = df_row["split"]
-            device = df_row["device"]
-            patient_id = df_row["patient_id"]
-            annots_experts = df_row[[f"annot_expert_{idx}" for idx in expert_idxs]].values
             annot_majority = df_row["annot_majority"]
             file_idx = df_row["out_index"]
             # transform image
             img = Image.open(os.path.join(root_path, image_path))
-            orig_size = img.size
             img = zero_pad_to_square(img)
             img.thumbnail(out_img_size, resample=Image.BICUBIC)
             # transform masks
@@ -141,20 +133,20 @@ def get_unified_data(
             disc_mask.thumbnail(out_img_size, resample=Image.NEAREST)
             disc_mask_path = writer.save_image_from_index(disc_mask, file_idx, disc_masks_path)
             # additional annotations
-            add_annot = [
-                orig_size,
-                device,
-                patient_id,
-                annot2lab[annot_majority],
-                *[annot2lab[annot] for annot in annots_experts],
-                mask_path,
-                disc_mask_path,
-                cup_mask_path,
-                *[df_row[col] for col in stat_annot_cols],
-            ]
+            add_annot = {
+                "original_image_size": img.size,
+                "device": df_row["device"],
+                "patient_id": df_row["patient_id"],
+                "glaucoma_suspect_majority": annot2lab[annot_majority],
+                **{"glaucome_suspect_expert_{idx}": df_row[f"annot_expert_{idx}"] for idx in expert_idxs},
+                "mask_staple_original_path": mask_path,
+                "mask_disc_staple_path": disc_mask_path,
+                "mask_cup_staple_path": cup_mask_path,
+                **(df_row[[stat_annot_cols]].to_dict()),
+            }
             # label
-            lab = annot2idx[annot_majority]
-            return img, split, [lab], add_annot
+            lab = {task["task_name"]: annot2idx[annot_majority]}
+            return img, split, lab, add_annot
 
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing Chaksu"):
             with ThreadPool() as pool:

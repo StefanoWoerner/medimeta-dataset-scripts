@@ -76,15 +76,7 @@ def get_unified_data(
             labels[idx] = row[disease]
         return labels
 
-    def diseases_func(row):
-        diseases = []
-        for disease in disease_task["labels"].values():
-            if row[disease] == 1:
-                diseases.append(disease)
-        return " - ".join(diseases)
-
     info_df["disease"] = info_df.apply(label_func, axis=1)
-    info_df["disease_labels"] = info_df.apply(diseases_func, axis=1)
 
     info_df.set_index("original_filepath", inplace=True, drop=True)
 
@@ -102,14 +94,14 @@ def get_unified_data(
         # resize
         img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # labels
-        lab = [df_row["risk"], df_row["disease"]]
+        lab = {risk_task["task_name"]: df_row["risk"], disease_task["task_name"]: df_row["disease"]}
         # add annotation
-        add_annot = [img_size, df_row["risk_label"], df_row["disease_labels"]]
+        add_annot = {
+            "original_image_size": img_size,
+        }
         return original_filepath, split, lab, img, add_annot
 
-    with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=["original_size", "disease_presence", "disease_labels"]
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         all_paths = info_df.index
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing RFMiD"):
             with ThreadPool() as pool:

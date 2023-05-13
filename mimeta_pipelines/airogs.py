@@ -56,7 +56,7 @@ def get_unified_data(
         # change path to extracted folder
         root_path = in_path
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["referable_glaucoma", "original_size"]) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         images_paths = sorted(
             [
                 os.path.join(images_rel_path, i_p)
@@ -71,17 +71,19 @@ def get_unified_data(
         # assert images_paths == annotations["images_paths"].values.tolist(), "Images paths do not match."
         annotations["class"] = annotations["class"].map({"RG": 1, "NRG": 0})
         path2lab = dict(zip(annotations["image_path"].values, annotations["class"].values))
-        lab2fulllab = info_dict["tasks"][0]["labels"]
+        task = info_dict["tasks"][0]
+        lab2fulllab = task["labels"]
+        task_name = task["task_name"]
 
         def get_image_lab_addannot_triple(path: str):
             image = Image.open(os.path.join(root_path, path))
             label = path2lab[path]
             referable_glaucoma = lab2fulllab[label]
-            add_annot = [referable_glaucoma, image.size]
+            add_annot = {"referable_glaucoma": referable_glaucoma, "original_image_size": image.size}
             # transform image: pad to square, resize
             image = zero_pad_to_square(image)  # pad to square
             image.thumbnail(out_img_size, resample=Image.BICUBIC)  # resize
-            return image, [label], add_annot
+            return image, {task_name: label}, add_annot
 
         for paths in tqdm(np.array_split(images_paths, len(images_paths) // batch_size), desc="Processing AIROGS"):
             with ThreadPool() as pool:

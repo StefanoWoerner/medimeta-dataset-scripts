@@ -75,7 +75,6 @@ def get_unified_data(
         os.path.join(INFO_PATH, "CBIS-DDSM_mass_cropped.yaml"),
         os.path.join(INFO_PATH, "CBIS-DDSM_calc_cropped.yaml"),
     ),
-    batch_size=256,
     out_img_size=(224, 224),
     is_sorted=False,
     remove_temp=True,
@@ -96,10 +95,7 @@ def get_unified_data(
         "image view": "image_view",
         "abnormality id": "abnormality_id",
         "abnormality type": "abnormality_type",
-        "mass shape": "mass_shape",
-        "mass margins": "mass_margins",
         "assessment": "assessment",
-        "pathology": "pathology",
         "subtlety": "subtlety",
     }
 
@@ -110,17 +106,13 @@ def get_unified_data(
         "image view": "image_view",
         "abnormality id": "abnormality_id",
         "abnormality type": "abnormality_type",
-        "calc type": "calc_type",
-        "calc distribution": "calc_distribution",
         "assessment": "assessment",
-        "pathology": "pathology",
         "subtlety": "subtlety",
     }
 
     _get_unified_data(
         root_path,
         info_paths[0],
-        batch_size,
         out_img_size,
         label_file_train=os.path.join(root_path, "mass_case_description_train_set.csv"),
         label_file_test=os.path.join(root_path, "mass_case_description_test_set.csv"),
@@ -129,7 +121,6 @@ def get_unified_data(
     _get_unified_data(
         root_path,
         info_paths[1],
-        batch_size,
         out_img_size,
         label_file_train=os.path.join(root_path, "calc_case_description_train_set.csv"),
         label_file_test=os.path.join(root_path, "calc_case_description_test_set.csv"),
@@ -144,7 +135,6 @@ def get_unified_data(
 def _get_unified_data(
     root_path,
     info_path,
-    batch_size,
     out_img_size,
     label_file_train,
     label_file_test,
@@ -207,18 +197,18 @@ def _get_unified_data(
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
         im = Image.fromarray(((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8))
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
-        labels = [tl[i] for tl in task_labels]
-        return s[0][1], splits[i], im, labels, annotations.iloc[i]
+        labels = {"pathology": task_labels[0][i], **{tn: tl[i] for tn, tl in zip(task_names, task_labels[1:])}}
+        return s[0][1], splits[i], im, labels, annotations.iloc[i].to_dict()
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=list(annotation_columns.values())) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         for i in tqdm(range(len(df))):
             p, s, im, l, a = get_image_data(i)
-            writer.write_many(
-                old_paths=[p],
-                original_splits=[s],
-                task_labels=[l],
-                add_annots=[a],
-                images=[im],
+            writer.write(
+                old_path=p,
+                original_split=s,
+                task_labels=l,
+                add_annots=a,
+                image=im,
             )
 
 

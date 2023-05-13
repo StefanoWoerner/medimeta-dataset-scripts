@@ -62,17 +62,16 @@ def get_unified_data(
         # resize
         img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         # add annotation
-        add_annot = [(w, h), w / h]
+        add_annot = {"original_image_size": (w, h), "original_image_ratio": w / h}
         return img, add_annot, isrgb
 
-    with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=["original_size", "original_ratio", "disease_label"]
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
+        task = info_dict["tasks"][0]
+        class_to_idx = {v: k for k, v in task["labels"].items()}
         for split, split_root_path in (
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
-            class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
             batches = folder_paths(root=split_root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
             rgb_counter = 0
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_Pneumonia ({split} split)"):
@@ -81,9 +80,9 @@ def get_unified_data(
                 writer.write_many(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
-                    task_labels=[[lab] for lab in labs],
+                    task_labels=[{task["task_name"]: lab} for lab in labs],
                     images=[res[0] for res in results],
-                    add_annots=[res[1] + [info_dict["tasks"][0]["labels"][lab]] for res, lab in zip(results, labs)],
+                    add_annots=[res[1] for res in results],
                 )
                 rgb_counter += sum([res[2] for res in results])
             print("Found {} RGB images, converted them.".format(rgb_counter))

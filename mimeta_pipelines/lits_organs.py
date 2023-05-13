@@ -82,20 +82,12 @@ def get_unified_data(
     df = _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_folder, annots_test_folder)
     df = _get_organs_dataframe(df, root_path)
 
-    # Additional annotation columns
-    add_annot_cols = [
-        "organ_name",
-        "original_image_size",
-        "original_voxel_dims",
-        "mask_filepath",
-        "original_mask_filepath",
-        "bboxes_image_filepath",
-        "original_bbox",
-    ]
-
     # To be called once for each plane
     def _get_unified_data(out_path, info_path, plane):
-        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols) as writer:
+        with UnifiedDatasetWriter(out_path, info_path) as writer:
+            info_dict = yaml.safe_load(open(info_path, "r"))
+            task = info_dict["tasks"][0]
+
             # Get labeling transformations and legend for colored bounding boxes
             plane_df, bboxes_label_fig = _transform_labels(df.copy(), info_path)
             # Create output folders
@@ -148,17 +140,16 @@ def get_unified_data(
                     else:
                         organ_mask_img_path = None
                     images.append(organ_img)
-                    task_labels.append([row.new_idx])
+                    task_labels.append({task["task_name"]: row.new_idx})
                     add_annots.append(
-                        [
-                            row.new_label,  # organ_name
-                            img.shape,  # original_image_size
-                            row.voxel_dims,  # original_voxel_dims
-                            organ_mask_img_path,  # mask_filepath
-                            row.mask_path,  # original_mask_filepath
-                            bboxes_img_path,  # bboxes_image_filepath
-                            row.bbox,  # original_bbox
-                        ]
+                        {
+                            "original_image_size": img.shape,
+                            "original_voxel_dims": row.voxel_dims,
+                            "mask_filepath": organ_mask_img_path,
+                            "original_mask_filepath": row.mask_path,
+                            "bboxes_image_filepath": bboxes_img_path,
+                            "original_bbox": row.bbox,
+                        }
                     )
 
                 bboxes_img = Image.fromarray(bboxes_img, mode="RGB")
@@ -301,7 +292,6 @@ def _transform_labels(df, info_path):
     for i, (oldlab, color) in enumerate(oldlab2color.items()):
         ax.axhspan(i, i + 1, facecolor=color / 255)
         ax.text(0.5, i + 0.5, oldlab2newlab[oldlab], ha="center", va="center", color="black")
-    df["new_label"] = df["old_label"].map(oldlab2newlab)
     df["new_idx"] = df["old_label"].map(oldlab2idx)
     df["organ_color"] = df["old_label"].map(oldlab2color)
     return df, fig

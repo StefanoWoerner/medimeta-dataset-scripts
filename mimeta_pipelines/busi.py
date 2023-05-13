@@ -75,23 +75,21 @@ def get_unified_data(
         assert mask.mode == "1"  # binary
         out_mask_path_rel = writer.save_image_from_index(mask, file_idx, rel_masks_path)
         # add annotations
-        add_annot = [
-            out_mask_path_rel,
-            os.path.relpath(mask_path, root_path),
-            (w, h),
-        ]
+        add_annot = {
+            "mask_path": out_mask_path_rel,
+            "original_mask_path": os.path.relpath(mask_path, root_path),
+            "original_image_size": (w, h),
+        }
         return img, add_annot
 
-    with UnifiedDatasetWriter(
-        out_path,
-        info_path,
-        add_annot_cols=["mask_path", "original_mask_path", "original_size", "case_label", "malignancy_label"],
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         os.makedirs(os.path.join(out_path, rel_masks_path))
         # 3-class task
-        class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+        task = info_dict["tasks"][0]
+        class_to_idx = {v: k for k, v in task["labels"].items()}
         # binary task
-        class_to_idx_bin = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
+        task_bin = info_dict["tasks"][1]
+        class_to_idx_bin = {v: k for k, v in task_bin["labels"].items()}
         # mapper between the two tasks
         class_to_bin = {
             "normal": "no malignant finding",
@@ -113,19 +111,18 @@ def get_unified_data(
                 )
             current_idx += len(paths)
             # named labels
-            named_labs = [info_dict["tasks"][0]["labels"][lab] for lab in labs]
+            named_labs = [task["labels"][lab] for lab in labs]
             named_labs_bin = [class_to_bin[n_lab] for n_lab in named_labs]
             # numeric label for binary task
             labs_bin = [class_to_idx_bin[n_lab_bin] for n_lab_bin in named_labs_bin]
             writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
-                task_labels=[[lab, lab_bin] for lab, lab_bin in zip(labs, labs_bin)],
-                images=[img_annot[0] for img_annot in imgs_annots],
-                add_annots=[
-                    img_annot[1] + [n_lab, n_lab_bin]
-                    for img_annot, n_lab, n_lab_bin in zip(imgs_annots, named_labs, named_labs_bin)
+                task_labels=[
+                    {task["task_name"]: lab, task_bin["task_name"]: lab_bin} for lab, lab_bin in zip(labs, labs_bin)
                 ],
+                images=[img_annot[0] for img_annot in imgs_annots],
+                add_annots=[img_annot[1] for img_annot in imgs_annots],
             )
 
     # delete temporary folder

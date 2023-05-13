@@ -50,11 +50,11 @@ def get_unified_data(
         # change path to extracted folder
         root_path = in_path
 
-    with UnifiedDatasetWriter(
-        out_path, info_path, add_annot_cols=["annotation", "first_reannotation", "second_reannotation", "original_size"]
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         images_path = os.path.join(root_path, "AML-Cytomorphology")
-        class_to_idx = {v.split(" ")[0]: k for k, v in info_dict["tasks"][0]["labels"].items()}
+        task = info_dict["tasks"][0]
+        class_to_idx = {v.split(" ")[0]: k for k, v in task["labels"].items()}
+        task_name = task["task_name"]
         batches = folder_paths(root=images_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
@@ -69,12 +69,12 @@ def get_unified_data(
             rel_path = os.path.join(*(path.split(os.sep)[-2:]))
             annot = annotations.loc[rel_path]
             # "" since NaN being a float, we would get a float column
-            add_annot = [
-                annot.annotation,
-                annot.first_reannotation,
-                annot.second_reannotation,
-                orig_size,
-            ]
+            add_annot = {
+                "annotation": annot.annotation,
+                "first_reannotation": annot.first_reannotation,
+                "second_reannotation": annot.second_reannotation,
+                "original_image_size": orig_size,
+            }
             # remove alpha channel
             image = image.convert("RGB")
             # resize
@@ -87,7 +87,7 @@ def get_unified_data(
             writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
-                task_labels=[[lab] for lab in labs],
+                task_labels=[{task_name: lab} for lab in labs],
                 images=[img_annot[0] for img_annot in imgs_annots],
                 add_annots=[img_annot[1] for img_annot in imgs_annots],
             )

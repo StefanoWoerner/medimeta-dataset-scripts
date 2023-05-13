@@ -53,11 +53,6 @@ def get_unified_data(
         dataset_path: str, out_path: str, info_path: str, annot_cols: list[str], tasks_mapper: dict[str, str]
     ):
         """Creates a unified dataset from the DeepDRiD datasets."""
-        # add one column per task with human-readable labels
-        annot_cols += [task_name + "_label" for task_name in tasks_mapper.values()]
-
-        with open(info_path, "r") as f:
-            info_dict = yaml.safe_load(f)
 
         # image converter + annotation extractor
         def get_img_annotation_pair(path: str):
@@ -68,16 +63,11 @@ def get_unified_data(
             # resize
             img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             # add annotation: original size and ratio
-            add_annot = [(w, h), w / h]
+            add_annot = {"original_image_size": (w, h), "original_image_ratio": w / h}
             return img, add_annot
 
         # write dataset
-        with UnifiedDatasetWriter(
-            out_path,
-            info_path,
-            # sorted for consistency with below
-            add_annot_cols=sorted(annot_cols) + ["original_size", "original_ratio"],
-        ) as writer:
+        with UnifiedDatasetWriter(out_path, info_path) as writer:
             # folder name -> split name
             split_mapper = {"training": "train", "validation": "val", "Evaluation": "test"}
             # split path -> split name
@@ -157,11 +147,8 @@ def get_unified_data(
                 # no missing DR level
                 annots_df = annots_df[annots_df.dr_level != 5]
 
-                # mapper task column -> idx_to_label dict
-                task_labels = {tasks_mapper[task["task_name"]]: task["labels"] for task in info_dict["tasks"]}
-                # labeled task columns
-                for col in tasks_mapper.values():
-                    annots_df[col + "_label"] = annots_df[col].map(task_labels[col])
+                # sort
+                annots_df = annots_df.sort_values(by=["patient_id", "image_id"])
 
                 # write (batched)
                 for batch in tqdm(
@@ -173,11 +160,14 @@ def get_unified_data(
                     writer.write_many(
                         old_paths=[os.path.relpath(p, root_path) for p in batch.index],
                         original_splits=[split] * len(batch),
-                        task_labels=batch[list(tasks_mapper.values())].values.tolist(),
+                        task_labels=[
+                            {task_name: lab for task_name, lab in zip(tasks_mapper, img_labels)}
+                            for img_labels in batch[list(tasks_mapper.values())].values.tolist()
+                        ],
                         images=[img_annot[0] for img_annot in images_annots],
                         add_annots=[
-                            df_annot + img_annot[1]
-                            for df_annot, img_annot in zip(batch[sorted(annot_cols)].values.tolist(), images_annots)
+                            {**df_annot, **(img_annot[1])}
+                            for df_annot, img_annot in zip(batch[sorted(annot_cols)].to_dict("records"), images_annots)
                         ],
                     )
 

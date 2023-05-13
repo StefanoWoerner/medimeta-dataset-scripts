@@ -54,14 +54,15 @@ def get_unified_data(
         # resize
         img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # add annotation
-        add_annot = [(w, h)]
+        add_annot = {"original_image_size": (w, h)}
         return img, add_annot
 
     # rename ig -> immature granulocyte
     os.rename(os.path.join(root_path, "ig"), os.path.join(root_path, "immature granulocyte"))
 
-    with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size", "cell_class_label"]) as writer:
-        class_to_idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
+        task = info_dict["tasks"][0]
+        class_to_idx = {v: k for k, v in task["labels"].items()}
         batches = folder_paths(
             root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
         )
@@ -71,11 +72,9 @@ def get_unified_data(
             writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
-                task_labels=[[lab] for lab in labs],
+                task_labels=[{task["task_name"]: lab} for lab in labs],
                 images=[img_annot[0] for img_annot in imgs_annots],
-                add_annots=[
-                    img_annot[1] + [info_dict["tasks"][0]["labels"][lab]] for img_annot, lab in zip(imgs_annots, labs)
-                ],
+                add_annots=[img_annot[1] for img_annot in imgs_annots],
             )
 
     # delete temporary folder

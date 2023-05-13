@@ -51,13 +51,11 @@ class UnifiedDatasetWriter:
         self,
         out_path: str,
         info_path: str,
-        add_annot_cols: list[str] | None = None,
         dtype=np.uint8,
     ):
         """Initialize the dataset writer.
         :param out_path: path to the output directory.
         :param info_path: path to the info file.
-        :param add_annot_cols: list of additional columns to add to the annotations file.
         :param dtype: dtype of the images (for HDF5).
         """
         # Check output directory does not exist and create it
@@ -84,18 +82,12 @@ class UnifiedDatasetWriter:
         # Initialize original splits
         self.original_splits = []
         # Initialize annotations
-        self.add_annot_cols = add_annot_cols
-        self.task_names = [task["task_name"] for task in self.info_dict["tasks"]]
-        self.annotations = []
-        self.task_column_names = [f"tasks/{task_name}" for task_name in self.task_names]
-        self.annotations_cols = (
-            ["filepath", "original_filepath", "original_split"]
-            + self.task_column_names
-            + (list(self.add_annot_cols) if self.add_annot_cols else [])
-        )
+        self.add_annots = []
+        self.old_paths = []
         self.new_paths = []
         # Initialize task labels
-        self.task_labels = []  # shape (n_dpoints, n_tasks)
+        self.task_labels_dict = {task["task_name"]: task["labels"] for task in self.info_dict["tasks"]}
+        self.task_labels = {task_name: [] for task_name in self.task_labels_dict.keys()}
         # Create the base dir of the images
         self.images_relpath = "images"
         os.makedirs(os.path.join(self.out_path, self.images_relpath))
@@ -130,7 +122,7 @@ class UnifiedDatasetWriter:
         self.dataset_file.close()
         # Write out files
         try:
-            # Original splits
+            # original splits
             original_splits_path = os.path.join(self.out_path, "original_splits")
             os.makedirs(original_splits_path)
             for split in SPLITS:
@@ -141,36 +133,55 @@ class UnifiedDatasetWriter:
                     # check coherent with info file
                     assert self.info_dict["original_splits_num_samples"][split] == len(split_paths)
                     f.write("\n".join(split_paths))
+
             # task labels (1 file per task)
             task_labels_path = os.path.join(self.out_path, "task_labels")
             os.makedirs(task_labels_path)
-            for task_name, task_labeling in zip(self.task_names, zip(*self.task_labels)):
+            for task_name, task_list in self.task_labels.items():
                 npy_save_path = os.path.join(task_labels_path, task_name)
-                np.save(npy_save_path, np.array(task_labeling))
+                np.save(npy_save_path, task_list)
 
             # annotations
             annotations_path = os.path.join(self.out_path, "annotations.csv")
-            annotations_df = pd.DataFrame.from_records(
-                data=self.annotations, columns=self.annotations_cols, index=self.annotations_cols[0]
-            )
+            annotations_df = pd.DataFrame.from_records(self.add_annots, index=self.new_paths)
+            annotations_df.index.name = "filepath"
+            annotations_df["original_split"] = self.original_splits
+            annotations_df["original_filepath"] = self.old_paths
+            # tasks
+            task_col_names = []
+            for task_name, task_dict in self.task_labels_dict.items():
+                task_col_name = f"tasks/{task_name}"
+                assert task_col_name not in annotations_df.columns
+                task_col_names.append(task_col_name)
+                annotations_df[task_col_name] = self.task_labels[task_name]
+                assert task_name not in annotations_df.columns
+                task_def = [task for task in self.info_dict["tasks"] if task["task_name"] == task_name][0]
+                if task_def["task_target"] == "MULTILABEL_CLASSIFICATION":
+                    annotations_df[task_name] = annotations_df[task_col_name].apply(
+                        lambda labels: "|".join([task_dict[i] for i, label in enumerate(labels) if label == 1])
+                    )
+                else:
+                    annotations_df[task_name] = annotations_df[task_col_name].map(task_dict)
             # reorder columns
-            task_names = self.task_column_names
-            ordered_annot_cols = (
-                ["patient_id", *sorted(set(self.add_annot_cols) - set(["patient_id"]))]
-                if "patient_id" in self.add_annot_cols
-                else list(sorted(self.add_annot_cols))
-            )
-            ordered_cols = [*self.task_column_names, "original_filepath", "original_split", *ordered_annot_cols]
+            remaining_cols = set(annotations_df.columns)
+            ordered_cols = []
+            # first, tasks, original path, and split
+            first_cols = task_col_names + ["original_filepath", "original_split"]
+            ordered_cols += first_cols
+            remaining_cols -= set(first_cols)
+            # second, patient id (if available)
+            if "patient_id" in remaining_cols:
+                ordered_cols.append("patient_id")
+                remaining_cols -= set(["patient_id"])
+            # third, the rest ordered alphabetically
+            ordered_cols += sorted(remaining_cols)
             annotations_df = annotations_df[ordered_cols]
+            # save
             annotations_df.to_csv(annotations_path)
             # test well-formed
             annot_df = pd.read_csv(annotations_path)
             assert annot_df.columns[0] == "filepath"
-            assert (
-                len(annot_df)
-                == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
-                == len(self.new_paths)
-            )
+            assert len(annot_df) == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
 
         # Roll back whenever an error occurs
         except Exception as e:
@@ -214,60 +225,76 @@ class UnifiedDatasetWriter:
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[index] = np.array(image)
         # in directory
-        return self.save_image(image, index, self.images_relpath, check_dim=True, check_channels=True)
+        return self.save_image_from_index(image, index, self.images_relpath, check_dim=True, check_channels=True)
 
     def write(
         self,
         old_path: str,
         original_split: str,
-        task_labels: list[int],
+        task_labels: dict[str, int],
         image: Image.Image,
-        add_annots: list | None = None,
+        add_annots: dict | None = None,
     ):
         """Add labels, additional information, and image.
         :param old_path: path to the original image (relative)
         :param original_split: original split (train, val, test)
-        :param task_labels: list of task labels
-        :param add_annots: list of additional annotations
+        :param task_labels: dict of task labels
+        :param add_annots: dict of additional annotations
         :param image: PIL image
         """
+        # Basic checks
+        assert original_split in SPLITS, f"Split must be one of {SPLITS}, not {original_split}."
+        in_tasks = set(task_labels.keys())
+        assert in_tasks == set(
+            self.task_labels.keys()
+        ), f"Must provide tasks {list(self.task_names.keys())}, got {in_tasks}."
+        for task_name, task_label in task_labels.items():
+            if isinstance(task_label, list):  # multilabel classification
+                assert len(task_label) == len(self.task_labels_dict[task_name]), (
+                    f"Label {task_label} invalid for task {task_name}: "
+                    f"should be a list of {len(self.task_labels_dict[task_name])} elements."
+                )
+                assert not set(task_label) - set(
+                    [0, 1]
+                ), f"Label {task_label} invalid for task {task_name}: should be binary list."
+            else:  # single label
+                assert (
+                    task_label in self.task_labels_dict[task_name]
+                ), f"Label {task_label} invalid for task {task_name}."
         # File indeces
         file_idx = self.current_idx
         self.current_idx += 1
         # Additional annotations (if any)
         if add_annots is None:
-            if self.add_annot_cols:
-                raise TypeError("add_annot is required if add_annot_cols is not None.")
-            add_annots = []
+            add_annots = dict()
         # Images
         filepath = self.save_dataset_image(image, file_idx)
-        # Check splits valid
-        if original_split not in SPLITS:
-            raise ValueError(f"Original split must be of {SPLITS}.")
-        # Check labels valid
-        for i, task in enumerate(self.info_dict["tasks"]):
-            if not task_labels[i] in task["labels"]:
-                raise ValueError(f"Task {task['task_name']} label must be in {task['labels'].keys()}.")
         # Register new information
         self.original_splits.append(original_split)
-        self.task_labels.append(task_labels)
-        self.annotations.append([filepath, old_path, original_split] + task_labels + add_annots)
+        for task_name in self.task_labels:
+            self.task_labels[task_name].append(task_labels[task_name])
+        self.add_annots.append(add_annots)
+        self.old_paths.append(old_path)
         self.new_paths.append(filepath)
 
     def write_many(
         self,
         old_paths: list[str],
         original_splits: list[str],
-        task_labels: list[list[int]],
+        task_labels: list[dict[str, int]],
         images: list[Image.Image],
-        add_annots: list | None = None,
+        add_annots: list[dict] | None = None,
     ):
         """Add labels, additional information, and images.
         :param old_paths: list of paths to the original images (relative)
         :param original_splits: list of original splits (train, val, test)
-        :param task_labels: list of task labels (1 list per sample)
-        :param add_annots: list of additional annotations (1 list per sample)
+        :param task_labels: list of task labels (1 dict per sample)
+        :param add_annots: list of additional annotations (1 dict per sample)
         :param images: list of PIL images
         """
-        for old_path, original_split, task_label, image in zip(old_paths, original_splits, task_labels, images):
-            self.write(old_path, original_split, task_label, image, add_annots)
+        if add_annots is None:
+            add_annots = [None] * len(old_paths)
+        for old_path, original_split, task_label, image, add_annots_ in zip(
+            old_paths, original_splits, task_labels, images, add_annots
+        ):
+            self.write(old_path, original_split, task_label, image, add_annots_)

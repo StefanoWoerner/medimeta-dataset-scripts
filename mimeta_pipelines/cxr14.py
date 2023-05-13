@@ -65,21 +65,7 @@ def get_unified_data(
         with ThreadPool(len(subfolder_zips)) as pool:
             results = pool.map(unzip, subfolder_zips)
 
-    with UnifiedDatasetWriter(
-        out_path,
-        info_path,
-        add_annot_cols=[
-            "follow-up_nb",
-            "patient_id",
-            "patient_age",
-            "patient_gender_f_m",
-            "finding_labels",
-            "view_position",
-            "original_image_size",
-            "original_pixel_spacing",
-            "bounding_box",
-        ],
-    ) as writer:
+    with UnifiedDatasetWriter(out_path, info_path) as writer:
         # relevant files
         # splits
         with open(os.path.join(root_path, "train_val_list.txt"), "r") as f:
@@ -97,7 +83,8 @@ def get_unified_data(
             copyfile(os.path.join(root_path, f), os.path.join(out_path, f"{f}_original"))
         # metadata
         metadata = pd.read_csv(os.path.join(root_path, "Data_Entry_2017_v2020.csv"), index_col="Image Index")
-        possible_labels = list(info_dict["tasks"][0]["labels"].values())
+        task = info_dict["tasks"][0]
+        possible_labels = list(task["labels"].values())
         metadata["label"] = metadata["Finding Labels"].apply(
             lambda lab: [1 if l in lab else 0 for l in possible_labels]
         )
@@ -118,7 +105,8 @@ def get_unified_data(
             },
             inplace=True,
         )
-        gender_to_idx = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
+        task_gender = info_dict["tasks"][1]
+        gender_to_idx = {v: k for k, v in task_gender["labels"].items()}
         metadata["patient_gender_f_m"] = metadata["patient_gender"]
         metadata["patient_gender"] = metadata["patient_gender"].apply(lambda g: gender_to_idx[g])
         # bounding boxes
@@ -155,8 +143,11 @@ def get_unified_data(
                 rgba = True
                 image = image.convert("L")
             index = path.split(os.sep)[-1]
-            annot = list(add_annots.loc[index])
-            labels = [metadata.loc[index, "label"], metadata.loc[index, "patient_gender"]]
+            annot = add_annots.loc[index].to_dict()
+            labels = {
+                task["task_name"]: metadata.loc[index, "label"],
+                task_gender["task_name"]: metadata.loc[index, "patient_gender"],
+            }
             original_split = splits.loc[index, "original_split"]
             # resize
             image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
