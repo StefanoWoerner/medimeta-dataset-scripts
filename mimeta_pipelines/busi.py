@@ -36,7 +36,7 @@ def get_unified_data(
     info_path=os.path.join(INFO_PATH, "BUSI.yaml"),
     batch_size=512,
     out_img_size=(224, 224),
-    zipped=True,
+    zipped=False,
 ):
     info_dict, out_path = setup(in_path, info_path)
 

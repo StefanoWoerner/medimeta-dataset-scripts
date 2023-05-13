@@ -1,6 +1,7 @@
 """Save datasets in a unified format.
 """
 import os
+from multiprocessing import Lock
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 
@@ -79,24 +80,25 @@ class UnifiedDatasetWriter:
         license_out_path = os.path.join(out_path, "LICENSE")
         copyfile(license_in_path, license_out_path)
 
-        # Initialize original splits
-        self.original_splits = []
-        # Initialize annotations
-        self.add_annots = []
-        self.old_paths = []
-        self.new_paths = []
-        # Initialize task labels
+        # Initialize dataset
+        self.dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
+        # original splits
+        self.original_splits = [None] * self.dataset_length
+        # annotations, paths
+        self.add_annots = [None] * self.dataset_length
+        self.old_paths = [None] * self.dataset_length
+        self.new_paths = [None] * self.dataset_length
+        # task labels
         self.task_labels_dict = {task["task_name"]: task["labels"] for task in self.info_dict["tasks"]}
-        self.task_labels = {task_name: [] for task_name in self.task_labels_dict.keys()}
-        # Create the base dir of the images
+        self.task_labels = {task_name: [None] * self.dataset_length for task_name in self.task_labels_dict.keys()}
+        # base dir of the images
         self.images_relpath = "images"
         os.makedirs(os.path.join(self.out_path, self.images_relpath))
-        # Initialize HDF5 file
+        # hdf5 file
         self.out_img_shape = self.info_dict["input_size"]
         self.hdf5_path = os.path.join(self.out_path, "images.hdf5")
         self.hdf5_dataset_name = "images"
         self.dataset_file = h5py.File(self.hdf5_path, "w")
-        self.dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
         if self.out_img_shape[0] > 1:
             dataset_shape = (self.dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
         else:
@@ -107,8 +109,8 @@ class UnifiedDatasetWriter:
             shape=dataset_shape,
             dtype=self.dtype,
         )
-        # Initialize image counter
-        self.current_idx = 0
+        # lock for index determination
+        self.index_lock = Lock()
 
     def __enter__(self):
         return self
@@ -122,6 +124,7 @@ class UnifiedDatasetWriter:
         self.dataset_file.close()
         # Write out files
         try:
+            assert None not in self.new_paths
             # original splits
             original_splits_path = os.path.join(self.out_path, "original_splits")
             os.makedirs(original_splits_path)
@@ -234,6 +237,7 @@ class UnifiedDatasetWriter:
         task_labels: dict[str, int],
         image: Image.Image,
         add_annots: dict | None = None,
+        index: int | None = None,
     ):
         """Add labels, additional information, and image.
         :param old_path: path to the original image (relative)
@@ -241,6 +245,7 @@ class UnifiedDatasetWriter:
         :param task_labels: dict of task labels
         :param add_annots: dict of additional annotations
         :param image: PIL image
+        :param index: index of the image in the dataset
         """
         # Basic checks
         assert original_split in SPLITS, f"Split must be one of {SPLITS}, not {original_split}."
@@ -261,21 +266,26 @@ class UnifiedDatasetWriter:
                 assert (
                     task_label in self.task_labels_dict[task_name]
                 ), f"Label {task_label} invalid for task {task_name}."
-        # File indeces
-        file_idx = self.current_idx
-        self.current_idx += 1
+        assert index is None or (
+            index >= 0 and index < self.dataset_length and self.new_paths[index] is None
+        ), f"Invalid index {index}: should be in [0, {self.dataset_length}) and not already occupied."
+        # Image index
+        if index is None:
+            self.index_lock.acquire()  # thread-safe index determination
+            index = self.old_paths.index(None)
+            self.old_paths[index] = old_path
+            self.index_lock.release()
         # Additional annotations (if any)
         if add_annots is None:
             add_annots = dict()
         # Images
-        filepath = self.save_dataset_image(image, file_idx)
+        filepath = self.save_dataset_image(image, index)
         # Register new information
-        self.original_splits.append(original_split)
+        self.original_splits[index] = original_split
         for task_name in self.task_labels:
-            self.task_labels[task_name].append(task_labels[task_name])
-        self.add_annots.append(add_annots)
-        self.old_paths.append(old_path)
-        self.new_paths.append(filepath)
+            self.task_labels[task_name][index] = task_labels[task_name]
+        self.add_annots[index] = add_annots
+        self.new_paths[index] = filepath
 
     def write_many(
         self,
@@ -284,6 +294,7 @@ class UnifiedDatasetWriter:
         task_labels: list[dict[str, int]],
         images: list[Image.Image],
         add_annots: list[dict] | None = None,
+        indeces: list[int] | None = None,
     ):
         """Add labels, additional information, and images.
         :param old_paths: list of paths to the original images (relative)
@@ -291,10 +302,11 @@ class UnifiedDatasetWriter:
         :param task_labels: list of task labels (1 dict per sample)
         :param add_annots: list of additional annotations (1 dict per sample)
         :param images: list of PIL images
+        :param indeces: list of the indeces of the images in the dataset
         """
         if add_annots is None:
             add_annots = [None] * len(old_paths)
-        for old_path, original_split, task_label, image, add_annots_ in zip(
-            old_paths, original_splits, task_labels, images, add_annots
-        ):
-            self.write(old_path, original_split, task_label, image, add_annots_)
+        if indeces is None:
+            indeces = [None] * len(old_paths)
+        with ThreadPool() as pool:
+            pool.starmap(self.write, zip(old_paths, original_splits, task_labels, images, add_annots, indeces))
