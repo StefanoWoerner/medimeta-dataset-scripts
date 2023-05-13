@@ -63,7 +63,7 @@ def get_unified_data(
             for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
                 with ThreadPool() as pool:
                     imgs = pool.map(get_img, paths)
-                writer.write(
+                writer.write_many(
                     old_paths=[os.path.relpath(p, new_in_path) for p in paths],
                     original_splits=[split] * len(paths),
                     task_labels=[[lab] for lab in labs],
@@ -77,6 +77,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "nct_crc"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

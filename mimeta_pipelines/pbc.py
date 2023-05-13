@@ -68,7 +68,7 @@ def get_unified_data(
         for paths, labs in tqdm(batches, desc="Processing peripheral_blood_cells dataset"):
             with ThreadPool() as pool:
                 imgs_annots = pool.map(get_img_annotation_pair, paths)
-            writer.write(
+            writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
                 task_labels=[[lab] for lab in labs],
@@ -88,6 +88,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "pbc"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

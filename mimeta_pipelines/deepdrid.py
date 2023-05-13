@@ -170,7 +170,7 @@ def get_unified_data(
                 ):
                     with ThreadPool() as pool:
                         images_annots = pool.map(get_img_annotation_pair, batch.index)
-                    writer.write(
+                    writer.write_many(
                         old_paths=[os.path.relpath(p, root_path) for p in batch.index],
                         original_splits=[split] * len(batch),
                         task_labels=batch[list(tasks_mapper.values())].values.tolist(),

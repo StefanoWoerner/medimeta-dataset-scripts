@@ -117,7 +117,7 @@ def get_unified_data(
             named_labs_bin = [class_to_bin[n_lab] for n_lab in named_labs]
             # numeric label for binary task
             labs_bin = [class_to_idx_bin[n_lab_bin] for n_lab_bin in named_labs_bin]
-            writer.write(
+            writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=["train"] * len(paths),
                 task_labels=[[lab, lab_bin] for lab, lab_bin in zip(labs, labs_bin)],

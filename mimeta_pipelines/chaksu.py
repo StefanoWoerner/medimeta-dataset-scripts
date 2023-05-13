@@ -159,7 +159,7 @@ def get_unified_data(
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing Chaksu"):
             with ThreadPool() as pool:
                 imgs_splits_labs_annots = pool.map(get_image_split_lab_addannot_tuple, paths)
-            writer.write(
+            writer.write_many(
                 old_paths=paths,
                 original_splits=[img_split_lab_annot[1] for img_split_lab_annot in imgs_splits_labs_annots],
                 task_labels=[img_split_lab_annot[2] for img_split_lab_annot in imgs_splits_labs_annots],

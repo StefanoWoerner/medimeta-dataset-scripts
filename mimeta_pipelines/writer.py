@@ -104,11 +104,11 @@ class UnifiedDatasetWriter:
         self.hdf5_path = os.path.join(self.out_path, "images.hdf5")
         self.hdf5_dataset_name = "images"
         self.dataset_file = h5py.File(self.hdf5_path, "w")
-        dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
+        self.dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
         if self.out_img_shape[0] > 1:
-            dataset_shape = (dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
+            dataset_shape = (self.dataset_length, *self.out_img_shape[1:], self.out_img_shape[0])
         else:
-            dataset_shape = (dataset_length, *self.out_img_shape[1:])
+            dataset_shape = (self.dataset_length, *self.out_img_shape[1:])
         self.dtype = dtype
         self.dataset_file.create_dataset(
             self.hdf5_dataset_name,
@@ -218,6 +218,44 @@ class UnifiedDatasetWriter:
 
     def write(
         self,
+        old_path: str,
+        original_split: str,
+        task_labels: list[int],
+        image: Image.Image,
+        add_annots: list | None = None,
+    ):
+        """Add labels, additional information, and image.
+        :param old_path: path to the original image (relative)
+        :param original_split: original split (train, val, test)
+        :param task_labels: list of task labels
+        :param add_annots: list of additional annotations
+        :param image: PIL image
+        """
+        # File indeces
+        file_idx = self.current_idx
+        self.current_idx += 1
+        # Additional annotations (if any)
+        if add_annots is None:
+            if self.add_annot_cols:
+                raise TypeError("add_annot is required if add_annot_cols is not None.")
+            add_annots = []
+        # Images
+        filepath = self.save_dataset_image(image, file_idx)
+        # Check splits valid
+        if original_split not in SPLITS:
+            raise ValueError(f"Original split must be of {SPLITS}.")
+        # Check labels valid
+        for i, task in enumerate(self.info_dict["tasks"]):
+            if not task_labels[i] in task["labels"]:
+                raise ValueError(f"Task {task['task_name']} label must be in {task['labels'].keys()}.")
+        # Register new information
+        self.original_splits.append(original_split)
+        self.task_labels.append(task_labels)
+        self.annotations.append([filepath, old_path, original_split] + task_labels + add_annots)
+        self.new_paths.append(filepath)
+
+    def write_many(
+        self,
         old_paths: list[str],
         original_splits: list[str],
         task_labels: list[list[int]],
@@ -231,45 +269,5 @@ class UnifiedDatasetWriter:
         :param add_annots: list of additional annotations (1 list per sample)
         :param images: list of PIL images
         """
-        batch_size = len(old_paths)
-
-        # File indeces
-        file_idxs = list(range(self.current_idx, self.current_idx + batch_size))
-        self.current_idx += batch_size
-
-        # Additional annotations (if any)
-        if add_annots is None:
-            if self.add_annot_cols:
-                raise TypeError("add_annot is required if add_annot_cols is not None.")
-            add_annots = [[]] * batch_size
-
-        # Images
-        with ThreadPool() as pool:
-            filepaths = pool.starmap(self.save_dataset_image, zip(images, file_idxs))
-
-        # Check coherent lengths
-        lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots, images)]
-        if not all(length == batch_size for length in lengths):
-            raise ValueError(f"All arguments should have the same length, got {lengths}.")
-        # Check splits valid
-        if not all(split in SPLITS for split in original_splits):
-            raise ValueError(f"Original splits must be of {SPLITS}.")
-        # Check labels valid
-        for i, task in enumerate(self.info_dict["tasks"]):
-            if isinstance(task_labels[0][i], list):
-                all_valid = all(label in task["labels"] for labels in task_labels for label in labels[i])
-            else:
-                all_valid = all(labels[i] in task["labels"] for labels in task_labels)
-            if not all_valid:
-                raise ValueError(f"Task {task['task_name']} labels must be in {task['labels'].keys()}.")
-
-        # Register new information
-        self.original_splits += original_splits
-        self.task_labels += task_labels
-        self.annotations += [
-            [fp, orig_path, orig_split] + list(task_lab) + list(add_annot)
-            for fp, orig_path, orig_split, task_lab, add_annot in zip(
-                filepaths, old_paths, original_splits, task_labels, add_annots
-            )
-        ]
-        self.new_paths += filepaths
+        for old_path, original_split, task_label, image in zip(old_paths, original_splits, task_labels, images):
+            self.write(old_path, original_split, task_label, image, add_annots)

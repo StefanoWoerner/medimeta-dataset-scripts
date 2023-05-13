@@ -114,7 +114,7 @@ def get_unified_data(
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing RFMiD"):
             with ThreadPool() as pool:
                 writer_inputs = pool.map(get_writer_input, paths)
-            writer.write(*(zip(*writer_inputs)))
+            writer.write_many(*(zip(*writer_inputs)))
 
     # delete temporary folder
     if zipped:

@@ -168,7 +168,7 @@ def get_unified_data(
         for paths in tqdm(batches, desc="CRX14"):
             with ThreadPool() as pool:
                 results = pool.map(get_image_data, paths)
-            writer.write(
+            writer.write_many(
                 old_paths=[os.path.relpath(p, root_path) for p in paths],
                 original_splits=[res[2] for res in results],
                 task_labels=[res[1] for res in results],

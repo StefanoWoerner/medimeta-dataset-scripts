@@ -78,7 +78,7 @@ def get_unified_data(
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_Pneumonia ({split} split)"):
                 with ThreadPool() as pool:
                     results = pool.map(get_img_annotation_isrgb_triple, paths)
-                writer.write(
+                writer.write_many(
                     old_paths=[os.path.relpath(p, root_path) for p in paths],
                     original_splits=[split] * len(paths),
                     task_labels=[[lab] for lab in labs],
@@ -95,6 +95,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "kermany_pneumonia"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

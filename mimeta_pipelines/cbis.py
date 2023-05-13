@@ -213,7 +213,7 @@ def _get_unified_data(
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=list(annotation_columns.values())) as writer:
         for i in tqdm(range(len(df))):
             p, s, im, l, a = get_image_data(i)
-            writer.write(
+            writer.write_many(
                 old_paths=[p],
                 original_splits=[s],
                 task_labels=[l],

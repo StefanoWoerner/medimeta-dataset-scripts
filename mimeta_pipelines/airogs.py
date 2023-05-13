@@ -86,7 +86,7 @@ def get_unified_data(
         for paths in tqdm(np.array_split(images_paths, len(images_paths) // batch_size), desc="Processing AIROGS"):
             with ThreadPool() as pool:
                 imgs_labs_annots = pool.map(get_image_lab_addannot_triple, paths)
-            writer.write(
+            writer.write_many(
                 old_paths=paths,
                 original_splits=["train"] * len(paths),
                 task_labels=[img_lab_annot[1] for img_lab_annot in imgs_labs_annots],

@@ -178,7 +178,7 @@ def get_unified_data(
                 writer_input = [
                     [el for input in writer_inputs for el in input[i]] for i in range(len(writer_inputs[0]))
                 ]
-                writer.write(*writer_input)
+                writer.write_many(*writer_input)
 
     _get_unified_data(out_paths[0], info_paths[0], AnatomicalPlane.AXIAL)
     _get_unified_data(out_paths[1], info_paths[1], AnatomicalPlane.CORONAL)
