@@ -70,17 +70,16 @@ def get_unified_data(
             print("Upscaled")
         img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         mask = mask.resize(out_img_size, resample=Image.Resampling.NEAREST)  # binary mask (could change to max)
+        # save mask
+        assert len(mask.getbands()) == 1
+        assert mask.mode == "1"  # binary
+        out_mask_path_rel = writer.save_image_from_index(mask, file_idx, rel_masks_path)
         # add annotations
-        out_mask_path_rel = os.path.join(rel_masks_path, f"{file_idx:06d}.tiff")
         add_annot = [
             out_mask_path_rel,
             os.path.relpath(mask_path, root_path),
             (w, h),
         ]
-        # save mask
-        assert len(mask.getbands()) == 1
-        assert mask.mode == "1"  # binary
-        mask.save(fp=os.path.join(out_path, out_mask_path_rel), compression=None, quality=100)
         return img, add_annot
 
     with UnifiedDatasetWriter(
@@ -94,7 +93,11 @@ def get_unified_data(
         # binary task
         class_to_idx_bin = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
         # mapper between the two tasks
-        class_to_bin = {"normal": "no malignant finding", "benign": "no malignant finding", "malignant": "malignant finding"}
+        class_to_bin = {
+            "normal": "no malignant finding",
+            "benign": "no malignant finding",
+            "malignant": "malignant finding",
+        }
 
         batches = folder_paths(
             root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
@@ -132,6 +135,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "busi"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 

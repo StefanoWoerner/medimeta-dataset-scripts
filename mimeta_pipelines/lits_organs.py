@@ -143,8 +143,8 @@ def get_unified_data(
                         img, mask, bboxes_img, row, plane, out_img_size
                     )
                     if mask is not None:
-                        organ_mask_img_path = os.path.join(masks_path, f"{(row.Index):06d}.tiff")
-                        organ_mask_img.save(os.path.join(out_path, organ_mask_img_path))
+                        file_idx = row.Index
+                        organ_mask_img_path = writer.save_image_from_index(organ_mask_img, file_idx, masks_path)
                     else:
                         organ_mask_img_path = None
                     images.append(organ_img)
@@ -162,7 +162,7 @@ def get_unified_data(
                     )
 
                 bboxes_img = Image.fromarray(bboxes_img, mode="RGB")
-                bboxes_img.save(os.path.join(out_path, bboxes_img_path))
+                writer.save_image(bboxes_img, bboxes_img_path)
 
                 old_paths = [volume_path] * len(images)
                 original_splits = [row.split] * len(images)

@@ -177,6 +177,45 @@ class UnifiedDatasetWriter:
             rmtree(self.out_path, ignore_errors=True)
             raise e
 
+    def _image_name_from_index(self, index: int) -> str:
+        return f"{index:06d}.tiff"
+
+    def save_image(self, image: Image.Image, rel_path: str, check_dim: bool = False, check_channels: bool = False):
+        """Save image to path.
+        :param image: PIL image
+        :param rel_path: relative path
+        """
+        if check_channels:
+            assert len(image.getbands()) == self.out_img_shape[0]
+        if check_dim:
+            assert image.size == tuple(self.out_img_shape[1:])
+        image.save(fp=os.path.join(self.out_path, rel_path), compression=None, quality=100)  # TODO: subprocess?
+
+    def save_image_from_index(
+        self, image: Image.Image, index: int, rel_dirpath: str, check_dim: bool = True, check_channels: bool = False
+    ) -> str:
+        """Save image to path.
+        :param image: PIL image
+        :param index: index
+        :param rel_dirpath: relative directory path
+        :return: relative path where the image was saved
+        """
+        rel_path = os.path.join(rel_dirpath, self._image_name_from_index(index))
+        self.save_image(image, rel_path, check_dim, check_channels)
+        return rel_path
+
+    def save_dataset_image(self, image: Image.Image, index: int) -> str:
+        """Save dataset (training) image to images directory and HDF5.
+        :param image: PIL image
+        :param index: index
+        :return: relative path where the image was saved
+        """
+        # in HDF5
+        ds = self.dataset_file[self.hdf5_dataset_name]
+        ds[index] = np.array(image)
+        # in directory
+        return self.save_image(image, index, self.images_relpath, check_dim=True, check_channels=True)
+
     def write(
         self,
         old_paths: list[str],
@@ -194,11 +233,8 @@ class UnifiedDatasetWriter:
         """
         batch_size = len(old_paths)
 
-        # Filenames: {index_6_digits}.tiff
-        filepaths = [
-            os.path.join(self.images_relpath, f"{file_idx:06d}.tiff")
-            for file_idx in range(self.current_idx, self.current_idx + batch_size)
-        ]
+        # File indeces
+        file_idxs = list(range(self.current_idx, self.current_idx + batch_size))
         self.current_idx += batch_size
 
         # Additional annotations (if any)
@@ -208,18 +244,9 @@ class UnifiedDatasetWriter:
             add_annots = [[]] * batch_size
 
         # Images
-        def save_fun(img, path):
-            assert len(img.getbands()) == self.info_dict["input_size"][0]
-            assert img.size == tuple(self.info_dict["input_size"][1:])
-            img.save(fp=os.path.join(self.out_path, path), compression=None, quality=100)
-
-        # in directory
         with ThreadPool() as pool:
-            assert len(set(filepaths)) == len(filepaths)
-            pool.starmap(save_fun, zip(images, filepaths))
+            filepaths = pool.starmap(self.save_dataset_image, zip(images, file_idxs))
 
-        ds = self.dataset_file[self.hdf5_dataset_name]
-        ds[self.current_idx - batch_size : self.current_idx] = [np.array(img) for img in images]
         # Check coherent lengths
         lengths = [len(ls) for ls in (filepaths, old_paths, original_splits, task_labels, add_annots, images)]
         if not all(length == batch_size for length in lengths):

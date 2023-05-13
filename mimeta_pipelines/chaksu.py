@@ -108,54 +108,54 @@ def get_unified_data(
     lab2idx = {v: k for k, v in info_dict["tasks"][0]["labels"].items()}
     annot2idx = {k: lab2idx[v] for k, v in annot2lab.items()}
 
-    # Row processing function
-    def get_image_split_lab_addannot_tuple(path: str):
-        # get info from dataframe
-        df_row = info_df.loc[path]
-        image_path = path
-        mask_path = df_row["masks_algo_STAPLE_path"]  # only saving this one mask
-        split = df_row["split"]
-        device = df_row["device"]
-        patient_id = df_row["patient_id"]
-        annots_experts = df_row[[f"annot_expert_{idx}" for idx in expert_idxs]].values
-        annot_majority = df_row["annot_majority"]
-        # transform image
-        img = Image.open(os.path.join(root_path, image_path))
-        orig_size = img.size
-        img = zero_pad_to_square(img)
-        img.thumbnail(out_img_size, resample=Image.BICUBIC)
-        # transform masks
-        mask = Image.open(os.path.join(root_path, mask_path))
-        mask = zero_pad_to_square(mask)
-        cup_mask = Image.fromarray((np.array(mask) > 255 // 3).astype(bool))
-        cup_mask.thumbnail(out_img_size, resample=Image.NEAREST)
-        cup_mask_path = os.path.join(cup_masks_path, f"{df_row['out_index']:06d}.tiff")
-        cup_mask.save(os.path.join(out_path, cup_mask_path))
-        disc_mask = Image.fromarray((np.array(mask) > (255 * 2) // 3).astype(bool))
-        disc_mask.thumbnail(out_img_size, resample=Image.NEAREST)
-        disc_mask_path = os.path.join(disc_masks_path, f"{df_row['out_index']:06d}.tiff")
-        disc_mask.save(os.path.join(out_path, disc_mask_path))
-        # additional annotations
-        add_annot = [
-            orig_size,
-            device,
-            patient_id,
-            annot2lab[annot_majority],
-            *[annot2lab[annot] for annot in annots_experts],
-            mask_path,
-            disc_mask_path,
-            cup_mask_path,
-            *[df_row[col] for col in stat_annot_cols],
-        ]
-        # label
-        lab = annot2idx[annot_majority]
-        return img, split, [lab], add_annot
-
     with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=add_annot_cols) as writer:
         os.makedirs(os.path.join(out_path, cup_masks_path))
         os.makedirs(os.path.join(out_path, disc_masks_path))
         copyfile(os.path.join(root_path, readme_name), os.path.join(out_path, readme_name))
         all_paths = info_df.index
+
+        # Row processing function
+        def get_image_split_lab_addannot_tuple(path: str):
+            # get info from dataframe
+            df_row = info_df.loc[path]
+            image_path = path
+            mask_path = df_row["masks_algo_STAPLE_path"]  # only saving this one mask
+            split = df_row["split"]
+            device = df_row["device"]
+            patient_id = df_row["patient_id"]
+            annots_experts = df_row[[f"annot_expert_{idx}" for idx in expert_idxs]].values
+            annot_majority = df_row["annot_majority"]
+            file_idx = df_row["out_index"]
+            # transform image
+            img = Image.open(os.path.join(root_path, image_path))
+            orig_size = img.size
+            img = zero_pad_to_square(img)
+            img.thumbnail(out_img_size, resample=Image.BICUBIC)
+            # transform masks
+            mask = Image.open(os.path.join(root_path, mask_path))
+            mask = zero_pad_to_square(mask)
+            cup_mask = Image.fromarray((np.array(mask) > 255 // 3).astype(bool))
+            cup_mask.thumbnail(out_img_size, resample=Image.NEAREST)
+            cup_mask_path = writer.save_image_from_index(cup_mask, file_idx, cup_masks_path)
+            disc_mask = Image.fromarray((np.array(mask) > (255 * 2) // 3).astype(bool))
+            disc_mask.thumbnail(out_img_size, resample=Image.NEAREST)
+            disc_mask_path = writer.save_image_from_index(disc_mask, file_idx, disc_masks_path)
+            # additional annotations
+            add_annot = [
+                orig_size,
+                device,
+                patient_id,
+                annot2lab[annot_majority],
+                *[annot2lab[annot] for annot in annots_experts],
+                mask_path,
+                disc_mask_path,
+                cup_mask_path,
+                *[df_row[col] for col in stat_annot_cols],
+            ]
+            # label
+            lab = annot2idx[annot_majority]
+            return img, split, [lab], add_annot
+
         for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing Chaksu"):
             with ThreadPool() as pool:
                 imgs_splits_labs_annots = pool.map(get_image_split_lab_addannot_tuple, paths)
