@@ -19,12 +19,11 @@ DATA MODIFICATIONS:
 """
 
 import os
-from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from zipfile import ZipFile
 
+import pandas as pd
 from PIL import Image
-from tqdm import tqdm
 
 from .image_utils import center_crop
 from .paths import INFO_PATH, folder_paths, setup
@@ -34,9 +33,8 @@ from .writer import UnifiedDatasetWriter
 def get_unified_data(
     in_path,
     info_path=os.path.join(INFO_PATH, "BUSI.yaml"),
-    batch_size=512,
     out_img_size=(224, 224),
-    zipped=False,
+    zipped=True,
 ):
     info_dict, out_path = setup(in_path, info_path)
 
@@ -50,80 +48,61 @@ def get_unified_data(
     # data path
     root_path = os.path.join(in_path, "Dataset_BUSI_with_GT")
 
-    rel_masks_path = "masks"
+    # Task mappers
+    # 3-class task
+    class_task = info_dict["tasks"][0]
+    class2idx = {class_: idx for idx, class_ in class_task["labels"].items()}
+    # binary task
+    bin_task = info_dict["tasks"][1]
+    bin2binidx = {bin_: idx for idx, bin_ in bin_task["labels"].items()}
+    class2bin = {"normal": "no malignant finding", "benign": "no malignant finding", "malignant": "malignant finding"}
+    classidx2binidx = {classidx: bin2binidx[class2bin[class_]] for classidx, class_ in class_task["labels"].items()}
 
-    def get_img_annotation_pair(path: str, file_idx: int):
-        name, extension = os.path.splitext(path)
-        mask_path = f"{name}_mask{extension}"
-        img = Image.open(path)
-        mask = Image.open(mask_path)
-        # convert image to grayscale
-        img = img.convert("L")
-        # convert mask to binary
-        mask = mask.convert("1")
-        # center-crop
-        w, h = img.size
-        img = center_crop(img)
-        mask = center_crop(mask)
-        # resize
-        if img.size[0] < out_img_size[0]:
-            print("Upscaled")
-        img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
-        mask = mask.resize(out_img_size, resample=Image.Resampling.NEAREST)  # binary mask (could change to max)
-        # save mask
-        assert len(mask.getbands()) == 1
-        assert mask.mode == "1"  # binary
-        out_mask_path_rel = writer.save_image_from_index(mask, file_idx, rel_masks_path)
-        # add annotations
-        add_annot = {
-            "mask_path": out_mask_path_rel,
-            "original_mask_path": os.path.relpath(mask_path, root_path),
-            "original_image_size": (w, h),
-        }
-        return img, add_annot
+    # Prepare annotations dataframe
+    paths, labels = folder_paths(root=root_path, dir_to_cl_idx=class2idx, check_alphabetical=False)
+    paths = [os.path.relpath(path, root_path) for path in paths]
+    annot_df = pd.DataFrame(data={"original_filepath": paths, class_task["task_name"]: labels})
+    annot_df["original_split"] = "train"
+    annot_df = annot_df[~(annot_df["original_filepath"].str.contains("mask"))]  # remove masks
+    annot_df[bin_task["task_name"]] = annot_df[class_task["task_name"]].map(classidx2binidx)
+    annot_df.reset_index(inplace=True, drop=True)
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
+        rel_masks_path = "masks"
         os.makedirs(os.path.join(out_path, rel_masks_path))
-        # 3-class task
-        task = info_dict["tasks"][0]
-        class_to_idx = {v: k for k, v in task["labels"].items()}
-        # binary task
-        task_bin = info_dict["tasks"][1]
-        class_to_idx_bin = {v: k for k, v in task_bin["labels"].items()}
-        # mapper between the two tasks
-        class_to_bin = {
-            "normal": "no malignant finding",
-            "benign": "no malignant finding",
-            "malignant": "malignant finding",
-        }
 
-        batches = folder_paths(
-            root=root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size, check_alphabetical=False
-        )
-        current_idx = 0
-        for paths, labs in tqdm(batches, desc="Processing BUSI dataset"):
-            # filter out mask images
-            labs = [lab for path, lab in zip(paths, labs) if "mask" not in path]
-            paths = [path for path in paths if "mask" not in path]
-            with ThreadPool() as pool:
-                imgs_annots = pool.starmap(
-                    get_img_annotation_pair, zip(paths, list(range(current_idx, current_idx + len(paths))))
-                )
-            current_idx += len(paths)
-            # named labels
-            named_labs = [task["labels"][lab] for lab in labs]
-            named_labs_bin = [class_to_bin[n_lab] for n_lab in named_labs]
-            # numeric label for binary task
-            labs_bin = [class_to_idx_bin[n_lab_bin] for n_lab_bin in named_labs_bin]
-            writer.write_many(
-                old_paths=[os.path.relpath(p, root_path) for p in paths],
-                original_splits=["train"] * len(paths),
-                task_labels=[
-                    {task["task_name"]: lab, task_bin["task_name"]: lab_bin} for lab, lab_bin in zip(labs, labs_bin)
-                ],
-                images=[img_annot[0] for img_annot in imgs_annots],
-                add_annots=[img_annot[1] for img_annot in imgs_annots],
-            )
+        def get_img_addannot_pair(df_row):
+            path = os.path.join(root_path, df_row["original_filepath"])
+            name, extension = os.path.splitext(path)
+            mask_path = f"{name}_mask{extension}"
+            img = Image.open(path)
+            mask = Image.open(mask_path)
+            # convert image to grayscale
+            img = img.convert("L")
+            # convert mask to binary
+            mask = mask.convert("1")
+            # center-crop
+            orig_size = img.size
+            img = center_crop(img)
+            mask = center_crop(mask)
+            # resize
+            if img.size[0] < out_img_size[0]:
+                print("Upscaled")
+            img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
+            mask = mask.resize(out_img_size, resample=Image.Resampling.NEAREST)  # binary mask (could change to max)
+            # save mask
+            assert len(mask.getbands()) == 1
+            assert mask.mode == "1"  # binary
+            out_mask_path_rel = writer.save_image_from_index(mask, df_row["index"], rel_masks_path)
+            # add annotations
+            add_annot = {
+                "mask_path": out_mask_path_rel,
+                "original_mask_path": os.path.relpath(mask_path, root_path),
+                "original_image_size": orig_size,
+            }
+            return img, add_annot
+
+        writer.write_from_dataframe(df=annot_df, processing_func=get_img_addannot_pair)
 
     # delete temporary folder
     if zipped:
