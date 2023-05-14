@@ -19,13 +19,11 @@ DATA MODIFICATIONS:
 """
 
 import os
-from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from zipfile import ZipFile
 
 import pandas as pd
 from PIL import Image
-from tqdm import tqdm
 
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
@@ -34,7 +32,6 @@ from .writer import UnifiedDatasetWriter
 def get_unified_data(
     in_path,
     info_path=os.path.join(INFO_PATH, "AML-Cytomorphology_LMU.yaml"),
-    batch_size=512,
     out_img_size=(224, 224),
     zipped=True,
 ):
@@ -51,46 +48,42 @@ def get_unified_data(
         root_path = in_path
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
-        images_path = os.path.join(root_path, "AML-Cytomorphology")
+        images_basedir = os.path.join(root_path, "AML-Cytomorphology")
         task = info_dict["tasks"][0]
         class_to_idx = {v.split(" ")[0]: k for k, v in task["labels"].items()}
-        task_name = task["task_name"]
-        batches = folder_paths(root=images_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size)
+        paths, labels = folder_paths(root=images_basedir, dir_to_cl_idx=class_to_idx, batch_size=None)
+        path2clsidx = dict(zip([os.path.relpath(p, images_basedir) for p in paths], labels))
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
             sep=r"\s+",
-            names=["path", "annotation", "first_reannotation", "second_reannotation"],
-            index_col=0,
+            names=["original_filepath", "annotation", "first_reannotation", "second_reannotation"],
         )
+        annotations[task["task_name"]] = annotations["original_filepath"].map(path2clsidx)
+        annotations["original_split"] = "train"
+        # keep only needed columns
+        annotations = annotations[
+            [
+                "original_filepath",
+                "original_split",
+                task["task_name"],
+                "annotation",
+                "first_reannotation",
+                "second_reannotation",
+            ]
+        ]
 
-        def get_img_annotation_pair(path: str):
-            image = Image.open(path)
+        def get_img_addannot_pair(annotations_row):
+            path = annotations_row["original_filepath"]
+            image = Image.open(os.path.join(images_basedir, path))
             orig_size = image.size
-            rel_path = os.path.join(*(path.split(os.sep)[-2:]))
-            annot = annotations.loc[rel_path]
-            # "" since NaN being a float, we would get a float column
-            add_annot = {
-                "annotation": annot.annotation,
-                "first_reannotation": annot.first_reannotation,
-                "second_reannotation": annot.second_reannotation,
-                "original_image_size": orig_size,
-            }
+            add_annot = {"original_image_size": orig_size}
             # remove alpha channel
             image = image.convert("RGB")
             # resize
             image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
             return image, add_annot
 
-        for paths, labs in tqdm(batches, desc="Processing AML-Cytomorphology_LMU"):
-            with ThreadPool() as pool:
-                imgs_annots = pool.map(get_img_annotation_pair, paths)
-            writer.write_many(
-                old_paths=[os.path.relpath(p, root_path) for p in paths],
-                original_splits=["train"] * len(paths),
-                task_labels=[{task_name: lab} for lab in labs],
-                images=[img_annot[0] for img_annot in imgs_annots],
-                add_annots=[img_annot[1] for img_annot in imgs_annots],
-            )
+        writer.write_from_dataframe(df=annotations, processing_func=get_img_addannot_pair)
 
     # remove extracted folder to free up space
     if zipped:
