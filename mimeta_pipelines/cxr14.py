@@ -27,8 +27,6 @@ from zipfile import ZipFile
 
 import pandas as pd
 from PIL import Image
-from more_itertools import chunked
-from tqdm import tqdm
 
 from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
@@ -37,7 +35,6 @@ from .writer import UnifiedDatasetWriter
 def get_unified_data(
     in_path,
     info_path=os.path.join(INFO_PATH, "CXR14.yaml"),
-    batch_size=256,
     out_img_size=(224, 224),
     zipped=True,
 ):
@@ -63,7 +60,7 @@ def get_unified_data(
                 os.remove(subfolder_zip)
 
         with ThreadPool(len(subfolder_zips)) as pool:
-            results = pool.map(unzip, subfolder_zips)
+            pool.map(unzip, subfolder_zips)
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         # relevant files
@@ -72,20 +69,17 @@ def get_unified_data(
             train_val_files = list(map(lambda p: p.strip("\n"), f.readlines()))
         with open(os.path.join(root_path, "test_list.txt"), "r") as f:
             test_files = list(map(lambda p: p.strip("\n"), f.readlines()))
-        splits = pd.DataFrame(
-            {
-                "original_split": ["train"] * len(train_val_files) + ["test"] * len(test_files),
-            },
-            index=train_val_files + test_files,
-        )
+        path2split = {p: "train" for p in train_val_files}
+        path2split.update({p: "test" for p in test_files})
         # documentation
         for f in ("FAQ_CHESTXRAY.pdf", "LOG_CHESTXRAY.pdf", "README_CHESTXRAY.pdf"):
             copyfile(os.path.join(root_path, f), os.path.join(out_path, f"{f}_original"))
         # metadata
         metadata = pd.read_csv(os.path.join(root_path, "Data_Entry_2017_v2020.csv"), index_col="Image Index")
+        metadata["original_split"] = metadata.index.map(path2split)
         task = info_dict["tasks"][0]
         possible_labels = list(task["labels"].values())
-        metadata["label"] = metadata["Finding Labels"].apply(
+        metadata[task["task_name"]] = metadata["Finding Labels"].apply(
             lambda lab: [1 if l in lab else 0 for l in possible_labels]
         )
         metadata["original_image_size"] = (
@@ -94,25 +88,25 @@ def get_unified_data(
         metadata["original_pixel_spacing"] = (
             "(" + metadata["OriginalImagePixelSpacing[x"].astype(str) + "," + metadata["y]"].astype(str) + ")"
         )
+        task_gender = info_dict["tasks"][1]
         metadata.rename(
             columns={
                 "Follow-up #": "follow-up_nb",
                 "Patient ID": "patient_id",
                 "Patient Age": "patient_age",
-                "Patient Gender": "patient_gender",
+                "Patient Gender": task_gender["task_name"],
                 "View Position": "view_position",
                 "Finding Labels": "finding_labels",
             },
             inplace=True,
         )
-        task_gender = info_dict["tasks"][1]
-        gender_to_idx = {v: k for k, v in task_gender["labels"].items()}
-        metadata["patient_gender_f_m"] = metadata["patient_gender"]
-        metadata["patient_gender"] = metadata["patient_gender"].apply(lambda g: gender_to_idx[g])
+        gender2idx = {v: k for k, v in task_gender["labels"].items()}
+        metadata[task_gender["task_name"]] = metadata[task_gender["task_name"]].map(gender2idx)
         # bounding boxes
-        bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"), index_col="Image Index")
+        bboxes = pd.read_csv(os.path.join(root_path, "BBox_List_2017.csv"))
         bboxes["bounding_box"] = (
-            "("
+            bboxes["Finding Label"]
+            + ": ("
             + bboxes["Bbox [x"].astype(str)
             + ","
             + bboxes["y"].astype(str)
@@ -122,53 +116,37 @@ def get_unified_data(
             + bboxes["h]"].astype(str)
             + ")"
         )
-        add_annots = metadata[
+        bboxes = pd.DataFrame(bboxes.groupby("Image Index")["bounding_box"].apply(list))
+        bboxes.rename(columns={0: "bounding_boxes"}, inplace=True)
+        info_df = metadata[
             [
+                "original_split",
+                task["task_name"],
+                task_gender["task_name"],
                 "follow-up_nb",
                 "patient_id",
                 "patient_age",
-                "patient_gender_f_m",
                 "finding_labels",
                 "view_position",
                 "original_image_size",
                 "original_pixel_spacing",
             ]
         ].join(bboxes[["bounding_box"]], how="left")
+        info_df["original_filepath"] = [
+            os.path.join(os.path.relpath(images_path, root_path), ind) for ind in info_df.index
+        ]
+        info_df.reset_index(inplace=True, drop=True)
 
-        def get_image_data(path: str):
-            rgba = False
-            image = Image.open(path)
+        def get_image_addannot_pair(df_row):
+            image = Image.open(os.path.join(root_path, df_row["original_filepath"]))
             # some images are RGBA
             if image.mode == "RGBA":
-                rgba = True
                 image = image.convert("L")
-            index = path.split(os.sep)[-1]
-            annot = add_annots.loc[index].to_dict()
-            labels = {
-                task["task_name"]: metadata.loc[index, "label"],
-                task_gender["task_name"]: metadata.loc[index, "patient_gender"],
-            }
-            original_split = splits.loc[index, "original_split"]
             # resize
             image.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
-            return image, labels, original_split, annot, rgba
+            return image, dict()
 
-        all_paths = [os.path.join(images_path, p) for p in os.listdir(images_path) if p[-4:] == ".png"]
-        batches = list(chunked(all_paths, batch_size))
-        rgba_counter = 0
-        for paths in tqdm(batches, desc="CRX14"):
-            with ThreadPool() as pool:
-                results = pool.map(get_image_data, paths)
-            writer.write_many(
-                old_paths=[os.path.relpath(p, root_path) for p in paths],
-                original_splits=[res[2] for res in results],
-                task_labels=[res[1] for res in results],
-                images=[res[0] for res in results],
-                add_annots=[res[3] for res in results],
-            )
-            rgba_counter += sum([res[4] for res in results])
-
-        print(f"Found {rgba_counter} RGBA images, converted them.")
+        writer.write_from_dataframe(df=info_df, processing_func=get_image_addannot_pair)
 
     # remove extracted folder to free up space
     if zipped:
