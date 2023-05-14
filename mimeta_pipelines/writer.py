@@ -4,6 +4,7 @@ import os
 from multiprocessing import Lock
 from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
+import tqdm
 
 import h5py
 import numpy as np
@@ -275,6 +276,8 @@ class UnifiedDatasetWriter:
             index = self.old_paths.index(None)
             self.old_paths[index] = old_path
             self.index_lock.release()
+        else:
+            self.old_paths[index] = old_path
         # Additional annotations (if any)
         if add_annots is None:
             add_annots = dict()
@@ -310,3 +313,42 @@ class UnifiedDatasetWriter:
             indeces = [None] * len(old_paths)
         with ThreadPool() as pool:
             pool.starmap(self.write, zip(old_paths, original_splits, task_labels, images, add_annots, indeces))
+
+    def write_from_dataframe(self, df: pd.DataFrame, processing_func: callable):
+        """Write whole dataset from a correctly formatted dataframe.
+        :param df: dataframe containing task columns, original_filepath, original_split and additional annotations (the rest).
+        :param processing_func: function that takes a row of the dataframe and returns a PIL image and a dictionary of additional annotations.
+        """
+        # check input dataframe
+        required_cols = ["original_filepath", "original_split"] + list(self.task_labels.keys())
+        assert len(set(required_cols) - set(df.columns)) == 0, f"Columns {required_cols} are required."
+        # if the dataframe is not correctly indexed, reindex assuming the passed index is in the desired order
+        if not df.index.min() == 0 and df.index.max() == len(df) - 1:
+            df.sort_index(inplace=True)
+            df.reset_index(inplace=True, drop=True)
+        # dataframe to list of dicts: one per row, index included by resetting index
+        df_dict = df.reset_index().transpose().to_dict().values()
+
+        add_annot_df_cols = set(df.columns) - set(required_cols)
+
+        def _process_image(row):
+            image, add_annots = processing_func(row)
+            self.write(
+                old_path=row["original_filepath"],
+                original_split=row["original_split"],
+                task_labels={task: row[task] for task in self.task_labels.keys()},
+                image=image,
+                add_annots={
+                    **add_annots,  # from image processing
+                    **{c: row[c] for c in add_annot_df_cols},  # from dataframe
+                },
+                index=row["index"],
+            )
+
+        with ThreadPool() as pool:
+            for _ in tqdm.tqdm(
+                pool.imap_unordered(_process_image, df_dict),
+                total=len(df_dict),
+                desc=f"Processing {self.info_dict['name']}",
+            ):
+                pass
