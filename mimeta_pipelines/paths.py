@@ -23,18 +23,18 @@ def setup(in_path, info_path):
 
 def folder_paths(
     root: str,
-    batch_size: int,
     dir_to_cl_idx: dict[str, int],
+    batch_size: int | None = None,
     check_alphabetical: bool = True,
     check_cl_idxs_range: bool = True,
-) -> list[tuple[list[str], list[int]]]:
-    """Get batches of (paths, labels) from a folder class structure.
+) -> tuple[list[str], list[int]] | list[tuple[list[str], list[int]]]:
+    """Get batches of (paths, labels), or (paths, labels), from a folder class structure.
     :param root: root folder.
-    :param batch_size: batch size.
     :param dir_to_cl_idx: dictionary mapping directories to class indices.
+    :param batch_size: batch size if batches are to be returned, else None.
     :param check_alphabetical: check that the class names are in alphabetical order, and the indices range(len(classes)).
     :param check_cl_idxs_range: check that the class keys (indices) are equal to range(len(classes)).
-    :returns: list of batches, each batch is a tuple of (paths, labels).
+    :returns: list of batches, each batch is a tuple of (paths, labels), or a single tuple of (paths, labels) if batch_size is None.
     """
     # alphabetical class order check
     if check_alphabetical:
@@ -52,11 +52,14 @@ def folder_paths(
             [
                 os.path.join(root, dir_, f)
                 for f in os.listdir(os.path.join(root, dir_))
-                if f.split(".")[-1] in ("tif", "tiff", "png", "jpeg", "jpg") and not f.startswith(".")
+                if os.path.splitext(f)[1].lower() in (".tif", ".tiff", ".png", ".jpeg", ".jpg")
+                and not f.startswith(".")
             ]
         )
         paths.extend(new_paths)
         labels.extend([dir_to_cl_idx[dir_]] * len(new_paths))
-    # create batches
-    batches = [(paths[i : i + batch_size], labels[i : i + batch_size]) for i in range(0, len(paths), batch_size)]
-    return batches
+    if batch_size is None:
+        return paths, labels
+    else:
+        batches = [(paths[i : i + batch_size], labels[i : i + batch_size]) for i in range(0, len(paths), batch_size)]
+        return batches

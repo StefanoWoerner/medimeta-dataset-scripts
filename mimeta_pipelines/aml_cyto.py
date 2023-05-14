@@ -55,7 +55,7 @@ def get_unified_data(
         task = info_dict["tasks"][0]
         class_to_idx = {v.split(" ")[0]: k for k, v in task["labels"].items()}
         task_name = task["task_name"]
-        batches = folder_paths(root=images_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
+        batches = folder_paths(root=images_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size)
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
             sep=r"\s+",

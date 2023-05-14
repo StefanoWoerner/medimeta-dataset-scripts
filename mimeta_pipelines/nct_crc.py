@@ -61,7 +61,7 @@ def get_unified_data(
         for split, split_dir in splits.items():
             split_path = os.path.join(new_in_path, split_dir)
             class_to_idx = {re.search(r"\((\w+)\)", v).group(1): k for k, v in task["labels"].items()}
-            batches = folder_paths(root=split_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
+            batches = folder_paths(root=split_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size)
             for paths, labs in tqdm(batches, desc=f"Processing NCT-CRC ({split} split)"):
                 with ThreadPool() as pool:
                     imgs = pool.map(get_img, paths)

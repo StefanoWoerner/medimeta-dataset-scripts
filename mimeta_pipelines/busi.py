@@ -98,7 +98,7 @@ def get_unified_data(
         }
 
         batches = folder_paths(
-            root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
+            root=root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size, check_alphabetical=False
         )
         current_idx = 0
         for paths, labs in tqdm(batches, desc="Processing BUSI dataset"):

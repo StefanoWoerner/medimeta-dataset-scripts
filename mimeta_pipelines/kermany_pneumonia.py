@@ -72,7 +72,7 @@ def get_unified_data(
             ("train", os.path.join(in_path, "train")),
             ("test", os.path.join(in_path, "test")),
         ):
-            batches = folder_paths(root=split_root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx)
+            batches = folder_paths(root=split_root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size)
             rgb_counter = 0
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_Pneumonia ({split} split)"):
                 with ThreadPool() as pool:

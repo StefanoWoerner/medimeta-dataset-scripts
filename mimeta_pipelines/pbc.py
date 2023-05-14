@@ -64,7 +64,7 @@ def get_unified_data(
         task = info_dict["tasks"][0]
         class_to_idx = {v: k for k, v in task["labels"].items()}
         batches = folder_paths(
-            root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
+            root=root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size, check_alphabetical=False
         )
         for paths, labs in tqdm(batches, desc="Processing peripheral_blood_cells dataset"):
             with ThreadPool() as pool:
