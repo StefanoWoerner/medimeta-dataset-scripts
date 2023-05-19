@@ -198,7 +198,8 @@ def _get_unified_data(
         im = Image.fromarray(((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8))
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
         labels = {"pathology": task_labels[0][i], **{tn: tl[i] for tn, tl in zip(task_names, task_labels[1:])}}
-        return s[0][1], splits[i], im, labels, annotations.iloc[i].to_dict()
+        original_filepath = os.path.relpath(s[0][1], root_path)
+        return original_filepath, splits[i], im, labels, annotations.iloc[i].to_dict()
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         for i in tqdm(range(len(df))):
