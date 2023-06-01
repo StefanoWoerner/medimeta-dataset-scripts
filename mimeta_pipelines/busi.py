@@ -11,8 +11,7 @@ if zipped=False:
 DATA MODIFICATIONS:
 - The images are converted to grayscale, the masks to binary, using the
   PIL.Image.convert method.
-- The images and masks are center-cropped with the smallest dimension to
-  obtain a square image
+- The images and masks are zero-padded to obtain a square image.
 - The images are resized to 224x224 (1 upscaled) using the
   PIL.Image.thumbnail method with BICUBIC interpolation, the masks with
   NEAREST interpolation.
@@ -26,7 +25,7 @@ from zipfile import ZipFile
 from PIL import Image
 from tqdm import tqdm
 
-from .image_utils import center_crop
+from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
@@ -63,8 +62,8 @@ def get_unified_data(
         mask = mask.convert("1")
         # center-crop
         w, h = img.size
-        img = center_crop(img)
-        mask = center_crop(mask)
+        img = zero_pad_to_square(img)
+        mask = zero_pad_to_square(mask)
         # resize
         if img.size[0] < out_img_size[0]:
             print("Upscaled")
@@ -94,7 +93,11 @@ def get_unified_data(
         # binary task
         class_to_idx_bin = {v: k for k, v in info_dict["tasks"][1]["labels"].items()}
         # mapper between the two tasks
-        class_to_bin = {"normal": "no malignant finding", "benign": "no malignant finding", "malignant": "malignant finding"}
+        class_to_bin = {
+            "normal": "no malignant finding",
+            "benign": "no malignant finding",
+            "malignant": "malignant finding",
+        }
 
         batches = folder_paths(
             root=root_path, batch_size=batch_size, dir_to_cl_idx=class_to_idx, check_alphabetical=False
@@ -132,6 +135,7 @@ def get_unified_data(
 
 def main():
     from config import config as cfg
+
     pipeline_name = "busi"
     get_unified_data(**cfg.pipeline_args[pipeline_name])
 
