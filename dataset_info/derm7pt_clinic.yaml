@@ -117,7 +117,7 @@ tasks:
       1: present
 
 input_size: [3,224,224]
-num_samples:
+original_splits_num_samples:
   train: 413
   val: 203
   test: 395
