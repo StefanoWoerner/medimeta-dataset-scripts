@@ -1,7 +1,9 @@
-id: derm7pt_derm
-name: 7-point criteria evaluation database - dermoscopy images #TODO rename
-summary: "Seven-Point Checklist for Skin Lesion Classification - Dermoscopy Images"
-description: #TODO
+id: skin_derm
+name: Skin Lesion Evaluation (Dermoscopy)
+summary: "A dataset containing dermoscopy color images of skin lesions,
+along with corresponding labels for seven different evaluation criteria
+and the diagnosis. Tasks containing infrequent labels have versions
+which group the infrequent labels together into more frequent labels."
 
 tasks:
   - task_name: Diagnosis
