@@ -130,13 +130,14 @@ class UnifiedDatasetWriter:
             original_splits_path = os.path.join(self.out_path, "original_splits")
             os.makedirs(original_splits_path)
             for split in SPLITS:
-                with open(os.path.join(original_splits_path, f"{split}.txt"), "w") as f:
-                    split_paths = [
-                        path for path, orig_split in zip(self.new_paths, self.original_splits) if orig_split == split
-                    ]
-                    # check coherent with info file
-                    assert self.info_dict["original_splits_num_samples"][split] == len(split_paths)
-                    f.write("\n".join(split_paths))
+                split_paths = [
+                    path for path, orig_split in zip(self.new_paths, self.original_splits) if orig_split == split
+                ]
+                # check coherent with info file
+                assert self.info_dict["original_splits_num_samples"][split] == len(split_paths)
+                if split_paths:
+                    with open(os.path.join(original_splits_path, f"{split}.txt"), "w") as f:
+                        f.write("\n".join(split_paths))
 
             # task labels (1 file per task)
             task_labels_path = os.path.join(self.out_path, "task_labels")
