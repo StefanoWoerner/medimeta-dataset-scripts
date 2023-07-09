@@ -106,10 +106,10 @@ def get_unified_data(
             mask = zero_pad_to_square(mask)
             cup_mask = Image.fromarray((np.array(mask) > 255 // 3).astype(bool))
             cup_mask.thumbnail(out_img_size, resample=Image.NEAREST)
-            cup_mask_path = writer.save_image_from_index(cup_mask, df_row["index"], cup_masks_path)
+            cup_mask_path = writer.save_image_with_index(cup_mask, df_row["index"], cup_masks_path)
             disc_mask = Image.fromarray((np.array(mask) > (255 * 2) // 3).astype(bool))
             disc_mask.thumbnail(out_img_size, resample=Image.NEAREST)
-            disc_mask_path = writer.save_image_from_index(disc_mask, df_row["index"], disc_masks_path)
+            disc_mask_path = writer.save_image_with_index(disc_mask, df_row["index"], disc_masks_path)
             add_annot = {
                 "original_image_size": orig_size,
                 "mask_staple_original_path": mask_path,

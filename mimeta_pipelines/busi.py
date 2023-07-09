@@ -93,7 +93,7 @@ def get_unified_data(
             # save mask
             assert len(mask.getbands()) == 1
             assert mask.mode == "1"  # binary
-            out_mask_path_rel = writer.save_image_from_index(mask, df_row["index"], rel_masks_path)
+            out_mask_path_rel = writer.save_image_with_index(mask, df_row["index"], rel_masks_path)
             # add annotations
             add_annot = {
                 "mask_path": out_mask_path_rel,

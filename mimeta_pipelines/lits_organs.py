@@ -136,7 +136,7 @@ def get_unified_data(
                     )
                     if mask is not None:
                         file_idx = row.Index
-                        organ_mask_img_path = writer.save_image_from_index(organ_mask_img, file_idx, masks_path)
+                        organ_mask_img_path = writer.save_image_with_index(organ_mask_img, file_idx, masks_path)
                     else:
                         organ_mask_img_path = None
                     images.append(organ_img)

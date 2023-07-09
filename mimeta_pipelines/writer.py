@@ -207,7 +207,7 @@ class UnifiedDatasetWriter:
             assert image.size == tuple(self.out_img_shape[1:])
         image.save(fp=os.path.join(self.out_path, rel_path), compression=None, quality=100)  # TODO: subprocess?
 
-    def save_image_from_index(
+    def save_image_with_index(
         self, image: Image.Image, index: int, rel_dirpath: str, check_dim: bool = True, check_channels: bool = False
     ) -> str:
         """Save image to path.
@@ -230,7 +230,7 @@ class UnifiedDatasetWriter:
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[index] = np.array(image)
         # in directory
-        return self.save_image_from_index(image, index, self.images_relpath, check_dim=True, check_channels=True)
+        return self.save_image_with_index(image, index, self.images_relpath, check_dim=True, check_channels=True)
 
     def write(
         self,
