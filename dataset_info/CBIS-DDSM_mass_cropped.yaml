@@ -3,6 +3,8 @@ name: Mammography (Masses)
 summary: "Cropped regions of interest (masses) from a curated breast
 imaging dataset of screening mammographies"
 
+domain: Mammography
+
 tasks:
   - task_name: "pathology"
     task_target: BINARY_CLASSIFICATION

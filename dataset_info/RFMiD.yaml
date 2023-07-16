@@ -5,6 +5,8 @@ summary: "Multi-disease Retinal Fundus Image Dataset consisting of
 conditions annotated through adjudicated consensus of two senior retinal
 experts as well as an overall disease presence label."
 
+domain: Retinal fundus
+
 tasks:
   - task_name: "disease presence"
     task_target: BINARY_CLASSIFICATION

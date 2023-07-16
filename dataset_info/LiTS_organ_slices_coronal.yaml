@@ -3,6 +3,8 @@ name: Coronal Organ Slices
 summary: "Coronal slices of 11 different organs extracted from the Liver
 Tumor Segmentation Benchmark (LiTS) dataset"
 
+domain: Abdominal CT
+
 tasks:
   - task_name: "organ label"
     task_target: MULTICLASS_CLASSIFICATION

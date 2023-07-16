@@ -3,6 +3,8 @@ name: Breast Ultrasound
 summary: "Dataset of breast ultrasound images of women between 25 and 75
 years old. The data contains normal, benign, and malignant."
 
+domain: Breast ultrasound
+
 tasks:
   - task_name: case category
     task_target: MULTICLASS_CLASSIFICATION

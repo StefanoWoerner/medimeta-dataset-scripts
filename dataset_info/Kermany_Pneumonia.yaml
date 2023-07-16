@@ -3,6 +3,8 @@ name: Pediatric Pneumonia
 summary: "Pediatric chest X-ray images labeled for pneumonia
 classification"
 
+domain: Chest X-ray
+
 tasks:
   - task_name: "disease"
     task_target: BINARY_CLASSIFICATION

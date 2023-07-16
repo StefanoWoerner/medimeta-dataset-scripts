@@ -5,6 +5,8 @@ along with corresponding labels for seven different evaluation criteria
 and the diagnosis. Tasks containing infrequent labels have versions
 which group the infrequent labels together into more frequent labels."
 
+domain: Clinical skin imaging
+
 tasks:
   - task_name: Diagnosis
     task_target: MULTICLASS_CLASSIFICATION

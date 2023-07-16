@@ -4,6 +4,8 @@ summary: "Glaucoma-specific Indian ethnicity retinal fundus images
 acquired using three devices. Five expert ophthalmologists provided
 annotations on whether the subject is glaucoma suspect or not."
 
+domain: Retinal fundus
+
 tasks:
   - task_name: "Glaucoma suspect"
     task_target: BINARY_CLASSIFICATION

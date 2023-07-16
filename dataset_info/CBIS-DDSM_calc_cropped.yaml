@@ -3,6 +3,8 @@ name: Mammography (Calcifications)
 summary: "Cropped regions of interest (calcifications) from a curated
 breast imaging dataset of screening mammographies"
 
+domain: Mammography
+
 tasks:
   - task_name: "pathology"
     task_target: BINARY_CLASSIFICATION

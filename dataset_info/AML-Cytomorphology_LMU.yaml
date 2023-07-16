@@ -4,6 +4,8 @@ summary: "Morphological Dataset of Leukocytes containing expert-labeled
 single-cell images from peripheral blood smears of patients with Acute
 Myeloid Leukemia and patients without signs of hematological malignancy"
 
+domain: Microscopy
+
 tasks:
   - task_name: morphological class
     task_target: MULTICLASS_CLASSIFICATION

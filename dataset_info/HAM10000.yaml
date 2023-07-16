@@ -3,6 +3,8 @@ name: Dermatoscopy
 summary: "Dermatoscopic images of common pigmented skin lesions from
 different populations acquired and stored by different modalities."
 
+domain: Dermatoscopy
+
 tasks:
   - task_name: "disease category"
     task_target: MULTICLASS_CLASSIFICATION

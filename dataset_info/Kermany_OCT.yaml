@@ -3,6 +3,8 @@ name: OCT
 summary: "Optical Coherence Tomography (OCT) images labeled for disease
 classification"
 
+domain: OCT
+
 tasks:
   - task_name: "disease"
     task_target: MULTICLASS_CLASSIFICATION

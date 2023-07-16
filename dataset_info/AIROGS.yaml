@@ -3,6 +3,8 @@ name: AIROGS #TODO: change name
 summary: Rotterdam EyePACS AIROGS train set
 description: "The Rotterdam EyePACS AIROGS train set contains 101,442 color fundus images from 54,274 subjects and approximately 500 different sites with a heterogeneous ethnicity. All images were assigned by human experts with the labels referable glaucoma, no referable glaucoma, or ungradable. This dataset contains the data for training data of the AIROGS challenge, which is held as part of ISBI 2022."
 
+domain: Retinal fundus
+
 tasks:
   - task_name: "Referable glaucoma"
     task_target: BINARY_CLASSIFICATION
