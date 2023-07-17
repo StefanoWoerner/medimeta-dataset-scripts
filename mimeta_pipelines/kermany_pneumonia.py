@@ -10,8 +10,7 @@ if zipped=False:
 DATA MODIFICATIONS:
 - The 283 images in RGB format are converted to grayscale using the
   PIL.Image.convert method.
-- The images are center-cropped with the smallest dimension to obtain a
-  square image.
+- The images are padded to obtain a square image.
 - The images are resized to 224x224 (some upsized, since smaller than
   224x224) using the PIL.Image.resize method with BICUBIC interpolation.
 """
@@ -24,7 +23,7 @@ from zipfile import ZipFile
 from PIL import Image
 from tqdm import tqdm
 
-from .image_utils import center_crop
+from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
@@ -58,9 +57,8 @@ def get_unified_data(
             img = img.convert("L")
         # center-crop
         w, h = img.size
-        img = center_crop(img)
-        # resize
-        img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
+        img = zero_pad_to_square(img)  # pad to square
+        img = img.resize(out_img_size, resample=Image.BICUBIC)  # resize
         # add annotation
         add_annot = {"original_image_size": (w, h), "original_image_ratio": w / h}
         return img, add_annot, isrgb

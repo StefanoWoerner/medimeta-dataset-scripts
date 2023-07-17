@@ -3,6 +3,8 @@ name: Chest X-ray Multi-disease
 summary: "Chest X-ray dataset containing 112,120 frontal-view X-ray
 images with annotations for 14 common thorax diseases"
 
+domain: Chest X-ray
+
 tasks:
   - task_name: "disease labels"
     task_target: MULTILABEL_CLASSIFICATION
@@ -21,7 +23,7 @@ tasks:
       11: Fibrosis
       12: Pleural_Thickening
       13: Hernia
-  - task_name: "patient gender"
+  - task_name: "patient sex"
     task_target: BINARY_CLASSIFICATION
     labels:
       0: M

@@ -11,8 +11,7 @@ if zipped=False:
 DATA MODIFICATIONS:
 - The images are converted to grayscale, the masks to binary, using the
   PIL.Image.convert method.
-- The images and masks are center-cropped with the smallest dimension to
-  obtain a square image
+- The images and masks are zero-padded to obtain a square image.
 - The images are resized to 224x224 (1 upscaled) using the
   PIL.Image.thumbnail method with BICUBIC interpolation, the masks with
   NEAREST interpolation.
@@ -25,7 +24,7 @@ from zipfile import ZipFile
 import pandas as pd
 from PIL import Image
 
-from .image_utils import center_crop
+from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
@@ -81,10 +80,10 @@ def get_unified_data(
             img = img.convert("L")
             # convert mask to binary
             mask = mask.convert("1")
-            # center-crop
+            # resize
             orig_size = img.size
-            img = center_crop(img)
-            mask = center_crop(mask)
+            img = zero_pad_to_square(img)
+            mask = zero_pad_to_square(mask)
             # resize
             if img.size[0] < out_img_size[0]:
                 print("Upscaled")

@@ -3,6 +3,8 @@ name: Diabetic Retinopathy (Regular Fundus)
 summary: "Dataset of fundus images with diabetic retinopathy grades and
 image quality annotations."
 
+domain: Retinal fundus
+
 tasks:
   - task_name: "DR level"
     task_target: ORDINAL_REGRESSION

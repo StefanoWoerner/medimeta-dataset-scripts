@@ -5,6 +5,8 @@ individual normal cells. The images were captured from individuals
 without infection, hematologic or oncologic disease and free of any
 pharmacologic treatment at the moment of blood collection."
 
+domain: Microscopy
+
 tasks:
   - task_name: "cell class"
     task_target: MULTICLASS_CLASSIFICATION

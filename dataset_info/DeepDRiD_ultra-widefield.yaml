@@ -3,6 +3,8 @@ name: Diabetic Retinopathy (Ultra-widefield Fundus)
 summary: "Dataset of ultra-widefield fundus images with annotations for
 diabetic retinopathy grading"
 
+domain: Retinal fundus
+
 tasks:
   - task_name: "DR level"
     task_target: ORDINAL_REGRESSION

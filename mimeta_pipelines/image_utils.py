@@ -11,7 +11,8 @@ def zero_pad_to_square(img: Image.Image) -> Image.Image:
     :param img: PIL image.
     :returns: padded image.
     """
-    return ImageOps.pad(img, (max(img.size),) * 2, method=Image.BICUBIC)
+    method = Image.NEAREST if img.mode == "1" else Image.BICUBIC
+    return ImageOps.pad(img, (max(img.size),) * 2, method=method, color=0)
 
 
 def center_crop(img: Image.Image) -> Image.Image:

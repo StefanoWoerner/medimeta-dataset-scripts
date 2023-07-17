@@ -3,6 +3,8 @@ name: Colorectal Cancer Histopathology
 summary: "Image patches from hematoxylin & eosin (H&E) stained
 histological images of human colorectal cancer (CRC) and normal tissue."
 
+domain: Histopathology
+
 tasks:
   - task_name: "tissue class"
     task_target: MULTICLASS_CLASSIFICATION
