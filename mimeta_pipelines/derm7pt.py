@@ -163,7 +163,7 @@ def get_unified_data(
             add_annot = {"original_image_size": img_size, **{col: df_row[col] for col in add_annot_cols}}
             return original_filepath, split, lab, img, add_annot
 
-        with UnifiedDatasetWriter(out_path, info_path, add_annot_cols=["original_size"] + add_annot_cols) as writer:
+        with UnifiedDatasetWriter(out_path, info_path) as writer:
             all_paths = meta_df.index
             for paths in tqdm(
                 np.array_split(all_paths, len(all_paths) // batch_size), desc=f"Processing {info_dict['name']}"
