@@ -2,7 +2,6 @@
 """
 import os
 from multiprocessing import Lock
-from multiprocessing.pool import ThreadPool
 from shutil import copyfile, rmtree
 import tqdm
 
@@ -223,7 +222,7 @@ class UnifiedDatasetWriter:
         check_channels: bool = False,
     ):
         """Save image to path.
-        
+
         Args:
             image: PIL image
             rel_path: relative path
@@ -364,11 +363,10 @@ class UnifiedDatasetWriter:
             add_annots = [None] * len(old_paths)
         if indices is None:
             indices = [None] * len(old_paths)
-        with ThreadPool() as pool:
-            pool.starmap(
-                self.write,
-                zip(old_paths, original_splits, task_labels, images, add_annots, indices),
-            )
+        for old_path, original_split, task_label, image, add_annot, index in zip(
+            old_paths, original_splits, task_labels, images, add_annots, indices
+        ):
+            self.write(old_path, original_split, task_label, image, add_annot, index)
 
     def write_from_dataframe(self, df: pd.DataFrame, processing_func: callable):
         """Write whole dataset from a correctly formatted dataframe.
