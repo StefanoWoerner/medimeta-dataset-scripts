@@ -7,9 +7,14 @@ from PIL import Image, ImageOps
 
 
 def zero_pad_to_square(img: Image.Image) -> Image.Image:
-    """Zero pad an image on the smallest dimension (centered) to make it square.
-    :param img: PIL image.
-    :returns: padded image.
+    """Zero pad an image on the smallest dimension (centered) to make it
+    square.
+
+    Args:
+        img: PIL image
+
+    Returns:
+        padded image
     """
     method = Image.NEAREST if img.mode == "1" else Image.BICUBIC
     return ImageOps.pad(img, (max(img.size),) * 2, method=method, color=0)
@@ -17,8 +22,12 @@ def zero_pad_to_square(img: Image.Image) -> Image.Image:
 
 def center_crop(img: Image.Image) -> Image.Image:
     """Center crop an image to make it square.
-    :param img: PIL image.
-    :returns: cropped image.
+
+    Args:
+        img: PIL image
+
+    Returns:
+        cropped image
     """
     w, h = img.size
     if w < h:
@@ -33,16 +42,25 @@ AnatomicalPlane = Enum("AnatomicalPlane", ["SAGITTAL", "CORONAL", "AXIAL"])
 
 
 def slice_3d_image(
-    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int], tuple[int, int]], plane: AnatomicalPlane
+    img: np.ndarray,
+    bbox: tuple[tuple[int, int], tuple[int, int], tuple[int, int]],
+    plane: AnatomicalPlane,
 ) -> tuple[np.ndarray, tuple[tuple[int, int], tuple[int, int]]]:
-    """Slice a 3D nii image and corresponing bounding box into a 2D image with the corresponding bounding box,
-    for the given plane (sagittal, coronal, axial).
-    :param img: 3d image in numpy array.
-    :param bbox: bounding box of the 3D image in the format ((x_min, x_max), (y_min, y_max), (z_min, z_max)).
-    :param plane: plane to slice the image.
-    :returns: tuple of 3 tuples (sagittal, coronal, axial), each containing a 2D image and its corresponding bounding box.
+    """Slice a 3D nii image and corresponing bounding box into a 2D
+    image with the corresponding bounding box, for the given plane
+    (sagittal, coronal, axial).
+
+    Args:
+        img: 3d image in numpy array
+        bbox: bounding box of the 3D image in the format
+            ((x_min, x_max), (y_min, y_max), (z_min, z_max))
+        plane: plane to slice the image
+
+    Returns:
+        tuple of 3 tuples (sagittal, coronal, axial), each containing a
+        2D image and its corresponding bounding box
     """
-    assert all([img.shape[i] >= bbox[i][1] and bbox[i][1] >= bbox[i][0] for i in range(3)])
+    assert all([img.shape[i] >= bbox[i][1] >= bbox[i][0] for i in range(3)])
     if plane == AnatomicalPlane.SAGITTAL:
         img = img[(bbox[0][0] + bbox[0][1]) // 2, :, :]
         bbox = (bbox[1], bbox[2])
@@ -55,13 +73,19 @@ def slice_3d_image(
     return img, bbox
 
 
-def ct_windowing(img: np.ndarray, window_width: float = 400, window_level: float = 50) -> np.ndarray:
+def ct_windowing(
+    img: np.ndarray, window_width: float = 400, window_level: float = 50
+) -> np.ndarray:
     # default values from https://radiopaedia.org/articles/windowing-ct (abdominal window)
     """Apply windowing to a CT image.
-    :param img: 2D numpy array.
-    :param window_width: window width.
-    :param window_level: window level.
-    :returns: windowed image (float array in [0, 1])
+
+    Args:
+        img: 2D numpy array
+        window_width: window width
+        window_level: window level
+
+    Returns:
+        windowed image (float array in [0, 1])
     """
     img = img.astype(np.float32)
     lower = window_level - window_width / 2
@@ -72,12 +96,20 @@ def ct_windowing(img: np.ndarray, window_width: float = 400, window_level: float
     return img
 
 
-def ratio_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], ratio: float = 1.0) -> np.ndarray:
-    """Cut a crop with ratio width/height of an image based on a bounding box (endpoint inclusive).
-    :param img: 2D numpy array.
-    :param bbox: bounding box of the image in the format ((x_min, x_max), (y_min, y_max)); max values are inclusive.
-    :param ratio: ratio width/height of the crop.
-    :returns: cropped image.
+def ratio_cut(
+    img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], ratio: float = 1.0
+) -> np.ndarray:
+    """Cut a crop with ratio width/height of an image based on a
+    bounding box (endpoint inclusive).
+
+    Args:
+        img: 2D numpy array
+        bbox: bounding box of the image in the format
+            ((x_min, x_max), (y_min, y_max)); max values are inclusive
+        ratio: ratio width/height of the crop
+
+    Returns:
+        cropped image
     """
     img_shape = np.array(img.shape)
     # compute out bbox indices
@@ -91,11 +123,17 @@ def ratio_cut(img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], ra
         out_bbox[0][0] = round(bbox_centers[0] - bbox_diff[1] / ratio / 2)
         out_bbox[0][1] = out_bbox[0][0] + round(bbox_diff[1] / ratio)
     # initialize crop
-    crop_shape = np.array([out_bbox[0][1] - out_bbox[0][0] + 1, out_bbox[1][1] - out_bbox[1][0] + 1])
+    crop_shape = np.array(
+        [out_bbox[0][1] - out_bbox[0][0] + 1, out_bbox[1][1] - out_bbox[1][0] + 1]
+    )
     crop = np.zeros(crop_shape, dtype=img.dtype)
     # calculate img slice positions
-    start = np.clip(np.array([out_bbox[0][0], out_bbox[1][0]]), a_min=0, a_max=img_shape - 1)  # where to start in img
-    end = np.clip(np.array([out_bbox[0][1], out_bbox[1][1]]), a_min=0, a_max=img_shape - 1)  # where to end in img
+    start = np.clip(
+        np.array([out_bbox[0][0], out_bbox[1][0]]), a_min=0, a_max=img_shape - 1
+    )  # where to start in img
+    end = np.clip(
+        np.array([out_bbox[0][1], out_bbox[1][1]]), a_min=0, a_max=img_shape - 1
+    )  # where to end in img
     # calculate crop slice positions
     crop_low = start - np.array([out_bbox[0][0], out_bbox[1][0]])  # where to start in crop
     crop_high = crop_low + (end - start)  # where to end in crop
@@ -125,10 +163,17 @@ def draw_colored_bounding_box(
     img: np.ndarray, bbox: tuple[tuple[int, int], tuple[int, int]], color: np.ndarray | int = 255
 ) -> np.ndarray:
     """Draw a bounding box on an image.
-    :param img: 3D numpy array (color channel last).
-    :param bbox: bounding box of the image in the format ((x_min, x_max), (y_min, y_max)); max values are inclusive.
-    :param color: 1D numpy array (length 3) or int specifying color of the bounding box.
-    :returns: image with bounding box.
+
+    Args:
+        img: 2D numpy array
+        bbox: bounding box of the image in the format
+            ((x_min, x_max), (y_min, y_max)); max values are inclusive
+        color: 1D numpy array (length 3) or int specifying color of the
+        bounding box
+
+
+    Returns:
+        image with bounding box
     """
     img = img.copy()
     img[bbox[0][0] : bbox[0][1] + 1, bbox[1][0], :] = color

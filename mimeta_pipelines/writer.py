@@ -262,9 +262,13 @@ class UnifiedDatasetWriter:
 
     def save_dataset_image(self, image: Image.Image, index: int) -> str:
         """Save dataset (training) image to images directory and HDF5.
-        :param image: PIL image
-        :param index: index
-        :return: relative path where the image was saved
+
+        Args:
+            image: PIL image
+            index: index within dataset
+
+        Returns:
+            The relative path where the image was saved
         """
         # in HDF5
         ds = self.dataset_file[self.hdf5_dataset_name]
@@ -283,13 +287,15 @@ class UnifiedDatasetWriter:
         add_annots: dict | None = None,
         index: int | None = None,
     ):
-        """Add labels, additional information, and image.
-        :param old_path: path to the original image (relative)
-        :param original_split: original split (train, val, test)
-        :param task_labels: dict of task labels
-        :param add_annots: dict of additional annotations
-        :param image: PIL image
-        :param index: index of the image in the dataset
+        """Write a single image to the dataset together with its labels and additional annotations.
+
+        Args:
+            old_path: relative path to the original image
+            original_split: original split (train, val, test)
+            task_labels: dict of task labels
+            add_annots: dict of additional annotations
+            image: PIL image
+            index: index of the image in the dataset
         """
         # Basic checks
         assert original_split in SPLITS, f"Split must be one of {SPLITS}, not {original_split}."
@@ -343,13 +349,16 @@ class UnifiedDatasetWriter:
         add_annots: list[dict] | None = None,
         indices: list[int] | None = None,
     ):
-        """Add labels, additional information, and images.
-        :param old_paths: list of paths to the original images (relative)
-        :param original_splits: list of original splits (train, val, test)
-        :param task_labels: list of task labels (1 dict per sample)
-        :param add_annots: list of additional annotations (1 dict per sample)
-        :param images: list of PIL images
-        :param indices: list of the indices of the images in the dataset
+        """Write multiple images to the dataset together with their
+        labels and additional annotations.
+
+        Args:
+            old_paths: list of relative paths to the original images
+            original_splits: list of original splits (train, val, test)
+            task_labels: list of dicts of task labels (1 dict per sample)
+            images: list of PIL images
+            add_annots: list of dicts of additional annotations (1 dict per sample)
+            indices: list of indices of the images in the dataset
         """
         if add_annots is None:
             add_annots = [None] * len(old_paths)

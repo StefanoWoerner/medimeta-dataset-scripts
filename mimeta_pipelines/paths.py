@@ -29,12 +29,19 @@ def folder_paths(
     check_cl_idxs_range: bool = True,
 ) -> tuple[list[str], list[int]] | list[tuple[list[str], list[int]]]:
     """Get batches of (paths, labels), or (paths, labels), from a folder class structure.
-    :param root: root folder.
-    :param dir_to_cl_idx: dictionary mapping directories to class indices.
-    :param batch_size: batch size if batches are to be returned, else None.
-    :param check_alphabetical: check that the class names are in alphabetical order, and the indices range(len(classes)).
-    :param check_cl_idxs_range: check that the class keys (indices) are equal to range(len(classes)).
-    :returns: list of batches, each batch is a tuple of (paths, labels), or a single tuple of (paths, labels) if batch_size is None.
+
+    Args:
+        root: root folder.
+        dir_to_cl_idx: dictionary mapping directories to class indices.
+        batch_size: batch size if batches are to be returned, else None.
+        check_alphabetical: check that the class names are in
+            alphabetical order, and the indices range(len(classes)).
+        check_cl_idxs_range: check that the class keys (indices) are
+            equal to range(len(classes)).
+    
+    Returns:
+        list of batches, each batch is a tuple of (paths, labels), or a
+        single tuple of (paths, labels) if batch_size is None.
     """
     # alphabetical class order check
     if check_alphabetical:
