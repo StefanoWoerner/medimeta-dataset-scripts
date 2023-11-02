@@ -370,9 +370,13 @@ class UnifiedDatasetWriter:
 
     def write_from_dataframe(self, df: pd.DataFrame, processing_func: callable):
         """Write whole dataset from a correctly formatted dataframe.
-        :param df: dataframe containing task columns, original_filepath, original_split and
-        additional annotations (the rest).
-        :param processing_func: function that takes a row of the dataframe and returns a PIL image and a dictionary of additional annotations.
+
+        Args:
+            df: dataframe containing task columns, original_filepath,
+                original_split and additional annotations (the rest)
+            processing_func: function that takes a row of the dataframe
+                and returns a PIL image and a dictionary of additional
+                annotations
         """
         # check input dataframe
         required_cols = ["original_filepath", "original_split"] + list(self.task_labels.keys())
