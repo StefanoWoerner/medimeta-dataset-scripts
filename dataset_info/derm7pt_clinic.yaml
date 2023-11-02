@@ -127,8 +127,17 @@ original_splits_num_samples:
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
 
-#TODO attribution
-
-original_license: #TODO
-original_paper: https://ieeexplore.ieee.org/document/8333693
-original_download_url: https://derm.cs.sfu.ca/Download.html
+original_data:
+  - name: derm7pt
+    title: "DeepDRiD: Diabetic Retinopathy—Grading and Image Quality Estimation Challenge"
+    url: https://derm.cs.sfu.ca/Welcome.html
+    code_url: https://github.com/jeremykawahara/derm7pt
+    license: "Code in github repository licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License."
+    authors: "Jeremy Kawahara, Sara Daneshvar, Giuseppe Argenziano, Ghassan Hamarneh"
+    paper_title: "Seven-Point Checklist and Skin Lesion Classification Using Multitask Multimodal Neural Nets"
+    paper_url: https://ieeexplore.ieee.org/document/8333693
+    citations:
+      - "J. Kawahara, S. Daneshvar, G. Argenziano and G. Hamarneh
+      Seven-Point Checklist and Skin Lesion Classification Using Multitask Multimodal Neural Nets
+      in IEEE Journal of Biomedical and Health Informatics, vol. 23, no. 2, pp. 538-546, March 2019
+      doi: 10.1109/JBHI.2018.2824327."
