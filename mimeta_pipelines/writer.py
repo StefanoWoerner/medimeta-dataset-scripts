@@ -21,15 +21,6 @@ class UnifiedDatasetWriter:
 
     -- [`out_path']
         |
-        |
-        -- [original_splits]
-        |   |
-        |   -- train.txt
-        |   |
-        |   -- val.txt
-        |   |
-        |   -- test.txt
-        |
         -- images
         |   |
         |   -- 000000.tiff
@@ -37,16 +28,28 @@ class UnifiedDatasetWriter:
         |   -- 000001.tiff
         |   ...
         |
+        -- original_splits
+        |   |
+        |   -- train.txt
+        |   |
+        |   -- val.txt
+        |   |
+        |   -- test.txt
+        |
         -- task_labels
         |   |
-        |   -- [`task_name_1'].pt
+        |   -- [`task_name_1'].npy
         |   |
-        |   -- [`task_name_2'].pt
+        |   -- [`task_name_2'].npy
         |   ...
         |
         -- annotations.csv
         |
+        -- images.hdf5
+        |
         -- info.yaml
+        |
+        -- LICENSE
     """
 
     def __init__(
@@ -56,9 +59,14 @@ class UnifiedDatasetWriter:
         dtype=np.uint8,
     ):
         """Initialize the dataset writer.
-        :param out_path: path to the output directory.
-        :param info_path: path to the info file.
-        :param dtype: dtype of the images (for HDF5).
+
+        Args:
+            out_path: path to the output directory.
+            info_path: path to the info file.
+            dtype: data type of the images (for HDF5).
+
+        Raises:
+            ValueError: if the license is not recognized.
         """
         # Check output directory does not exist and create it
         self.out_path = out_path
@@ -90,8 +98,12 @@ class UnifiedDatasetWriter:
         self.old_paths = [None] * self.dataset_length
         self.new_paths = [None] * self.dataset_length
         # task labels
-        self.task_labels_dict = {task["task_name"]: task["labels"] for task in self.info_dict["tasks"]}
-        self.task_labels = {task_name: [None] * self.dataset_length for task_name in self.task_labels_dict.keys()}
+        self.task_labels_dict = {
+            task["task_name"]: task["labels"] for task in self.info_dict["tasks"]
+        }
+        self.task_labels = {
+            task_name: [None] * self.dataset_length for task_name in self.task_labels_dict.keys()
+        }
         # base dir of the images
         self.images_relpath = "images"
         os.makedirs(os.path.join(self.out_path, self.images_relpath))
@@ -131,7 +143,9 @@ class UnifiedDatasetWriter:
             os.makedirs(original_splits_path)
             for split in SPLITS:
                 split_paths = [
-                    path for path, orig_split in zip(self.new_paths, self.original_splits) if orig_split == split
+                    path
+                    for path, orig_split in zip(self.new_paths, self.original_splits)
+                    if orig_split == split
                 ]
                 # check coherent with info file
                 assert self.info_dict["original_splits_num_samples"][split] == len(split_paths)
@@ -160,10 +174,12 @@ class UnifiedDatasetWriter:
                 task_col_names.append(task_col_name)
                 annotations_df[task_col_name] = self.task_labels[task_name]
                 assert task_name not in annotations_df.columns
-                task_def = [task for task in self.info_dict["tasks"] if task["task_name"] == task_name][0]
+                task_def = [t for t in self.info_dict["tasks"] if t["task_name"] == task_name][0]
                 if task_def["task_target"] == "MULTILABEL_CLASSIFICATION":
                     annotations_df[task_name] = annotations_df[task_col_name].apply(
-                        lambda labels: "|".join([task_dict[i] for i, label in enumerate(labels) if label == 1])
+                        lambda labels: "|".join(
+                            [task_dict[i] for i, label in enumerate(labels) if label == 1]
+                        )
                     )
                 else:
                     annotations_df[task_name] = annotations_df[task_col_name].map(task_dict)
@@ -186,35 +202,59 @@ class UnifiedDatasetWriter:
             # test well-formed
             annot_df = pd.read_csv(annotations_path)
             assert annot_df.columns[0] == "filepath"
-            assert len(annot_df) == len(os.listdir(os.path.join(self.out_path, self.images_relpath)))
+            assert len(annot_df) == len(
+                os.listdir(os.path.join(self.out_path, self.images_relpath))
+            )
 
         # Roll back whenever an error occurs
         except Exception as e:
             rmtree(self.out_path, ignore_errors=True)
             raise e
 
-    def _image_name_from_index(self, index: int) -> str:
+    @staticmethod
+    def _image_name_from_index(index: int) -> str:
         return f"{index:06d}.tiff"
 
-    def save_image(self, image: Image.Image, rel_path: str, check_dim: bool = False, check_channels: bool = False):
+    def save_image(
+        self,
+        image: Image.Image,
+        rel_path: str,
+        check_dim: bool = False,
+        check_channels: bool = False,
+    ):
         """Save image to path.
-        :param image: PIL image
-        :param rel_path: relative path
+        
+        Args:
+            image: PIL image
+            rel_path: relative path
+            check_dim: whether to check the image dimensions
+            check_channels: whether to check the number of channels
         """
         if check_channels:
             assert len(image.getbands()) == self.out_img_shape[0]
         if check_dim:
             assert image.size == tuple(self.out_img_shape[1:])
-        image.save(fp=os.path.join(self.out_path, rel_path), compression=None, quality=100)  # TODO: subprocess?
+        image.save(fp=os.path.join(self.out_path, rel_path), compression=None, quality=100)
 
     def save_image_with_index(
-        self, image: Image.Image, index: int, rel_dirpath: str, check_dim: bool = True, check_channels: bool = False
+        self,
+        image: Image.Image,
+        index: int,
+        rel_dirpath: str,
+        check_dim: bool = True,
+        check_channels: bool = False,
     ) -> str:
         """Save image to path.
-        :param image: PIL image
-        :param index: index
-        :param rel_dirpath: relative directory path
-        :return: relative path where the image was saved
+
+        Args:
+            image: PIL image
+            index: index within dataset
+            rel_dirpath: relative directory path
+            check_dim: whether to check the image dimensions
+            check_channels: whether to check the number of channels
+
+        Returns:
+            The relative path where the image was saved
         """
         rel_path = os.path.join(rel_dirpath, self._image_name_from_index(index))
         self.save_image(image, rel_path, check_dim, check_channels)
@@ -230,7 +270,9 @@ class UnifiedDatasetWriter:
         ds = self.dataset_file[self.hdf5_dataset_name]
         ds[index] = np.array(image)
         # in directory
-        return self.save_image_with_index(image, index, self.images_relpath, check_dim=True, check_channels=True)
+        return self.save_image_with_index(
+            image, index, self.images_relpath, check_dim=True, check_channels=True
+        )
 
     def write(
         self,
@@ -254,22 +296,23 @@ class UnifiedDatasetWriter:
         in_tasks = set(task_labels.keys())
         assert in_tasks == set(
             self.task_labels.keys()
-        ), f"Must provide tasks {list(self.task_names.keys())}, got {in_tasks}."
+        ), f"Must provide tasks {list(self.task_labels.keys())}, got {in_tasks}."
         for task_name, task_label in task_labels.items():
-            if isinstance(task_label, list):  # multilabel classification
+            if isinstance(task_label, (list, tuple)):  # multilabel classification
                 assert len(task_label) == len(self.task_labels_dict[task_name]), (
                     f"Label {task_label} invalid for task {task_name}: "
                     f"should be a list of {len(self.task_labels_dict[task_name])} elements."
                 )
-                assert not set(task_label) - set(
-                    [0, 1]
-                ), f"Label {task_label} invalid for task {task_name}: should be binary list."
+                assert not set(task_label) - {
+                    0,
+                    1,
+                }, f"Label {task_label} invalid for task {task_name}: should be binary list."
             else:  # single label
                 assert (
                     task_label in self.task_labels_dict[task_name]
                 ), f"Label {task_label} invalid for task {task_name}."
         assert index is None or (
-            index >= 0 and index < self.dataset_length and self.new_paths[index] is None
+            0 <= index < self.dataset_length and self.new_paths[index] is None
         ), f"Invalid index {index}: should be in [0, {self.dataset_length}) and not already occupied."
         # Image index
         if index is None:
@@ -298,7 +341,7 @@ class UnifiedDatasetWriter:
         task_labels: list[dict[str, int]],
         images: list[Image.Image],
         add_annots: list[dict] | None = None,
-        indeces: list[int] | None = None,
+        indices: list[int] | None = None,
     ):
         """Add labels, additional information, and images.
         :param old_paths: list of paths to the original images (relative)
@@ -306,29 +349,36 @@ class UnifiedDatasetWriter:
         :param task_labels: list of task labels (1 dict per sample)
         :param add_annots: list of additional annotations (1 dict per sample)
         :param images: list of PIL images
-        :param indeces: list of the indeces of the images in the dataset
+        :param indices: list of the indices of the images in the dataset
         """
         if add_annots is None:
             add_annots = [None] * len(old_paths)
-        if indeces is None:
-            indeces = [None] * len(old_paths)
+        if indices is None:
+            indices = [None] * len(old_paths)
         with ThreadPool() as pool:
-            pool.starmap(self.write, zip(old_paths, original_splits, task_labels, images, add_annots, indeces))
+            pool.starmap(
+                self.write,
+                zip(old_paths, original_splits, task_labels, images, add_annots, indices),
+            )
 
     def write_from_dataframe(self, df: pd.DataFrame, processing_func: callable):
         """Write whole dataset from a correctly formatted dataframe.
-        :param df: dataframe containing task columns, original_filepath, original_split and additional annotations (the rest).
+        :param df: dataframe containing task columns, original_filepath, original_split and
+        additional annotations (the rest).
         :param processing_func: function that takes a row of the dataframe and returns a PIL image and a dictionary of additional annotations.
         """
         # check input dataframe
         required_cols = ["original_filepath", "original_split"] + list(self.task_labels.keys())
-        assert len(set(required_cols) - set(df.columns)) == 0, f"Columns {required_cols} are required."
-        # if the dataframe is not correctly indexed, reindex assuming the passed index is in the desired order
+        assert (
+            len(set(required_cols) - set(df.columns)) == 0
+        ), f"Columns {required_cols} are required."
+        # if the dataframe is not correctly indexed, reindex assuming the passed index is in the
+        # desired order
         if not df.index.min() == 0 and df.index.max() == len(df) - 1:
             df.sort_index(inplace=True)
             df.reset_index(inplace=True, drop=True)
         # dataframe to list of dicts: one per row, index included by resetting index
-        df_dict = df.reset_index().transpose().to_dict().values()
+        df_items = df.reset_index().transpose().items()
 
         add_annot_df_cols = set(df.columns) - set(required_cols)
 
@@ -346,10 +396,7 @@ class UnifiedDatasetWriter:
                 index=row["index"],
             )
 
-        with ThreadPool() as pool:
-            for _ in tqdm.tqdm(
-                pool.imap_unordered(_process_image, df_dict),
-                total=len(df_dict),
-                desc=f"Processing {self.info_dict['name']}",
-            ):
-                pass
+        for r in tqdm.tqdm(
+            df_items, total=len(df.index), desc=f"Processing {self.info_dict['name']}"
+        ):
+            _process_image(dict(r[1]))
