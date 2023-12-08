@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
+from mimeta_pipelines.splits import make_random_split, use_fixed_split, get_splits
 from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
@@ -76,15 +77,42 @@ def get_unified_data(
 
     # Remove not needed columns
     rem_cols = [f"mask_expert_{exp_idx}_path" for exp_idx in expert_idxs]
-    rem_cols += [f"mask_algo_{merge_algo}_path" for merge_algo in set(merge_algos) - set(["STAPLE"])]
+    rem_cols += [
+        f"mask_algo_{merge_algo}_path" for merge_algo in set(merge_algos) - set(["STAPLE"])
+    ]
     info_df.drop(columns=rem_cols, inplace=True)
 
     # Map annotations to labels
-    annot2lab = {"NORMAL": "Normal", "GLAUCOMA SUSPECT": "Suspect", "GLAUCOMA  SUSUPECT": "Suspect"}  # typo in data
+    annot2lab = {
+        "NORMAL": "Normal",
+        "GLAUCOMA SUSPECT": "Suspect",
+        "GLAUCOMA  SUSUPECT": "Suspect",
+    }  # typo in data
     task = info_dict["tasks"][0]
     lab2idx = {v: k for k, v in task["labels"].items()}
     annot2idx = {k: lab2idx[v] for k, v in annot2lab.items()}
     info_df[task["task_name"]] = info_df["annot_majority"].map(annot2idx)
+
+    # Add splits to dataframe
+    split_file_name = "chaksu_splits.csv"
+
+    def _split_fn(x):
+        return pd.concat(
+            [
+                make_random_split(
+                    x,
+                    groupby_key="original_filepath",
+                    ratios={"train": 0.85, "val": 0.15},
+                    row_filter={"original_split": ["train"]},
+                    seed=42,
+                ),
+                use_fixed_split(
+                    x, "original_filepath", split="test", row_filter={"original_split": ["test"]}
+                ),
+            ]
+        )
+
+    info_df = get_splits(info_df, split_file_name, _split_fn)
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         os.makedirs(os.path.join(out_path, cup_masks_path))
@@ -109,7 +137,9 @@ def get_unified_data(
             cup_mask_path = writer.save_image_with_index(cup_mask, df_row["index"], cup_masks_path)
             disc_mask = Image.fromarray((np.array(mask) > (255 * 2) // 3).astype(bool))
             disc_mask.thumbnail(out_img_size, resample=Image.NEAREST)
-            disc_mask_path = writer.save_image_with_index(disc_mask, df_row["index"], disc_masks_path)
+            disc_mask_path = writer.save_image_with_index(
+                disc_mask, df_row["index"], disc_masks_path
+            )
             add_annot = {
                 "original_image_size": orig_size,
                 "mask_staple_original_path": mask_path,
@@ -142,7 +172,9 @@ def _get_image_path(root_path, dir_path, image_name):
     if "4.0_OD_CO" in dir_path and "Expert 4" in dir_path and image_name in ("22", "82", "83"):
         image_name = image_name + "glsusp"
     image_paths = [
-        path for path in os.listdir(os.path.join(root_path, dir_path)) if _get_image_name(path) == image_name
+        path
+        for path in os.listdir(os.path.join(root_path, dir_path))
+        if _get_image_name(path) == image_name
     ]
     assert (
         len(image_paths) == 1
@@ -169,7 +201,12 @@ def _get_images_df(root_path, split_folders, devices):
             splits_ += [split.lower()] * len(paths)
             devices_ += [device] * len(paths)
     images_df = pd.DataFrame(
-        {"original_split": splits_, "device": devices_, "original_filepath": image_paths, "image_name": image_names}
+        {
+            "original_split": splits_,
+            "device": devices_,
+            "original_filepath": image_paths,
+            "image_name": image_names,
+        }
     )
     # patient id implicit in the naming of some images
     images_df["patient_id"] = images_df["original_filepath"].apply(
@@ -225,7 +262,9 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
 
     def reindex_df(df):
         # weird naming in original data
-        df["image_name"] = df["Images"].apply(lambda n: os.path.splitext(n.lower().split("-")[0])[0])
+        df["image_name"] = df["Images"].apply(
+            lambda n: os.path.splitext(n.lower().split("-")[0])[0]
+        )
         df.drop(columns=["Images"], inplace=True)
         df.set_index("image_name", drop=True, inplace=True)
         return df
@@ -234,7 +273,10 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
         for device in devices:
             dev_lab_df = pd.read_csv(
                 os.path.join(
-                    root_path, split, "6.0_Glaucoma_Decision", f"Glaucoma_Decision_Comparison_{device}_majority.csv"
+                    root_path,
+                    split,
+                    "6.0_Glaucoma_Decision",
+                    f"Glaucoma_Decision_Comparison_{device}_majority.csv",
                 )
             )
             dev_lab_df.rename(
@@ -249,7 +291,8 @@ def _get_labels_df(root_path, split_folders, devices, expert_idxs, stats):
             dev_info_dfs = []
             for stat in stats:
                 stat_df = pd.read_csv(
-                    os.path.join(root_path, split, "6.0_Glaucoma_Decision", stat, f"{device}.csv"), index_col="Images"
+                    os.path.join(root_path, split, "6.0_Glaucoma_Decision", stat, f"{device}.csv"),
+                    index_col="Images",
                 )
                 stat_df.rename(columns=lambda c: f"{c.replace(' ', '_')}_{stat}", inplace=True)
                 stat_df.reset_index(inplace=True)

@@ -30,6 +30,7 @@ import pydicom
 from PIL import Image
 from tqdm import tqdm
 
+from .splits import get_splits, make_random_split, use_fixed_split
 from .image_utils import ratio_cut
 from .paths import INFO_PATH, UNIFIED_DATA_BASE_PATH, setup
 from .writer import UnifiedDatasetWriter
@@ -148,27 +149,64 @@ def _get_unified_data(
     df_test.insert(0, "original_split", "test")
     df = pd.concat([df_train, df_test], axis=0)
 
-    task_names = [task["task_name"] for task in info_dict["tasks"] if task["task_name"] != "pathology"]
+    task_names = [
+        task["task_name"] for task in info_dict["tasks"] if task["task_name"] != "pathology"
+    ]
     task_labels = [df["pathology"].apply(lambda x: 1 if x == "MALIGNANT" else 0).tolist()]
     for i, task_name in enumerate(task_names):
         concepts = info_dict["tasks"][i + 1]["labels"].values()
-        task_labels.append(df[task_name].apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts]).tolist())
+        task_labels.append(
+            df[task_name]
+            .apply(lambda x: [int(0 if pd.isna(x) else c in x) for c in concepts])
+            .tolist()
+        )
 
     cropped_img_paths = df["cropped image file path"]
-    cropped_img_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in cropped_img_paths]
+    cropped_img_paths = [
+        os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in cropped_img_paths
+    ]
 
     mask_paths = df["ROI mask file path"]
     mask_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in mask_paths]
 
     uncropped_img_paths = df["image file path"]
-    uncropped_img_paths = [os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in uncropped_img_paths]
-
-    splits = df["original_split"].tolist()
+    uncropped_img_paths = [
+        os.path.join(root_path, "CBIS-DDSM", p.replace("\n", "")) for p in uncropped_img_paths
+    ]
 
     annotations = df[list(annotation_columns.keys())]
 
+    split_file_name = f"{info_dict['id']}_splits.csv"
+
+    def split_fn(x):
+        return pd.concat(
+            [
+                make_random_split(
+                    x,
+                    groupby_key="patient_id",
+                    ratios={"train": 0.85, "val": 0.15},
+                    row_filter={"original_split": ["train"]},
+                    seed=42,
+                ),
+                use_fixed_split(
+                    x,
+                    groupby_key="patient_id",
+                    split="test",
+                    row_filter={"original_split": ["test"]},
+                ),
+            ]
+        )
+
+    df = get_splits(df, split_file_name, split_fn, "patient_id")
+
+    splits = df["split"].tolist()
+    original_splits = df["original_split"].tolist()
+
     def get_image_data(i):
-        s = sorted((os.path.getsize(p), p) for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]])
+        s = sorted(
+            (os.path.getsize(p), p)
+            for p in [uncropped_img_paths[i], mask_paths[i], cropped_img_paths[i]]
+        )
         # find complete image, mask
         imgs = [pydicom.read_file(p[1]).pixel_array for p in s[1:]]
         if len(np.unique(imgs[0])) == 2:
@@ -195,18 +233,31 @@ def _get_unified_data(
             bottom_bb = bottom_bb + (224 - size_vertical) // 2
         # crop image
         im = ratio_cut(im, ((left_bb, right_bb), (top_bb, bottom_bb)), ratio=1.0)
-        im = Image.fromarray(((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8))
+        im = Image.fromarray(
+            ((im.astype(np.float32) / np.iinfo(im.dtype).max) * 255).astype(np.uint8)
+        )
         im = im.resize(out_img_size, resample=Image.Resampling.BICUBIC)
-        labels = {"pathology": task_labels[0][i], **{tn: tl[i] for tn, tl in zip(task_names, task_labels[1:])}}
+        labels = {
+            "pathology": task_labels[0][i],
+            **{tn: tl[i] for tn, tl in zip(task_names, task_labels[1:])},
+        }
         original_filepath = os.path.relpath(s[0][1], root_path)
-        return original_filepath, splits[i], im, labels, annotations.iloc[i].to_dict()
+        return (
+            original_filepath,
+            splits[i],
+            original_splits[i],
+            im,
+            labels,
+            annotations.iloc[i].to_dict(),
+        )
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         for i in tqdm(range(len(df))):
-            p, s, im, l, a = get_image_data(i)
+            p, s, orig_s, im, l, a = get_image_data(i)
             writer.write(
                 old_path=p,
-                original_split=s,
+                split=s,
+                original_split=orig_s,
                 task_labels=l,
                 add_annots=a,
                 image=im,

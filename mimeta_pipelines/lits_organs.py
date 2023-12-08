@@ -45,6 +45,7 @@ from PIL import Image
 from scipy.ndimage import zoom
 from tqdm import tqdm
 
+from mimeta_pipelines.splits import get_splits, use_fixed_split, make_random_split
 from .image_utils import (
     slice_3d_image,
     ct_windowing,
@@ -79,7 +80,14 @@ def get_unified_data(
     img_bboxes_path = "images_bboxes"
 
     # Dataframe with processing information
-    df = _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_folder, annots_test_folder)
+    df = _get_volumes_dataframe(
+        root_path, train_folder, test_folder, annots_train_folder, annots_test_folder
+    )
+
+    # add splits to dataframe
+    split_file_name = "lits_organs_splits.csv"
+    df = get_splits(df, split_file_name, _split_fn, key="volume_path")
+
     df = _get_organs_dataframe(df, root_path)
 
     # To be called once for each plane
@@ -100,7 +108,11 @@ def get_unified_data(
                 # used for volume-related information (same for every organ)
                 row = plane_df[plane_df.volume_path == volume_path].iloc[0]
                 img = _load_nii_image(os.path.join(root_path, volume_path)).get_fdata()
-                mask = _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata() if row.mask_path else None
+                mask = (
+                    _load_nii_image(os.path.join(root_path, row.mask_path)).get_fdata()
+                    if row.mask_path
+                    else None
+                )
 
                 # prepare image that will show all bounding boxes
                 bboxes_central_slice_thickness = 0.1
@@ -117,12 +129,21 @@ def get_unified_data(
                 elif plane == AnatomicalPlane.SAGITTAL:
                     slice_bounds = axis_slice_bounds(0)
                     bboxes_img = img[slice_bounds[0] : slice_bounds[1], :, :].mean(axis=0)
-                bboxes_img = zoom(ct_windowing(bboxes_img), (getattr(row, f"ratio_{plane.name.lower()}"), 1), order=3)
+                bboxes_img = zoom(
+                    ct_windowing(bboxes_img),
+                    (getattr(row, f"ratio_{plane.name.lower()}"), 1),
+                    order=3,
+                )
                 bboxes_img = np.clip(bboxes_img, 0.0, 1.0)
-                bboxes_img = (bboxes_img * 255.0).astype(np.uint8)  # PIL only supports uint8 for RGB images
+                bboxes_img = (bboxes_img * 255.0).astype(
+                    np.uint8
+                )  # PIL only supports uint8 for RGB images
                 bboxes_img = np.array(Image.fromarray(bboxes_img).convert("RGB"))
                 bboxes_img_path = os.path.join(
-                    img_bboxes_path, os.path.split(volume_path)[1].replace("volume", "bboxes").replace("nii", "tiff")
+                    img_bboxes_path,
+                    os.path.split(volume_path)[1]
+                    .replace("volume", "bboxes")
+                    .replace("nii", "tiff"),
                 )
 
                 images = []
@@ -136,7 +157,9 @@ def get_unified_data(
                     )
                     if mask is not None:
                         file_idx = row.Index
-                        organ_mask_img_path = writer.save_image_with_index(organ_mask_img, file_idx, masks_path)
+                        organ_mask_img_path = writer.save_image_with_index(
+                            organ_mask_img, file_idx, masks_path
+                        )
                     else:
                         organ_mask_img_path = None
                     images.append(organ_img)
@@ -156,18 +179,22 @@ def get_unified_data(
                 writer.save_image(bboxes_img, bboxes_img_path)
 
                 old_paths = [volume_path] * len(images)
-                original_splits = [row.split] * len(images)
-                return old_paths, original_splits, task_labels, images, add_annots
+                splits = [row.split] * len(images)
+                original_splits = [row.original_split] * len(images)
+                return old_paths, splits, original_splits, task_labels, images, add_annots
 
             # Batch processing of images
             all_volume_paths = plane_df["volume_path"].unique()
             batches = np.array_split(all_volume_paths, ceil(len(all_volume_paths) / batch_size))
-            for volume_paths in tqdm(batches, desc=f"Processing LITS dataset, {plane.name.lower()} plane"):
+            for volume_paths in tqdm(
+                batches, desc=f"Processing LITS dataset, {plane.name.lower()} plane"
+            ):
                 with ThreadPool(batch_size) as pool:
                     writer_inputs = pool.map(get_volume_writer_input, volume_paths)
                 # join all sublists into one list
                 writer_input = [
-                    [el for input in writer_inputs for el in input[i]] for i in range(len(writer_inputs[0]))
+                    [el for input in writer_inputs for el in input[i]]
+                    for i in range(len(writer_inputs[0]))
                 ]
                 writer.write_many(*writer_input)
 
@@ -195,36 +222,43 @@ def _get_voxeldims_ratios(volume_path):
     return voxel_dims, ratios
 
 
-def _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_folder, annots_test_folder):
+def _get_volumes_dataframe(
+    root_path, train_folder, test_folder, annots_train_folder, annots_test_folder
+):
     volume_paths = []
     organs_paths = []
     mask_paths = []
-    splits = []
+    original_splits = []
     idxs = []
     voxel_dims = []
     ratios = [[], [], []]
 
-    def _process_file(organs_path, split):
+    def _process_file(organs_path, original_split):
         if organs_path.endswith(".txt"):
             idx = int(re.findall(r"\d+", organs_path)[-1])
-            if split == "train":
+            if original_split == "train":
                 batch_nb = 1 if idx <= 27 else 2
-                mask_path = os.path.join(train_folder, f"Training Batch {batch_nb}", organs_path.replace("txt", "nii"))
+                mask_path = os.path.join(
+                    train_folder, f"Training Batch {batch_nb}", organs_path.replace("txt", "nii")
+                )
                 volume_path = mask_path.replace("segmentation", "volume")
                 organs_rel_path = os.path.join(annots_train_folder, organs_path)
             else:
                 volume_path = os.path.join(
-                    test_folder, organs_path.replace("txt", "nii").replace("segmentation", "volume")
+                    test_folder,
+                    organs_path.replace("txt", "nii").replace("segmentation", "volume"),
                 )
                 mask_path = None
                 organs_rel_path = os.path.join(annots_test_folder, organs_path)
             _voxel_dims, _ratios = _get_voxeldims_ratios(os.path.join(root_path, volume_path))
-            if np.allclose(_voxel_dims, 1.0):  # images where this information is missing have all 1s: throw them away
+            if np.allclose(
+                _voxel_dims, 1.0
+            ):  # images where this information is missing have all 1s: throw them away
                 return
             volume_paths.append(volume_path)
             organs_paths.append(organs_rel_path)
             mask_paths.append(mask_path)
-            splits.append(split)
+            original_splits.append(original_split)
             idxs.append(idx)
             voxel_dims.append(_voxel_dims)
             for i in range(3):
@@ -236,23 +270,23 @@ def _get_volumes_dataframe(root_path, train_folder, test_folder, annots_train_fo
         _process_file(annot, "test")
     df = pd.DataFrame(
         {
+            "organs_path": organs_paths,
             "volume_path": volume_paths,
             "mask_path": mask_paths,
-            "split": splits,
+            "original_split": original_splits,
             "volume_idx": idxs,
             "voxel_dims": voxel_dims,
             "ratio_axial": ratios[0],
             "ratio_coronal": ratios[1],
             "ratio_sagittal": ratios[2],
-        },
-        index=organs_paths,
+        }
     )
     return df
 
 
 def _get_organs_dataframe(volumes_df, root_path):
     data = []
-    for organs_path in volumes_df.index:
+    for organs_path in volumes_df["organs_path"].unique():
         with open(os.path.join(root_path, organs_path)) as f:
             for ln in f.readlines():
                 t = ln.strip("\n").split(" ")
@@ -260,9 +294,13 @@ def _get_organs_dataframe(volumes_df, root_path):
                 bbox = ((int(t[2]), int(t[3])), (int(t[4]), int(t[5])), (int(t[6]), int(t[7])))
                 data.append((organs_path, t[0], t[1], bbox))
     df = pd.DataFrame(data, columns=["organs_path", "old_label", "old_idx", "bbox"])
-    organs_df = df.join(volumes_df, on="organs_path", how="left")
-    organs_df["split_idx"] = organs_df["split"].map({"train": 0, "test": 1})
-    organs_df = organs_df.sort_values(by=["split_idx", "volume_idx"]).reset_index(drop=True).drop(columns=["split_idx"])
+    organs_df = df.merge(volumes_df, on="organs_path", how="left")
+    organs_df["split_idx"] = organs_df["split"].map({"train": 0, "val": 1, "test": 2})
+    organs_df = (
+        organs_df.sort_values(by=["split_idx", "volume_idx"])
+        .reset_index(drop=True)
+        .drop(columns=["split_idx"])
+    )
     return organs_df
 
 
@@ -320,6 +358,23 @@ def _get_organ_img_mask(img, mask, bboxes_img, row, plane, out_img_size):
     organ_color = row.organ_color
     bboxes_img = draw_colored_bounding_box(bboxes_img, bbox_bboxes_img, organ_color)
     return organ_img, mask_img, bboxes_img
+
+
+def _split_fn(x):
+    return pd.concat(
+        [
+            make_random_split(
+                x,
+                groupby_key="volume_path",
+                ratios={"train": 0.85, "val": 0.15},
+                row_filter={"original_split": ["train"]},
+                seed=42,
+            ),
+            use_fixed_split(
+                x, "volume_path", split="test", row_filter={"original_split": ["test"]}
+            ),
+        ]
+    )
 
 
 def main():

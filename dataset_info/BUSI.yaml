@@ -19,10 +19,19 @@ tasks:
       1: malignant finding
 
 input_size: [1,224,224]
+
+total_num_samples: 780
+splits_num_samples:
+  train: 546
+  val: 78
+  test: 156
 original_splits_num_samples:
   train: 780
   val: 0
   test: 0
+
+domain_overlaps: []
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

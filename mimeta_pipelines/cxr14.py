@@ -28,6 +28,7 @@ from zipfile import ZipFile
 import pandas as pd
 from PIL import Image
 
+from mimeta_pipelines.splits import get_splits, make_random_split, use_fixed_split
 from .paths import INFO_PATH, setup
 from .writer import UnifiedDatasetWriter
 
@@ -52,7 +53,9 @@ def get_unified_data(
         root_path = os.path.join(in_path, "CXR8")
         images_path = os.path.join(root_path, "images")
         # extract subfolders
-        subfolder_zips = [os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"]
+        subfolder_zips = [
+            os.path.join(images_path, f) for f in os.listdir(images_path) if f[-7:] == ".tar.gz"
+        ]
 
         def unzip(subfolder_zip):
             with tarfile.open(subfolder_zip, "r:gz") as tf:
@@ -75,7 +78,9 @@ def get_unified_data(
         for f in ("FAQ_CHESTXRAY.pdf", "LOG_CHESTXRAY.pdf", "README_CHESTXRAY.pdf"):
             copyfile(os.path.join(root_path, f), os.path.join(out_path, f"{f}_original"))
         # metadata
-        metadata = pd.read_csv(os.path.join(root_path, "Data_Entry_2017_v2020.csv"), index_col="Image Index")
+        metadata = pd.read_csv(
+            os.path.join(root_path, "Data_Entry_2017_v2020.csv"), index_col="Image Index"
+        )
         metadata["original_split"] = metadata.index.map(path2split)
         task = info_dict["tasks"][0]
         possible_labels = list(task["labels"].values())
@@ -83,10 +88,18 @@ def get_unified_data(
             lambda lab: [1 if l in lab else 0 for l in possible_labels]
         )
         metadata["original_image_size"] = (
-            "(" + metadata["OriginalImage[Width"].astype(str) + "," + metadata["Height]"].astype(str) + ")"
+            "("
+            + metadata["OriginalImage[Width"].astype(str)
+            + ","
+            + metadata["Height]"].astype(str)
+            + ")"
         )
         metadata["original_pixel_spacing"] = (
-            "(" + metadata["OriginalImagePixelSpacing[x"].astype(str) + "," + metadata["y]"].astype(str) + ")"
+            "("
+            + metadata["OriginalImagePixelSpacing[x"].astype(str)
+            + ","
+            + metadata["y]"].astype(str)
+            + ")"
         )
         task_gender = info_dict["tasks"][1]
         metadata.rename(
@@ -136,6 +149,27 @@ def get_unified_data(
             os.path.join(os.path.relpath(images_path, root_path), ind) for ind in info_df.index
         ]
         info_df.reset_index(inplace=True, drop=True)
+
+        def split_fn(x):
+            return pd.concat(
+                [
+                    make_random_split(
+                        x,
+                        groupby_key="patient_id",
+                        ratios={"train": 0.85, "val": 0.15},
+                        row_filter={"original_split": ["train"]},
+                        seed=42,
+                    ),
+                    use_fixed_split(
+                        x,
+                        groupby_key="patient_id",
+                        split="test",
+                        row_filter={"original_split": ["test"]},
+                    ),
+                ]
+            )
+
+        info_df = get_splits(info_df, "CXR14.csv", split_fn, "patient_id")
 
         def get_image_addannot_pair(df_row):
             image = Image.open(os.path.join(root_path, df_row["original_filepath"]))

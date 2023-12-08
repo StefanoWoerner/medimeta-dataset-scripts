@@ -27,10 +27,19 @@ tasks:
       14: PMO Promyelocyte
 
 input_size: [3,224,224]
+
+total_num_samples: 18_365
+splits_num_samples:
+  train: 12_855
+  val: 1_836
+  test: 3_674
 original_splits_num_samples:
   train: 18_365
   val: 0
   test: 0
+
+domain_overlaps: [pbc]
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

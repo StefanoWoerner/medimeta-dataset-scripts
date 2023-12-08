@@ -59,12 +59,18 @@ def get_unified_data(
     test_df["split"] = "test"
     info_df = pd.concat([train_df, val_df, test_df])
     # Original paths
-    split2splitfolder = {"train": "a. Training Set", "val": "b. Validation Set", "test": "c. Testing Set"}
+    split2splitfolder = {
+        "train": "a. Training Set",
+        "val": "b. Validation Set",
+        "test": "c. Testing Set",
+    }
     split2folder = {
         split: os.path.join(in_path, "1. Original Images", split2splitfolder[split])
         for split in ("train", "val", "test")
     }
-    info_df["original_filepath"] = info_df["split"].map(split2folder) + os.path.sep + info_df["ID"].astype(str) + ".png"
+    info_df["original_filepath"] = (
+        info_df["split"].map(split2folder) + os.path.sep + info_df["ID"].astype(str) + ".png"
+    )
     # Tasks
     risk_task, disease_task = info_dict["tasks"]
     info_df.rename(columns={"Disease_Risk": "risk"}, inplace=True)
@@ -94,16 +100,21 @@ def get_unified_data(
         # resize
         img.thumbnail(out_img_size, resample=Image.Resampling.BICUBIC)
         # labels
-        lab = {risk_task["task_name"]: df_row["risk"], disease_task["task_name"]: df_row["disease"]}
+        lab = {
+            risk_task["task_name"]: df_row["risk"],
+            disease_task["task_name"]: df_row["disease"],
+        }
         # add annotation
         add_annot = {
             "original_image_size": img_size,
         }
-        return original_filepath, split, lab, img, add_annot
+        return original_filepath, split, split, lab, img, add_annot
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         all_paths = info_df.index
-        for paths in tqdm(np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing RFMiD"):
+        for paths in tqdm(
+            np.array_split(all_paths, len(all_paths) // batch_size), desc="Processing RFMiD"
+        ):
             with ThreadPool() as pool:
                 writer_inputs = pool.map(get_writer_input, paths)
             writer.write_many(*(zip(*writer_inputs)))

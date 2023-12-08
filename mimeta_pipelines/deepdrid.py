@@ -19,7 +19,6 @@ from shutil import rmtree, copyfile
 from zipfile import ZipFile
 
 import pandas as pd
-import yaml
 from PIL import Image
 from tqdm import tqdm
 
@@ -50,7 +49,11 @@ def get_unified_data(
     root_path = os.path.join(in_path, "DeepDRiD-master")
 
     def create_unified_dataset(
-        dataset_path: str, out_path: str, info_path: str, annot_cols: list[str], tasks_mapper: dict[str, str]
+        dataset_path: str,
+        out_path: str,
+        info_path: str,
+        annot_cols: list[str],
+        tasks_mapper: dict[str, str],
     ):
         """Creates a unified dataset from the DeepDRiD datasets."""
 
@@ -72,12 +75,16 @@ def get_unified_data(
             split_mapper = {"training": "train", "validation": "val", "Evaluation": "test"}
             # split path -> split name
             splits = {
-                os.path.join(dataset_path, path): [v for k, v in split_mapper.items() if k in path][0]
+                os.path.join(dataset_path, path): [
+                    v for k, v in split_mapper.items() if k in path
+                ][0]
                 for path in os.listdir(dataset_path)
             }
             for split_path, split in splits.items():
                 # copy in readmes (sometimes .txt, sometimes .docx)
-                readme_name = [f for f in os.listdir(split_path) if f.lower().startswith("readme")][0]
+                readme_name = [
+                    f for f in os.listdir(split_path) if f.lower().startswith("readme")
+                ][0]
                 copyfile(
                     os.path.join(split_path, readme_name),
                     os.path.join(out_path, f"Readme_{split}.{readme_name.split('.')[-1]}"),
@@ -99,8 +106,12 @@ def get_unified_data(
                             join="inner",
                         )
                         .reset_index(level=["patient_id", "image_id"])  # index by image_path only
-                        .rename(columns=lambda n: n.lower().replace(" ", "_"))  # normalize column names
-                        .rename(columns={"patient_dr_level": "dr_level"})  # coherence with ultra-widefield dataset
+                        .rename(
+                            columns=lambda n: n.lower().replace(" ", "_")
+                        )  # normalize column names
+                        .rename(
+                            columns={"patient_dr_level": "dr_level"}
+                        )  # coherence with ultra-widefield dataset
                     )
 
                     # Reindex by actual image path
@@ -125,7 +136,9 @@ def get_unified_data(
                     annots_df = (
                         pd.concat(
                             [
-                                pd.read_excel(os.path.join(split_path, info_file), index_col="image_id")
+                                pd.read_excel(
+                                    os.path.join(split_path, info_file), index_col="image_id"
+                                )
                                 for info_file in info_files
                             ],
                             axis=1,
@@ -141,7 +154,8 @@ def get_unified_data(
                     annots_df["patient_id"] = annots_df.index.str.split("_").str[0]
                     # Reindex by actual image path
                     annots_df.index = [
-                        os.path.join(split_path, "Images", i.split("_")[0], i + ".jpg") for i in annots_df.index
+                        os.path.join(split_path, "Images", i.split("_")[0], i + ".jpg")
+                        for i in annots_df.index
                     ]
 
                 # no missing DR level
@@ -152,13 +166,17 @@ def get_unified_data(
 
                 # write (batched)
                 for batch in tqdm(
-                    [annots_df[pos : pos + batch_size] for pos in range(0, len(annots_df), batch_size)],
+                    [
+                        annots_df[pos : pos + batch_size]
+                        for pos in range(0, len(annots_df), batch_size)
+                    ],
                     desc=f"Processing DeepDRiD-{os.path.split(dataset_path)[1]} ({split} split)",
                 ):
                     with ThreadPool() as pool:
                         images_annots = pool.map(get_img_annotation_pair, batch.index)
                     writer.write_many(
                         old_paths=[os.path.relpath(p, root_path) for p in batch.index],
+                        splits=[split] * len(batch),
                         original_splits=[split] * len(batch),
                         task_labels=[
                             {task_name: lab for task_name, lab in zip(tasks_mapper, img_labels)}
@@ -167,7 +185,9 @@ def get_unified_data(
                         images=[img_annot[0] for img_annot in images_annots],
                         add_annots=[
                             {**df_annot, **(img_annot[1])}
-                            for df_annot, img_annot in zip(batch[sorted(annot_cols)].to_dict("records"), images_annots)
+                            for df_annot, img_annot in zip(
+                                batch[sorted(annot_cols)].to_dict("records"), images_annots
+                            )
                         ],
                     )
 
@@ -186,7 +206,9 @@ def get_unified_data(
         orig_name: orig_name.lower().replace(" ", "_")
         for orig_name in ("DR level", "Overall quality", "Artifact", "Clarity", "Field definition")
     }
-    create_unified_dataset(reg_dataset_path, reg_out_path, reg_info_path, reg_annot_cols, reg_tasks_mapper)
+    create_unified_dataset(
+        reg_dataset_path, reg_out_path, reg_info_path, reg_annot_cols, reg_tasks_mapper
+    )
 
     # Ultra-widefield
     uwf_dataset_path = os.path.join(root_path, "ultra-widefield_images")
@@ -194,7 +216,9 @@ def get_unified_data(
     uwf_info_path = info_paths[1]
     uwf_annot_cols = ["patient_id", "image_id", "position"]
     uwf_tasks_mapper = {"DR level": "dr_level"}
-    create_unified_dataset(uwf_dataset_path, uwf_out_path, uwf_info_path, uwf_annot_cols, uwf_tasks_mapper)
+    create_unified_dataset(
+        uwf_dataset_path, uwf_out_path, uwf_info_path, uwf_annot_cols, uwf_tasks_mapper
+    )
 
     # remove extracted folder to free up space
     if zipped:

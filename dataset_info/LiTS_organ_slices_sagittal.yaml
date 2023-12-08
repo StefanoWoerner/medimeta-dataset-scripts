@@ -22,10 +22,19 @@ tasks:
       10: right femoral head
 
 input_size: [1, 224, 224]
+
+total_num_samples: 1645
+splits_num_samples:
+  train: 871
+  val: 156
+  test: 618
 original_splits_num_samples:
   train: 1027
   val: 0
   test: 618
+
+domain_overlaps: [organs_axial, organs_coronal]
+subject_overlaps: [organs_axial, organs_coronal]
 
 license: "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

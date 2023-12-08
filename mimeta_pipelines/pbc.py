@@ -15,16 +15,16 @@ DATA MODIFICATIONS:
 """
 
 import os
-from multiprocessing.pool import ThreadPool
 from shutil import rmtree
 from zipfile import ZipFile
 
+import pandas as pd
 from PIL import Image
-from tqdm import tqdm
 
+from mimeta_pipelines.splits import get_splits, make_random_split
+from mimeta_pipelines.writer import UnifiedDatasetWriter
 from .image_utils import center_crop
 from .paths import INFO_PATH, folder_paths, setup
-from .writer import UnifiedDatasetWriter
 
 
 def get_unified_data(
@@ -46,8 +46,36 @@ def get_unified_data(
     # data path
     root_path = os.path.join(in_path, "PBC_dataset_normal_DIB")
 
-    def get_img_annotation_pair(path: str):
-        img = Image.open(path)
+    # rename ig -> immature granulocyte
+    os.rename(os.path.join(root_path, "ig"), os.path.join(root_path, "immature granulocyte"))
+
+    task = info_dict["tasks"][0]
+    paths, labels = folder_paths(
+        root=root_path,
+        dir_to_cl_idx={v: k for k, v in task["labels"].items()},
+        check_alphabetical=False,
+    )
+    paths = [os.path.relpath(p, root_path) for p in paths]
+    df = pd.DataFrame(zip(paths, labels), columns=["original_filepath", "label"])
+    df["original_split"] = "train"
+    df.rename(columns={"label": task["task_name"]}, inplace=True)
+
+    # add splits to dataframe
+    split_file_name = "PBC_splits.csv"
+
+    def _split_fn(x):
+        return make_random_split(
+            x,
+            groupby_key="original_filepath",
+            ratios={"train": 0.7, "val": 0.1, "test": 0.2},
+            seed=42,
+        )
+
+    df = get_splits(df, split_file_name, _split_fn)
+
+    def get_img_annotation_pair(df_row):
+        # img = Image.open(path)
+        img = Image.open(os.path.join(root_path, df_row["original_filepath"]))
         # center-crop
         w, h = img.size
         img = center_crop(img)
@@ -57,25 +85,29 @@ def get_unified_data(
         add_annot = {"original_image_size": (w, h)}
         return img, add_annot
 
-    # rename ig -> immature granulocyte
-    os.rename(os.path.join(root_path, "ig"), os.path.join(root_path, "immature granulocyte"))
-
     with UnifiedDatasetWriter(out_path, info_path) as writer:
-        task = info_dict["tasks"][0]
-        class_to_idx = {v: k for k, v in task["labels"].items()}
-        batches = folder_paths(
-            root=root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size, check_alphabetical=False
-        )
-        for paths, labs in tqdm(batches, desc="Processing peripheral_blood_cells dataset"):
-            with ThreadPool() as pool:
-                imgs_annots = pool.map(get_img_annotation_pair, paths)
-            writer.write_many(
-                old_paths=[os.path.relpath(p, root_path) for p in paths],
-                original_splits=["train"] * len(paths),
-                task_labels=[{task["task_name"]: lab} for lab in labs],
-                images=[img_annot[0] for img_annot in imgs_annots],
-                add_annots=[img_annot[1] for img_annot in imgs_annots],
-            )
+        writer.write_from_dataframe(df=df, processing_func=get_img_annotation_pair)
+
+    # with UnifiedDatasetWriter(out_path, info_path) as writer:
+    #     task = info_dict["tasks"][0]
+    #     class_to_idx = {v: k for k, v in task["labels"].items()}
+    #     batches = folder_paths(
+    #         root=root_path,
+    #         dir_to_cl_idx=class_to_idx,
+    #         batch_size=batch_size,
+    #         check_alphabetical=False,
+    #     )
+    #     for paths, labs in tqdm(batches, desc="Processing peripheral_blood_cells dataset"):
+    #         with ThreadPool() as pool:
+    #             imgs_annots = pool.map(get_img_annotation_pair, paths)
+    #         writer.write_many(
+    #             old_paths=[os.path.relpath(p, root_path) for p in paths],
+    #             splits=["train"] * len(paths),
+    #             original_splits=["train"] * len(paths),
+    #             task_labels=[{task["task_name"]: lab} for lab in labs],
+    #             images=[img_annot[0] for img_annot in imgs_annots],
+    #             add_annots=[img_annot[1] for img_annot in imgs_annots],
+    #         )
 
     # delete temporary folder
     if zipped:

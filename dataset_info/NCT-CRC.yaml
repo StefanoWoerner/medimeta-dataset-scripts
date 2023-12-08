@@ -20,10 +20,19 @@ tasks:
       8: "colorectal adenocarcinoma epithelium (TUM)"
 
 input_size: [3,224,224]
+
+total_num_samples: 107_180
+splits_num_samples:
+  train: 85_000
+  val: 15_000
+  test: 7_180
 original_splits_num_samples:
-  train: 100000
-  val: 7180
+  train: 100_000
+  val: 7_180
   test: 0
+
+domain_overlaps: []
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

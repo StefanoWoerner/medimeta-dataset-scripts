@@ -12,6 +12,7 @@ original_data_dirnames:
   deepdrid: DeepDRiD
   derm7pt: derm7pt
   ham10000: HAM10000/ISIC2018
+  kermany_cell_data: Kermany_CellData
   kermany_oct: Kermany_OCT
   kermany_pneumonia: Kermany_Pneumonia
   lits_organs: LITS
@@ -38,6 +39,8 @@ pipeline_args:
     in_path: "${original_data_base_path}/${original_data_dirnames[derm7pt]}"
   ham10000:
     in_path: "${original_data_base_path}/${original_data_dirnames[ham10000]}"
+  kermany_cell_data:
+    in_path: "${original_data_base_path}/${original_data_dirnames[kermany_cell_data]}"
   kermany_oct:
     in_path: "${original_data_base_path}/${original_data_dirnames[kermany_oct]}"
   kermany_pneumonia:

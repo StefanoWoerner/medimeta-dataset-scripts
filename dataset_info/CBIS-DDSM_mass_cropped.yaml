@@ -32,10 +32,19 @@ tasks:
       4: "SPICULATED"
 
 input_size: [1,224,224]
+
+total_num_samples: 1696
+splits_num_samples:
+  train: 1126
+  val: 192
+  test: 378
 original_splits_num_samples:
   train: 1318
   val: 0
   test: 378
+
+domain_overlaps: [mammo_calc]
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

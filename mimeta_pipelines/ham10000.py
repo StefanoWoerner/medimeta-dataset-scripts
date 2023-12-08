@@ -120,6 +120,7 @@ def get_unified_data(
 
             writer.write_many(
                 old_paths=[os.path.relpath(original_path, root_path)],
+                splits=[original_split],
                 original_splits=[original_split],
                 task_labels=[label],
                 images=[image],

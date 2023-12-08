@@ -24,6 +24,7 @@ from zipfile import ZipFile
 import pandas as pd
 from PIL import Image
 
+from mimeta_pipelines.splits import make_random_split, get_splits
 from .image_utils import zero_pad_to_square
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
@@ -54,8 +55,15 @@ def get_unified_data(
     # binary task
     bin_task = info_dict["tasks"][1]
     bin2binidx = {bin_: idx for idx, bin_ in bin_task["labels"].items()}
-    class2bin = {"normal": "no malignant finding", "benign": "no malignant finding", "malignant": "malignant finding"}
-    classidx2binidx = {classidx: bin2binidx[class2bin[class_]] for classidx, class_ in class_task["labels"].items()}
+    class2bin = {
+        "normal": "no malignant finding",
+        "benign": "no malignant finding",
+        "malignant": "malignant finding",
+    }
+    classidx2binidx = {
+        classidx: bin2binidx[class2bin[class_]]
+        for classidx, class_ in class_task["labels"].items()
+    }
 
     # Prepare annotations dataframe
     paths, labels = folder_paths(root=root_path, dir_to_cl_idx=class2idx, check_alphabetical=False)
@@ -65,6 +73,16 @@ def get_unified_data(
     annot_df = annot_df[~(annot_df["original_filepath"].str.contains("mask"))]  # remove masks
     annot_df[bin_task["task_name"]] = annot_df[class_task["task_name"]].map(classidx2binidx)
     annot_df.reset_index(inplace=True, drop=True)
+
+    def split_fn(x):
+        return make_random_split(
+            x,
+            groupby_key="original_filepath",
+            ratios={"train": 0.7, "val": 0.1, "test": 0.2},
+            seed=42,
+        )
+
+    annot_df = get_splits(annot_df, "bus.csv", split_fn, "original_filepath")
 
     with UnifiedDatasetWriter(out_path, info_path) as writer:
         rel_masks_path = "masks"
@@ -88,7 +106,9 @@ def get_unified_data(
             if img.size[0] < out_img_size[0]:
                 print("Upscaled")
             img = img.resize(out_img_size, resample=Image.Resampling.BICUBIC)
-            mask = mask.resize(out_img_size, resample=Image.Resampling.NEAREST)  # binary mask (could change to max)
+            mask = mask.resize(
+                out_img_size, resample=Image.Resampling.NEAREST
+            )  # binary mask (could change to max)
             # save mask
             assert len(mask.getbands()) == 1
             assert mask.mode == "1"  # binary

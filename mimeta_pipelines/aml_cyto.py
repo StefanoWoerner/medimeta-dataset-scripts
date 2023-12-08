@@ -25,6 +25,7 @@ from zipfile import ZipFile
 import pandas as pd
 from PIL import Image
 
+from mimeta_pipelines.splits import make_random_split, get_splits
 from .paths import INFO_PATH, folder_paths, setup
 from .writer import UnifiedDatasetWriter
 
@@ -51,7 +52,9 @@ def get_unified_data(
         images_basedir = os.path.join(root_path, "AML-Cytomorphology")
         task = info_dict["tasks"][0]
         class_to_idx = {v.split(" ")[0]: k for k, v in task["labels"].items()}
-        paths, labels = folder_paths(root=images_basedir, dir_to_cl_idx=class_to_idx, batch_size=None)
+        paths, labels = folder_paths(
+            root=images_basedir, dir_to_cl_idx=class_to_idx, batch_size=None
+        )
         path2clsidx = dict(zip([os.path.relpath(p, images_basedir) for p in paths], labels))
         annotations = pd.read_csv(
             os.path.join(root_path, "annotations.dat"),
@@ -71,6 +74,16 @@ def get_unified_data(
                 "second_reannotation",
             ]
         ]
+
+        def split_fn(x):
+            return make_random_split(
+                x,
+                groupby_key="original_filepath",
+                ratios={"train": 0.7, "val": 0.1, "test": 0.2},
+                seed=42,
+            )
+
+        annotations = get_splits(annotations, "aml_cyto.csv", split_fn, "original_filepath")
 
         def get_img_addannot_pair(annotations_row):
             path = annotations_row["original_filepath"]

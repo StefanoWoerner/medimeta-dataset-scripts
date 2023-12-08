@@ -1,4 +1,4 @@
-id: skin_derm
+id: skinl_derm
 name: Skin Lesion Evaluation (Dermoscopy)
 summary: "A dataset containing dermoscopy color images of skin lesions,
 along with corresponding labels for seven different evaluation criteria
@@ -119,10 +119,19 @@ tasks:
       1: present
 
 input_size: [3,224,224]
+
+total_num_samples: 1011
+splits_num_samples:
+  train: 413
+  val: 203
+  test: 395
 original_splits_num_samples:
   train: 413
   val: 203
   test: 395
+
+domain_overlaps: [derm]
+subject_overlaps: [skinl_clinic]
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

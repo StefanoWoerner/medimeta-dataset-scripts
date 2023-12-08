@@ -2,6 +2,7 @@
 """
 import os
 from multiprocessing import Lock
+from operator import itemgetter
 from shutil import copyfile, rmtree
 import tqdm
 
@@ -27,13 +28,18 @@ class UnifiedDatasetWriter:
         |   -- 000001.tiff
         |   ...
         |
-        -- original_splits
+        -- splits
         |   |
         |   -- train.txt
         |   |
         |   -- val.txt
         |   |
         |   -- test.txt
+        |
+        -- original_splits
+        |   |
+        |   -- ...
+        |   ...
         |
         -- task_labels
         |   |
@@ -89,7 +95,22 @@ class UnifiedDatasetWriter:
         copyfile(license_in_path, license_out_path)
 
         # Initialize dataset
-        self.dataset_length = sum(list(self.info_dict["original_splits_num_samples"].values()))
+        self.dataset_length = self.info_dict["total_num_samples"]
+        if sum(itemgetter(*SPLITS)(self.info_dict["splits_num_samples"])) != self.dataset_length:
+            raise ValueError("Sum of splits num samples does not match total num samples.")
+        # if (
+        #     sum(itemgetter("train", "val")(self.info_dict["splits_num_samples"]))
+        #     != self.info_dict["splits_num_samples"]["trainval"]
+        # ):
+        #     raise ValueError(
+        #         "Sum of train and val num samples does not match trainval num samples."
+        #     )
+        if sum(self.info_dict["original_splits_num_samples"].values()) != self.dataset_length:
+            raise ValueError(
+                "Sum of original splits num samples does not match total num samples."
+            )
+        # splits
+        self.splits = [None] * self.dataset_length
         # original splits
         self.original_splits = [None] * self.dataset_length
         # annotations, paths
@@ -137,6 +158,19 @@ class UnifiedDatasetWriter:
         # Write out files
         try:
             assert None not in self.new_paths
+            # splits
+            splits_path = os.path.join(self.out_path, "splits")
+            os.makedirs(splits_path)
+            for split in SPLITS:
+                split_paths = [
+                    path for path, split_ in zip(self.new_paths, self.splits) if split_ == split
+                ]
+                # check coherent with info file
+                assert self.info_dict["splits_num_samples"][split] == len(split_paths)
+                if split_paths:
+                    with open(os.path.join(splits_path, f"{split}.txt"), "w") as f:
+                        f.write("\n".join(split_paths))
+
             # original splits
             original_splits_path = os.path.join(self.out_path, "original_splits")
             os.makedirs(original_splits_path)
@@ -163,6 +197,7 @@ class UnifiedDatasetWriter:
             annotations_path = os.path.join(self.out_path, "annotations.csv")
             annotations_df = pd.DataFrame.from_records(self.add_annots, index=self.new_paths)
             annotations_df.index.name = "filepath"
+            annotations_df["split"] = self.splits
             annotations_df["original_split"] = self.original_splits
             annotations_df["original_filepath"] = self.old_paths
             # tasks
@@ -186,7 +221,7 @@ class UnifiedDatasetWriter:
             remaining_cols = set(annotations_df.columns)
             ordered_cols = []
             # first, tasks, original path, and split
-            first_cols = task_col_names + ["original_filepath", "original_split"]
+            first_cols = ["split"] + task_col_names + ["original_filepath", "original_split"]
             ordered_cols += first_cols
             remaining_cols -= set(first_cols)
             # second, patient id (if available)
@@ -280,6 +315,7 @@ class UnifiedDatasetWriter:
     def write(
         self,
         old_path: str,
+        split: str,
         original_split: str,
         task_labels: dict[str, int],
         image: Image.Image,
@@ -290,6 +326,7 @@ class UnifiedDatasetWriter:
 
         Args:
             old_path: relative path to the original image
+            split: split (train, val, test)
             original_split: original split (train, val, test)
             task_labels: dict of task labels
             add_annots: dict of additional annotations
@@ -297,6 +334,7 @@ class UnifiedDatasetWriter:
             index: index of the image in the dataset
         """
         # Basic checks
+        assert split in SPLITS, f"Split must be one of {SPLITS}, not {split}."
         assert original_split in SPLITS, f"Split must be one of {SPLITS}, not {original_split}."
         in_tasks = set(task_labels.keys())
         assert in_tasks == set(
@@ -333,6 +371,7 @@ class UnifiedDatasetWriter:
         # Images
         filepath = self.save_dataset_image(image, index)
         # Register new information
+        self.splits[index] = split
         self.original_splits[index] = original_split
         for task_name in self.task_labels:
             self.task_labels[task_name][index] = task_labels[task_name]
@@ -342,6 +381,7 @@ class UnifiedDatasetWriter:
     def write_many(
         self,
         old_paths: list[str],
+        splits: list[str],
         original_splits: list[str],
         task_labels: list[dict[str, int]],
         images: list[Image.Image],
@@ -353,6 +393,7 @@ class UnifiedDatasetWriter:
 
         Args:
             old_paths: list of relative paths to the original images
+            splits: list of splits (train, val, test)
             original_splits: list of original splits (train, val, test)
             task_labels: list of dicts of task labels (1 dict per sample)
             images: list of PIL images
@@ -363,23 +404,26 @@ class UnifiedDatasetWriter:
             add_annots = [None] * len(old_paths)
         if indices is None:
             indices = [None] * len(old_paths)
-        for old_path, original_split, task_label, image, add_annot, index in zip(
-            old_paths, original_splits, task_labels, images, add_annots, indices
+        for old_path, split, original_split, task_label, image, add_annot, index in zip(
+            old_paths, splits, original_splits, task_labels, images, add_annots, indices
         ):
-            self.write(old_path, original_split, task_label, image, add_annot, index)
+            self.write(old_path, split, original_split, task_label, image, add_annot, index)
 
     def write_from_dataframe(self, df: pd.DataFrame, processing_func: callable):
         """Write whole dataset from a correctly formatted dataframe.
 
         Args:
-            df: dataframe containing task columns, original_filepath,
-                original_split and additional annotations (the rest)
+            df: dataframe containing split, task columns,
+                original_filepath, original_split and additional
+                annotations (the rest)
             processing_func: function that takes a row of the dataframe
                 and returns a PIL image and a dictionary of additional
                 annotations
         """
         # check input dataframe
-        required_cols = ["original_filepath", "original_split"] + list(self.task_labels.keys())
+        required_cols = ["split", "original_filepath", "original_split"] + list(
+            self.task_labels.keys()
+        )
         assert (
             len(set(required_cols) - set(df.columns)) == 0
         ), f"Columns {required_cols} are required."
@@ -397,6 +441,7 @@ class UnifiedDatasetWriter:
             image, add_annots = processing_func(row)
             self.write(
                 old_path=row["original_filepath"],
+                split=row["split"],
                 original_split=row["original_split"],
                 task_labels={task: row[task] for task in self.task_labels.keys()},
                 image=image,

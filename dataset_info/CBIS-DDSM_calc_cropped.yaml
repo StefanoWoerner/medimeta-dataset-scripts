@@ -38,10 +38,19 @@ tasks:
       4: "SEGMENTAL"
 
 input_size: [1,224,224]
+
+total_num_samples: 1872
+splits_num_samples:
+  train: 1332
+  val: 214
+  test: 326
 original_splits_num_samples:
   train: 1546
   val: 0
   test: 326
+
+domain_overlaps: [mammo_mass]
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html

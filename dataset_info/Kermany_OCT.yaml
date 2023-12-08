@@ -6,19 +6,33 @@ classification"
 domain: OCT
 
 tasks:
-  - task_name: "disease"
+  - task_name: "disease class"
     task_target: MULTICLASS_CLASSIFICATION
     labels:
       0: CNV
       1: DME
       2: DRUSEN
       3: NORMAL
+  - task_name: "urgent referral"
+    task_target: BINARY_CLASSIFICATION
+    labels:
+      0: "NO"
+      1: "YES"
 
 input_size: [1,224,224]
+
+total_num_samples: 109_309
+splits_num_samples:
+  train: 91_615
+  val: 16_694
+  test: 1000
 original_splits_num_samples:
-  train: 83484
+  train: 108_309 # paper says 108312 but there are only 108309 images in the zip file
   val: 0
   test: 1000
+
+domain_overlaps: []
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
@@ -26,7 +40,7 @@ download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.h
 original_data:
   - name: Kermany OCT X-Ray
     title: "Labeled Optical Coherence Tomography (OCT) and Chest X-Ray Images for Classification"
-    url: https://data.mendeley.com/datasets/rscbjbr9sj/2
+    url: https://data.mendeley.com/datasets/rscbjbr9sj/3
     license: "Creative Commons Attribution 4.0 International (CC BY 4.0)"
     authors: "Daniel Kermany, Kang Zhang, Michael Goldbaum"
     paper_title: "Identifying Medical Diagnoses and Treatable Diseases by Image-Based Deep Learning"

@@ -65,7 +65,9 @@ def get_unified_data(
             ("test", os.path.join(in_path, "test")),
         ):
             class_to_idx = {v: k for k, v in task["labels"].items()}
-            batches = folder_paths(root=split_root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size)
+            batches = folder_paths(
+                root=split_root_path, dir_to_cl_idx=class_to_idx, batch_size=batch_size
+            )
             for paths, labs in tqdm(batches, desc=f"Processing Kermany_OCT ({split} split)"):
                 with ThreadPool() as pool:
                     imgs_annots = pool.map(get_img_annotation_pair, paths)

@@ -17,6 +17,7 @@ def setup(in_path, info_path):
     with open(info_path, "r") as f:
         info_dict = yaml.safe_load(f)
     out_path = os.path.join(UNIFIED_DATA_BASE_PATH, info_dict["id"])
+
     assert not os.path.exists(out_path), f"Output path {out_path} already exists. Please delete it first."
     return info_dict, out_path
 

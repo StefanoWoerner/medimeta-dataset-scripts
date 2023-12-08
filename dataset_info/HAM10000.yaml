@@ -18,10 +18,19 @@ tasks:
       6: Vascular lesion
 
 input_size: [3,224,224]
+
+total_num_samples: 11720
+splits_num_samples:
+  train: 10015
+  val: 193
+  test: 1512
 original_splits_num_samples:
   train: 10015
   val: 193
   test: 1512
+
+domain_overlaps: [skinl_derm]
+subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
