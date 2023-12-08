@@ -28,7 +28,8 @@ def main():
                 Image.open(os.path.join(image_path, image_name)).convert("RGB")
                 for image_name in image_names
             ]
-            save_path = os.path.join(cfg.unified_data_base_path, id, f"teaser.png")
+            save_path = os.path.join(cfg.unified_data_base_path, id, "teaser.png")
+            save_grid(images, num_cols, num_rows, size_multiplier, save_path)
     elif mode == "macro":
         # load random images
         datasets = np.random.choice(dataset_ids, num_images)
@@ -37,11 +38,10 @@ def main():
             image_path = os.path.join(cfg.unified_data_base_path, dataset, "images")
             image_name = np.random.choice(os.listdir(image_path))
             images.append(Image.open(os.path.join(image_path, image_name)).convert("RGB"))
-        save_path = os.path.join(cfg.unified_data_base_path, f"teaser.png")
+        save_path = os.path.join(cfg.unified_data_base_path, "teaser.png")
+        save_grid(images, num_cols, num_rows, size_multiplier, save_path)
     else:
         raise ValueError(f"Unknown mode: {mode}")
-
-    save_grid(images, num_cols, num_rows, size_multiplier, save_path)
 
     print("Done.")
 
