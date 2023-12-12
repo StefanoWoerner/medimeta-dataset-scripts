@@ -12,7 +12,7 @@ tasks:
       0: "NORMAL"
       1: "PNEUMONIA"
   - task_name: "disease class"
-    task_target: BINARY_CLASSIFICATION
+    task_target: MULTICLASS_CLASSIFICATION
     labels:
       0: "NORMAL"
       1: "BACTERIA"
