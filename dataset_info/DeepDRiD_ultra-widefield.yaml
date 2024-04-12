@@ -31,7 +31,9 @@ domain_overlaps: [dr_regular, fundus, glaucoma]
 subject_overlaps: []
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
-download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+project_website: https://www.woerner.eu/projects/medimeta/
+download_url: https://zenodo.org/records/7884735
+DOI: 10.5281/zenodo.7884735
 
 original_data:
   - name: DeepDRiD

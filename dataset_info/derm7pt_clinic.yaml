@@ -1,11 +1,11 @@
-id: skinl_clinic
-name: Skin Lesion Evaluation (Clinical)
-summary: "A dataset containing clinical color images of skin lesions,
-along with corresponding labels for seven different evaluation criteria
-and the diagnosis. Tasks containing infrequent labels have versions
+id: skinl_photo
+name: Skin Lesion Evaluation (Clinical Photography)
+summary: "A dataset containing clinical colour photography images of skin
+lesions, along with corresponding labels for seven different evaluation
+criteria and the diagnosis. Tasks containing infrequent labels have versions
 which group the infrequent labels together into more frequent labels."
 
-domain: Clinical skin imaging
+domain: Clinical skin photography
 
 tasks:
   - task_name: Diagnosis
@@ -134,7 +134,9 @@ domain_overlaps: []
 subject_overlaps: [skinl_derm]
 
 license: "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
-download_url: https://www.woerner.eu/projects/diverse-medical-meta-dataset-1.0.html
+project_website: https://www.woerner.eu/projects/medimeta/
+download_url: https://zenodo.org/records/7884735
+DOI: 10.5281/zenodo.7884735
 
 original_data:
   - name: derm7pt
